@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "./logo";
 import { SettingsModal } from "./settings-modal";
+import { features } from "@/lib/features";
 
 interface LogoMenuProps {
   counts?: {
@@ -149,17 +150,19 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
           {integrationStatus && (
             <div className="flex items-center gap-0.5 ml-1">
               {[
-                { connected: integrationStatus.googleMeet, color: "#4285F4" },
-                { connected: integrationStatus.zoom, color: "#2D8CFF" },
-                { connected: integrationStatus.teams, color: "#6264A7" },
-                { connected: integrationStatus.hubspot, color: "#FF7A59" },
-              ].map((integration, idx) => (
-                <div
-                  key={idx}
-                  className={`w-2 h-2 rounded-full ${integration.connected ? "" : "opacity-30"}`}
-                  style={{ backgroundColor: integration.color }}
-                />
-              ))}
+                { connected: integrationStatus.googleMeet, color: "#4285F4", enabled: true },
+                { connected: integrationStatus.zoom, color: "#2D8CFF", enabled: features.zoom },
+                { connected: integrationStatus.teams, color: "#6264A7", enabled: features.teams },
+                { connected: integrationStatus.hubspot, color: "#FF7A59", enabled: features.hubspot },
+              ]
+                .filter((i) => i.enabled)
+                .map((integration, idx) => (
+                  <div
+                    key={idx}
+                    className={`w-2 h-2 rounded-full ${integration.connected ? "" : "opacity-30"}`}
+                    style={{ backgroundColor: integration.color }}
+                  />
+                ))}
             </div>
           )}
         </button>

@@ -7,6 +7,7 @@ import { matchMeetingToCompanyByEmails, isInternalMeeting, ensureCompaniesAreSyn
 import { getUserZoomMeetingsForSync, syncUserZoomMeetingToDatabase, getZoomMeetingParticipants, ZoomReauthRequiredError } from "@/lib/zoom";
 import { isMicrosoftConfigured, userHasMicrosoftTokens, getTeamsMeetingsForSync, syncTeamsMeetingToDatabase } from "@/lib/teams";
 import { DeduplicationResult } from "@/lib/db/meetings";
+import { features } from "@/lib/features";
 
 /** Maximum duration for this serverless function (seconds) - Vercel Pro allows up to 300s */
 export const maxDuration = 300;
@@ -86,14 +87,16 @@ export async function POST(request: NextRequest) {
     // response.hubspot is always null
 
     // Sync Zoom if connected
-    const hasZoom = await users.hasZoomConnected(user.id);
-    if (hasZoom) {
-      response.zoom = await syncZoomMeetings(user.id, days);
-      response.totalSynced += response.zoom.synced;
+    if (features.zoom) {
+      const hasZoom = await users.hasZoomConnected(user.id);
+      if (hasZoom) {
+        response.zoom = await syncZoomMeetings(user.id, days);
+        response.totalSynced += response.zoom.synced;
+      }
     }
 
     // Sync Teams if connected
-    if (isMicrosoftConfigured()) {
+    if (features.teams && isMicrosoftConfigured()) {
       const hasTeamsTokens = await userHasMicrosoftTokens(user.id);
       if (hasTeamsTokens) {
         response.teams = await syncTeamsMeetings(user.id, days);

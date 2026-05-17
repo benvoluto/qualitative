@@ -5,6 +5,7 @@ import { AutoSync } from "@/components/auto-sync";
 import { CompanySyncCheck } from "@/components/company-sync-check";
 import { meetings, extracts, extractRules, users, customers } from "@/lib/db";
 import { isHubSpotConfigured } from "@/lib/hubspot";
+import { features } from "@/lib/features";
 import { SettingsCard } from "./settings-card";
 import { RecentActivity } from "./recent-activity";
 
@@ -34,7 +35,7 @@ export default async function Home() {
     googleMeet: false,
     zoom: false,
     teams: false,
-    hubspot: isHubSpotConfigured(),
+    hubspot: features.hubspot && isHubSpotConfigured(),
   };
   let autosyncEnabled = false;
 
@@ -43,9 +44,9 @@ export default async function Home() {
     if (user) {
       integrationStatus = {
         googleMeet: !!user.google_access_token,
-        zoom: !!user.zoom_access_token,
-        teams: !!user.ms_access_token,
-        hubspot: isHubSpotConfigured(),
+        zoom: features.zoom && !!user.zoom_access_token,
+        teams: features.teams && !!user.ms_access_token,
+        hubspot: features.hubspot && isHubSpotConfigured(),
       };
       autosyncEnabled = await users.getUserMeetingAutosyncEnabled(user.id);
     }

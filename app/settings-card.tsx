@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SettingsModal } from "@/components/settings-modal";
+import { features } from "@/lib/features";
 
 interface SettingsCardProps {
   status: {
@@ -16,11 +17,11 @@ export function SettingsCard({ status }: SettingsCardProps) {
   const [showSettings, setShowSettings] = useState(false);
 
   const integrations = [
-    { name: "Google Meet", connected: status.googleMeet, color: "#4285F4" },
-    { name: "Zoom", connected: status.zoom, color: "#2D8CFF" },
-    { name: "Teams", connected: status.teams, color: "#6264A7" },
-    { name: "HubSpot", connected: status.hubspot, color: "#FF7A59" },
-  ];
+    { name: "Google Meet", connected: status.googleMeet, color: "#4285F4", enabled: true },
+    { name: "Zoom", connected: status.zoom, color: "#2D8CFF", enabled: features.zoom },
+    { name: "Teams", connected: status.teams, color: "#6264A7", enabled: features.teams },
+    { name: "HubSpot", connected: status.hubspot, color: "#FF7A59", enabled: features.hubspot },
+  ].filter((i) => i.enabled);
 
   return (
     <>

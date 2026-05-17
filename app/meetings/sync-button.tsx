@@ -3,9 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Toast } from "@/app/components/toast";
-
-/** Feature flag to enable/disable HubSpot meeting sync. Set to true to re-enable. */
-const HUBSPOT_MEETING_SYNC_ENABLED = false;
+import { features } from "@/lib/features";
 
 type SyncSource = "google" | "hubspot" | "zoom" | "teams";
 
@@ -337,7 +335,7 @@ export function SyncButton() {
                 Google Meet
                 <span className="ml-auto text-xs text-gray-400">Last {syncDays} days</span>
               </button>
-              {HUBSPOT_MEETING_SYNC_ENABLED && (
+              {features.hubspot && (
                 <button
                   onClick={() => handleSyncCheck("hubspot")}
                   className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -349,7 +347,10 @@ export function SyncButton() {
                   <span className="ml-auto text-xs text-gray-400">Last {syncDays} days</span>
                 </button>
               )}
-              <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+              {(features.zoom || features.teams) && (
+                <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+              )}
+              {features.zoom && (
               <button
                 onClick={() => zoomConnected && handleSyncCheck("zoom")}
                 disabled={!zoomConnected}
@@ -375,6 +376,8 @@ export function SyncButton() {
                   {zoomConnected ? `Last ${syncDays} days` : ""}
                 </span>
               </button>
+              )}
+              {features.teams && (
               <button
                 onClick={() => handleSyncCheck("teams")}
                 className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -385,6 +388,7 @@ export function SyncButton() {
                 Microsoft Teams
                 <span className="ml-auto text-xs text-gray-400">Last {syncDays} days</span>
               </button>
+              )}
             </div>
           </div>
         )}

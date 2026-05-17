@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { users } from "@/lib/db";
 import { isHubSpotConfigured } from "@/lib/hubspot";
+import { features } from "@/lib/features";
 
 export async function GET() {
   try {
@@ -19,8 +20,8 @@ export async function GET() {
 
     return NextResponse.json({
       googleMeet: !!user.google_access_token,
-      teams: !!user.ms_access_token,
-      hubspot: isHubSpotConfigured(),
+      teams: features.teams && !!user.ms_access_token,
+      hubspot: features.hubspot && isHubSpotConfigured(),
     });
   } catch (error) {
     console.error("Error getting integration status:", error);

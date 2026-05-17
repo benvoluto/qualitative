@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Toast } from "@/app/components/toast";
+import { features } from "@/lib/features";
 
 type ToastState = {
   message: string;
@@ -27,7 +28,7 @@ export function CompanySyncCheck({ hasHubSpot }: CompanySyncCheckProps) {
   }, []);
 
   useEffect(() => {
-    if (!hasHubSpot || hasRunRef.current) return;
+    if (!features.hubspot || !hasHubSpot || hasRunRef.current) return;
     hasRunRef.current = true;
     runSyncCheck();
     // eslint-disable-next-line react-hooks/exhaustive-deps

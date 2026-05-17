@@ -3,8 +3,7 @@ import Google from "next-auth/providers/google";
 import MicrosoftEntraId from "next-auth/providers/microsoft-entra-id";
 import { users } from "@/lib/db";
 
-// Domain restriction - only allow markerlearning.com emails
-const ALLOWED_DOMAIN = "markerlearning.com";
+const DOMAIN_BLACKLIST = ["markerlearning.com", "markerlearning.ai"];
 
 // Extended session type with access token
 interface SessionWithToken extends Session {
@@ -66,11 +65,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       const domain = email.split("@")[1];
-      if (domain !== ALLOWED_DOMAIN) {
-        // For development, you might want to allow other domains
-        // Remove this condition in production
+      if (DOMAIN_BLACKLIST.includes(domain)) {
         if (process.env.NODE_ENV === "development") {
-          console.warn(`Allowing non-${ALLOWED_DOMAIN} email in development: ${email}`);
+          console.warn(`Allowing blacklisted domain in development: ${email}`);
         } else {
           return false;
         }

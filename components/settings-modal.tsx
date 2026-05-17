@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-
-/** Feature flag to enable/disable HubSpot meeting sync. Set to true to re-enable. */
-const HUBSPOT_MEETING_SYNC_ENABLED = false;
+import { features } from "@/lib/features";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -568,11 +566,12 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
                   </p>
                 )}
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  This setting applies to Google Meet, HubSpot, Zoom, and Teams sync.
+                  This setting applies to Google Meet sync.
                 </p>
               </div>
 
-              {/* Deduplication */}
+              {/* Deduplication — only relevant when HubSpot meetings sync is on */}
+              {features.hubspot && (
               <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <div>
@@ -604,6 +603,7 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
                   </p>
                 )}
               </div>
+              )}
             </div>
           </div>
 
@@ -629,6 +629,7 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
               />
 
               {/* Zoom */}
+              {features.zoom && (
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                 <div className="flex items-center gap-3">
                   <ZoomIcon className="w-6 h-6" />
@@ -681,23 +682,26 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
                   </p>
                 )}
               </div>
+              )}
 
               {/* Microsoft Teams */}
-              <IntegrationCard
-                name="Microsoft Teams"
-                icon={<TeamsIcon className="w-6 h-6" />}
-                connected={integrationStatus.teams}
-                description={integrationStatus.teams
-                  ? "Connected via Microsoft sign-in"
-                  : "Sign in with Microsoft to enable"}
-                isLoading={isLoading}
-                testResult={testResults.teams}
-                onTest={() => handleTestIntegration("teams")}
-                showTestButton={integrationStatus.teams}
-              />
+              {features.teams && (
+                <IntegrationCard
+                  name="Microsoft Teams"
+                  icon={<TeamsIcon className="w-6 h-6" />}
+                  connected={integrationStatus.teams}
+                  description={integrationStatus.teams
+                    ? "Connected via Microsoft sign-in"
+                    : "Sign in with Microsoft to enable"}
+                  isLoading={isLoading}
+                  testResult={testResults.teams}
+                  onTest={() => handleTestIntegration("teams")}
+                  showTestButton={integrationStatus.teams}
+                />
+              )}
 
-              {/* HubSpot - Hidden when HUBSPOT_MEETING_SYNC_ENABLED is false */}
-              {HUBSPOT_MEETING_SYNC_ENABLED && (
+              {/* HubSpot */}
+              {features.hubspot && (
                 <IntegrationCard
                   name="HubSpot"
                   icon={<HubSpotIcon className="w-6 h-6" />}
