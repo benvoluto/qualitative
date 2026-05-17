@@ -16,6 +16,7 @@
     "@neondatabase/serverless": "^0.10.4",
     "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-virtual": "^3.13.14",
+    "@vercel/analytics": "^2.0.1",
     "googleapis": "^169.0.0",
     "marked": "^17.0.1",
     "next": "15.1.11",
