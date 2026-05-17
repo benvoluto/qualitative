@@ -2,6 +2,7 @@ import NextAuth, { Session } from "next-auth";
 import Google from "next-auth/providers/google";
 import MicrosoftEntraId from "next-auth/providers/microsoft-entra-id";
 import { users } from "@/lib/db";
+import { trackEvent } from "@/lib/analytics";
 
 const DOMAIN_BLACKLIST = ["markerlearning.com", "markerlearning.ai"];
 
@@ -76,6 +77,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Store/update user in database with provider tokens
       if (account) {
         try {
+          const existingUser = await users.getUserByEmail(email);
+          const isNewUser = !existingUser;
+
           if (account.provider === "google") {
             await users.upsertUser({
               email: email,
@@ -97,6 +101,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               ms_token_expires_at: account.expires_at
                 ? new Date(account.expires_at * 1000)
                 : null,
+            });
+          }
+
+          if (isNewUser) {
+            await trackEvent("user_signed_up", {
+              provider: account.provider,
+              domain: domain ?? null,
             });
           }
         } catch (error) {

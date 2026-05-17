@@ -5,6 +5,7 @@ import { transcribeMeetingRecording } from "@/lib/gemini";
 import { processZoomMeetingTranscript } from "@/lib/zoom";
 import { processTeamsMeetingTranscript } from "@/lib/teams";
 import { users, meetings } from "@/lib/db";
+import { trackEvent } from "@/lib/analytics";
 
 // Extend timeout for transcript processing (requires Vercel Pro)
 export const maxDuration = 300;
@@ -56,6 +57,7 @@ export async function POST(
       if (result.transcript) {
         console.log(`[Process] SUCCESS: Zoom transcript retrieved for meeting ${id}, source: ${result.source}`);
         await meetings.releaseProcessingLock(id, "transcribed");
+        await trackEvent("meeting_processed", { source: "zoom", transcript_source: result.source });
         return NextResponse.json({
           success: true,
           source: result.source,
@@ -98,6 +100,7 @@ export async function POST(
       if (result.transcript) {
         console.log(`[Process] SUCCESS: Teams transcript retrieved for meeting ${id}, source: ${result.source}`);
         await meetings.releaseProcessingLock(id, "transcribed");
+        await trackEvent("meeting_processed", { source: "teams", transcript_source: result.source });
         return NextResponse.json({
           success: true,
           source: result.source,
@@ -132,6 +135,7 @@ export async function POST(
       if (geminiResult.success) {
         console.log(`[Process] SUCCESS: Gemini transcript generated for meeting ${id}`);
         await meetings.releaseProcessingLock(id, "transcribed");
+        await trackEvent("meeting_processed", { source: "google_meet", transcript_source: "gemini" });
         return NextResponse.json({
           success: true,
           source: "gemini",
@@ -160,6 +164,7 @@ export async function POST(
         if (geminiResult.success) {
           console.log(`[Process] SUCCESS: Gemini transcript generated for meeting ${id}`);
           await meetings.releaseProcessingLock(id, "transcribed");
+          await trackEvent("meeting_processed", { source: "google_meet", transcript_source: "gemini" });
           return NextResponse.json({
             success: true,
             source: "gemini",
@@ -177,6 +182,7 @@ export async function POST(
 
       console.log(`[Process] SUCCESS: Google Drive transcript retrieved for meeting ${id}, source: ${result.source}`);
       await meetings.releaseProcessingLock(id, "transcribed");
+      await trackEvent("meeting_processed", { source: "google_meet", transcript_source: result.source });
       return NextResponse.json({
         success: true,
         source: result.source,

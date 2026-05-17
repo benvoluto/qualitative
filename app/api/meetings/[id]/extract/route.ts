@@ -4,6 +4,7 @@ import { processMeetingExtracts } from "@/lib/extraction";
 import { extracts, meetings, customers, users } from "@/lib/db";
 import { generateMeetingNotesSummary } from "@/lib/gemini";
 import { generateEmailDraft } from "@/lib/workflows/email-workflow";
+import { trackEvent } from "@/lib/analytics";
 
 // Extend timeout for Gemini processing (requires Vercel Pro)
 export const maxDuration = 300;
@@ -54,6 +55,12 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    await trackEvent("meeting_extracted", {
+      extracts_created: result.extractsCreated,
+      action_items: result.actionItems,
+      reprocess,
+    });
 
     // Auto-generate notes and email draft after successful extraction
     let notesGenerated = false;
