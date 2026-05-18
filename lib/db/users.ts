@@ -62,16 +62,19 @@ export async function updateUser(id: string, data: UpdateUser): Promise<User | n
 export async function upsertUser(data: CreateUser): Promise<User> {
   const sql = getDb();
 
-  // Ensure the user has an account. New users get a fresh one named after their domain.
+  // Ensure the user has an account. New users get a fresh one named after the
+  // person who's creating it (their Google profile name), with the email domain
+  // as the internal_domain. They can edit both during onboarding.
   const existing = await sql`SELECT id, account_id FROM users WHERE email = ${data.email}`;
   let accountId: string;
   if (existing[0]?.account_id) {
     accountId = existing[0].account_id;
   } else {
     const domain = data.email.split("@")[1]?.toLowerCase() ?? null;
+    const accountName = data.name?.trim() || domain || "Workspace";
     const accountResult = await sql`
       INSERT INTO accounts (name, internal_domain)
-      VALUES (${domain ?? "Workspace"}, ${domain})
+      VALUES (${accountName}, ${domain})
       RETURNING id
     `;
     accountId = accountResult[0].id;
@@ -142,16 +145,18 @@ export async function upsertUserMicrosoftTokens(data: {
 }): Promise<User> {
   const sql = getDb();
 
-  // Ensure the user has an account before linking Microsoft tokens.
+  // Ensure the user has an account before linking Microsoft tokens. New accounts
+  // are named after the user; they can edit during onboarding.
   const existing = await sql`SELECT id, account_id FROM users WHERE email = ${data.email}`;
   let accountId: string;
   if (existing[0]?.account_id) {
     accountId = existing[0].account_id;
   } else {
     const domain = data.email.split("@")[1]?.toLowerCase() ?? null;
+    const accountName = data.name?.trim() || domain || "Workspace";
     const accountResult = await sql`
       INSERT INTO accounts (name, internal_domain)
-      VALUES (${domain ?? "Workspace"}, ${domain})
+      VALUES (${accountName}, ${domain})
       RETURNING id
     `;
     accountId = accountResult[0].id;

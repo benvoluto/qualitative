@@ -6,7 +6,7 @@
  */
 export const features = {
   hubspot: false,
-  zoom: false,
+  zoom: true,
   teams: false,
   linear: false,
 } as const;

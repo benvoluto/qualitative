@@ -44,6 +44,9 @@ export function RulesStep({ rules }: RulesStepProps) {
         These rules tell the AI what kinds of insights to pull out of meeting transcripts.
         You can edit, add, or remove rules anytime from the Extract Rules page.
       </p>
+      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        You can add unlimited rules of your own later — these are just a starting point.
+      </p>
 
       <ul className="mt-6 space-y-3">
         {rules.map((rule) => {

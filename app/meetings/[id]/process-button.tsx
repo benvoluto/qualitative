@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Toast } from "@/app/components/toast";
 
 interface ProcessButtonProps {
@@ -9,122 +9,240 @@ interface ProcessButtonProps {
   hasExtracts?: boolean;
 }
 
-type ProcessingStep = "idle" | "processing" | "extracting" | "done";
+type RunStatus =
+  | "idle"
+  | "starting"
+  | "queued"
+  | "running"
+  | "completed"
+  | "failed";
+
+interface RunStatusResponse {
+  status: "queued" | "running" | "completed" | "failed";
+  meetingStatus: "pending" | "processing" | "transcribed" | "completed" | "failed" | null;
+  result?: {
+    transcriptSource: string | null;
+    extractsCreated: number;
+    actionItems: number;
+    notesGenerated: boolean;
+    emailGenerated: boolean;
+    skipped?: string;
+  };
+  error?: string;
+}
+
+const POLL_INTERVAL_MS = 2000;
+const RUN_ID_PARAM = "runId";
+
+/**
+ * Update ?runId=<id> in the URL without triggering Next.js navigation, so the
+ * component's polling state isn't lost. Pass null to remove the param.
+ */
+function setRunIdInUrl(runId: string | null) {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (runId) {
+    url.searchParams.set(RUN_ID_PARAM, runId);
+  } else {
+    url.searchParams.delete(RUN_ID_PARAM);
+  }
+  window.history.replaceState({}, "", url.toString());
+}
 
 export function ProcessButton({ meetingId, hasExtracts = false }: ProcessButtonProps) {
-  const [step, setStep] = useState<ProcessingStep>("idle");
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [status, setStatus] = useState<RunStatus>("idle");
+  const [meetingStatus, setMeetingStatus] = useState<RunStatusResponse["meetingStatus"]>(null);
+  const [toast, setToast] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pollRef = useRef<number | null>(null);
+  const activeRunRef = useRef<string | null>(null);
 
-  const isLoading = step !== "idle" && step !== "done";
+  const stopPolling = useCallback(() => {
+    if (pollRef.current !== null) {
+      window.clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
+
+  const pollOnce = useCallback(
+    async (runId: string): Promise<void> => {
+      try {
+        const res = await fetch(`/api/meetings/${meetingId}/run/${runId}`);
+        const data: RunStatusResponse = await res.json();
+        if (!res.ok) {
+          setToast({ type: "error", message: data.error || "Failed to check status" });
+          stopPolling();
+          setStatus("failed");
+          setRunIdInUrl(null);
+          activeRunRef.current = null;
+          return;
+        }
+        setMeetingStatus(data.meetingStatus);
+        if (data.status === "completed") {
+          stopPolling();
+          setStatus("completed");
+          setRunIdInUrl(null);
+          activeRunRef.current = null;
+          setToast({ type: "success", message: formatResultSummary(data.result, hasExtracts) });
+          router.refresh();
+        } else if (data.status === "failed") {
+          stopPolling();
+          setStatus("failed");
+          setRunIdInUrl(null);
+          activeRunRef.current = null;
+          setToast({ type: "error", message: data.error || "Processing failed" });
+          router.refresh();
+        } else {
+          setStatus("running");
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        setToast({ type: "error", message: `Polling failed: ${message}` });
+        stopPolling();
+        setStatus("failed");
+        setRunIdInUrl(null);
+        activeRunRef.current = null;
+      }
+    },
+    [meetingId, hasExtracts, router, stopPolling]
+  );
+
+  // Resume polling on mount if the URL has ?runId=<id>. Lets the user close the
+  // tab during a long workflow and come back to live progress.
+  useEffect(() => {
+    const paramRunId = searchParams.get(RUN_ID_PARAM);
+    if (!paramRunId || activeRunRef.current === paramRunId) return;
+
+    activeRunRef.current = paramRunId;
+    setStatus("running");
+    setToast({ type: "info", message: "Resuming background processing..." });
+    void pollOnce(paramRunId);
+    pollRef.current = window.setInterval(() => pollOnce(paramRunId), POLL_INTERVAL_MS);
+    // Intentionally fire once on mount only — we don't want re-renders restarting polling.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Always clear the interval on unmount.
+  useEffect(() => {
+    return () => stopPolling();
+  }, [stopPolling]);
 
   async function handleProcess() {
-    setStep("processing");
+    setStatus("starting");
     setToast(null);
 
     try {
-      // Step 1: Process transcript
-      const processResponse = await fetch(`/api/meetings/${meetingId}/process`, {
-        method: "POST",
-      });
-
-      const processData = await processResponse.json();
-
-      if (!processResponse.ok) {
-        setToast({ type: "error", message: processData.error || "Failed to process meeting" });
-        setStep("idle");
+      const res = await fetch(`/api/meetings/${meetingId}/run`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setToast({
+          type: "error",
+          message: data.error || `Failed to start processing (HTTP ${res.status})`,
+        });
+        setStatus("failed");
         return;
       }
 
-      // Step 2: Extract insights (only if meeting doesn't already have extracts)
-      if (!hasExtracts) {
-        setStep("extracting");
+      const runId = data.runId as string;
+      activeRunRef.current = runId;
+      setRunIdInUrl(runId);
+      setStatus("queued");
+      setToast({ type: "info", message: "Processing in the background. You can leave this page." });
 
-        const extractResponse = await fetch(`/api/meetings/${meetingId}/extract`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reprocess: false }),
-        });
-
-        const extractData = await extractResponse.json();
-
-        if (extractResponse.ok) {
-          setToast({ type: "success", message: `Processed transcript and ${extractData.message}` });
-        } else {
-          // Transcript was processed but extraction failed
-          setToast({ type: "error", message: `Transcript processed but extraction failed: ${extractData.error}` });
-        }
-      } else {
-        setToast({ type: "success", message: "Transcript processed successfully" });
-      }
-
-      setStep("done");
-      router.refresh();
-    } catch {
-      setToast({ type: "error", message: "Failed to process meeting" });
-      setStep("idle");
+      void pollOnce(runId);
+      pollRef.current = window.setInterval(() => pollOnce(runId), POLL_INTERVAL_MS);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setToast({ type: "error", message: `Failed to start: ${message}` });
+      setStatus("idle");
     }
   }
 
-  function getButtonText() {
-    switch (step) {
-      case "processing":
-        return "Processing...";
-      case "extracting":
-        return "Extracting...";
-      default:
-        return "Process & Extract";
-    }
-  }
+  const isBusy = status === "starting" || status === "queued" || status === "running";
 
   return (
     <>
       {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
       <button
         onClick={handleProcess}
-        disabled={isLoading}
+        disabled={isBusy}
         className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {isLoading ? (
+        {isBusy ? (
           <>
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            {getButtonText()}
+            <Spinner />
+            {labelForBusyState(status, meetingStatus, hasExtracts)}
           </>
         ) : (
           <>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              />
-            </svg>
-            {getButtonText()}
+            <PlayIcon />
+            {status === "completed" ? "Re-run" : "Process & Extract"}
           </>
         )}
       </button>
     </>
+  );
+}
+
+function labelForBusyState(
+  status: RunStatus,
+  meetingStatus: RunStatusResponse["meetingStatus"],
+  hasExtracts: boolean
+): string {
+  if (status === "starting") return "Starting...";
+  if (meetingStatus === "processing") return "Transcribing...";
+  if (meetingStatus === "transcribed") return hasExtracts ? "Finishing..." : "Extracting...";
+  if (meetingStatus === "completed") return "Wrapping up...";
+  return "Processing...";
+}
+
+function formatResultSummary(
+  result: RunStatusResponse["result"] | undefined,
+  hadExtracts: boolean
+): string {
+  if (!result) return "Done.";
+  const parts: string[] = [];
+  if (result.transcriptSource) {
+    parts.push(`transcribed (${result.transcriptSource})`);
+  }
+  if (result.extractsCreated > 0) {
+    parts.push(`${result.extractsCreated} extract${result.extractsCreated === 1 ? "" : "s"}`);
+  } else if (hadExtracts) {
+    parts.push("extracts already existed");
+  }
+  if (result.actionItems > 0) {
+    parts.push(`${result.actionItems} action item${result.actionItems === 1 ? "" : "s"}`);
+  }
+  if (result.notesGenerated) parts.push("notes");
+  if (result.emailGenerated) parts.push("email draft");
+  return parts.length > 0 ? `Done: ${parts.join(", ")}` : "Done.";
+}
+
+function Spinner() {
+  return (
+    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+      />
+    </svg>
   );
 }

@@ -62,15 +62,20 @@ export default async function MeetingDetailPage({
             </div>
             <div className="flex items-center gap-4">
               <StatusBadge status={meeting.workflow_status} />
-              {!meeting.transcript && meeting.workflow_status !== "processing" && (
-                <ProcessButton meetingId={id} hasExtracts={meetingExtracts.length > 0} />
+              {/* Unified Process & Extract runs the durable workflow. Shown until extracts exist. */}
+              {(!meeting.transcript || meetingExtracts.length === 0) &&
+                meeting.workflow_status !== "processing" && (
+                  <ProcessButton meetingId={id} hasExtracts={meetingExtracts.length > 0} />
+                )}
+              {/* Reprocess button uses the legacy synchronous /extract endpoint with reprocess=true. */}
+              {meetingExtracts.length > 0 && (
+                <ExtractButton
+                  meetingId={id}
+                  hasTranscript={!!meeting.transcript}
+                  hasExtracts={meetingExtracts.length > 0}
+                  extractCount={meetingExtracts.length}
+                />
               )}
-              <ExtractButton
-                meetingId={id}
-                hasTranscript={!!meeting.transcript}
-                hasExtracts={meetingExtracts.length > 0}
-                extractCount={meetingExtracts.length}
-              />
               <MeetingActions
                 meeting={meeting}
                 customers={allCustomers}

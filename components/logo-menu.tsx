@@ -110,9 +110,9 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
       {/* Tab Bar */}
       <nav className="flex items-center ml-2 border-l border-gray-200 dark:border-gray-700 pl-3">
         <Link
-          href="/"
+          href="/app"
           className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            isActive("/") && !pathname.startsWith("/meetings")
+            pathname === "/app"
               ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
               : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50"
           }`}

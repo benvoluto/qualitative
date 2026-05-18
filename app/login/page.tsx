@@ -44,7 +44,7 @@ export default async function LoginPage({
             action={async () => {
               "use server";
               await signIn("google", {
-                redirectTo: params.callbackUrl || "/",
+                redirectTo: params.callbackUrl || "/app",
               });
             }}
           >

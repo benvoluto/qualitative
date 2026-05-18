@@ -99,3 +99,17 @@ export async function setStripeCustomerId(
     WHERE account_id = ${accountId}
   `;
 }
+
+/**
+ * Admin-only: toggle the comped flag for an account. Independent of Stripe state —
+ * an account that already has a Pro Stripe subscription stays Pro either way; this
+ * only matters for accounts whose Stripe plan is free.
+ */
+export async function setComped(accountId: string, comped: boolean): Promise<void> {
+  const sql = getDb();
+  await sql`
+    UPDATE subscriptions
+    SET comped = ${comped}, updated_at = NOW()
+    WHERE account_id = ${accountId}
+  `;
+}

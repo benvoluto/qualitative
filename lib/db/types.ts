@@ -22,6 +22,8 @@ export interface Subscription {
   plan: SubscriptionPlan;
   status: SubscriptionStatus;
   current_period_end: Date | null;
+  /** Admin-granted Pro flag — independent of Stripe state. */
+  comped: boolean;
   created_at: Date;
   updated_at: Date;
 }

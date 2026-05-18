@@ -32,7 +32,9 @@ async function countMeetingsThisMonth(accountId: string): Promise<number> {
 
 export async function getUsageStatus(accountId: string): Promise<UsageStatus> {
   const subscription = await ensureSubscription(accountId);
-  const limits = getPlanLimits(subscription.plan);
+  // Comped accounts get Pro limits regardless of Stripe state.
+  const effectivePlan = subscription.comped ? "pro" : subscription.plan;
+  const limits = getPlanLimits(effectivePlan);
   const monthlyLimit = limits.meetingsPerMonth;
   const meetingsThisMonth = await countMeetingsThisMonth(accountId);
   const overLimit = meetingsThisMonth >= monthlyLimit;

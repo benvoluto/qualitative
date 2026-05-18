@@ -36,17 +36,22 @@ export function isZoomOAuthConfigured(): boolean {
 }
 
 /**
- * Required OAuth scopes for Zoom integration (granular scopes)
- * - cloud_recording:read:list_user_recordings - List user's recordings
- * - cloud_recording:read:list_recording_files - List recording files
- * - cloud_recording:read:recording - View/download recordings
- * - cloud_recording:read:meeting_transcript - Read meeting transcripts
+ * Required OAuth scopes for Zoom integration (granular scopes).
+ *  - user:read:user                                  — connected Zoom user's profile
+ *  - cloud_recording:read:list_user_recordings       — list the user's cloud recordings
+ *  - cloud_recording:read:list_recording_files       — enumerate files in a recording
+ *  - cloud_recording:read:recording                  — read/download recording files
+ *  - cloud_recording:read:meeting_transcript         — read the VTT transcript
+ *  - meeting:read:list_meeting_participants          — list past-meeting participants
+ *                                                       (for company matching)
  */
 const ZOOM_OAUTH_SCOPES = [
+  "user:read:user",
   "cloud_recording:read:list_user_recordings",
   "cloud_recording:read:list_recording_files",
   "cloud_recording:read:recording",
   "cloud_recording:read:meeting_transcript",
+  "meeting:read:list_meeting_participants",
 ].join(" ");
 
 /**

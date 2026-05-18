@@ -2,47 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Lab Grotesque Font Family */
-@font-face {
-  font-family: 'Lab Grotesque';
-  src: url('/assets/labgrotesque-light-webfont-L8BWXizN.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Lab Grotesque';
-  src: url('/assets/labgrotesque-regular-webfont-CEys3rI8.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Lab Grotesque';
-  src: url('/assets/labgrotesque-medium-webfont-DiIgKsK5.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Lab Grotesque';
-  src: url('/assets/labgrotesque-bold-webfont-BA3vVVdk.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Lab Grotesque';
-  src: url('/assets/labgrotesque-black-webfont-S7giQnnH.woff2') format('woff2');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -58,5 +17,5 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Lab Grotesque', Arial, Helvetica, sans-serif;
+  font-family: var(--font-poltawski), Georgia, "Times New Roman", serif;
 }

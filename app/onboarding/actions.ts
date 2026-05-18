@@ -78,5 +78,5 @@ export async function savePromptTemplateAction(
 export async function completeOnboardingAction(): Promise<never> {
   const { userId } = await requireAccountContext();
   await users.markUserOnboarded(userId);
-  redirect("/");
+  redirect("/app");
 }
