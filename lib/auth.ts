@@ -4,8 +4,6 @@ import MicrosoftEntraId from "next-auth/providers/microsoft-entra-id";
 import { users } from "@/lib/db";
 import { trackEvent } from "@/lib/analytics";
 
-const DOMAIN_BLACKLIST = ["markerlearning.com", "markerlearning.ai"];
-
 // Extended session type with access token
 interface SessionWithToken extends Session {
   accessToken?: string;
@@ -59,20 +57,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   callbacks: {
     async signIn({ user, account }) {
-      // Check if email domain is allowed
       const email = user.email;
       if (!email) {
         return false;
       }
 
       const domain = email.split("@")[1];
-      if (DOMAIN_BLACKLIST.includes(domain)) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn(`Allowing blacklisted domain in development: ${email}`);
-        } else {
-          return false;
-        }
-      }
 
       // Store/update user in database with provider tokens
       if (account) {

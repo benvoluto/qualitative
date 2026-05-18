@@ -1,5 +1,5 @@
 import * as dotenv from "dotenv";
-dotenv.config({ path: ".env.development.local" });
+dotenv.config({ path: ".env.local" });
 
 import { isHubSpotConfigured, getCompaniesWithRecentMeetings, getBestDealStageForCompany } from "../lib/hubspot";
 import { customers, companies } from "../lib/db";

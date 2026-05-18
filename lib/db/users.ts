@@ -1,5 +1,6 @@
 import { getDb } from "./client";
 import { User, CreateUser, UpdateUser, PromptTemplateType } from "./types";
+import { ensureSubscription } from "./subscriptions";
 
 export async function getUsers(): Promise<User[]> {
   const sql = getDb();
@@ -19,13 +20,14 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   return (result[0] as User) || null;
 }
 
-export async function createUser(data: CreateUser): Promise<User> {
+export async function createUser(data: CreateUser & { account_id: string }): Promise<User> {
   const sql = getDb();
   const result = await sql`
     INSERT INTO users (
-      email, name, image, google_access_token, google_refresh_token, google_token_expires_at
+      account_id, email, name, image, google_access_token, google_refresh_token, google_token_expires_at
     )
     VALUES (
+      ${data.account_id},
       ${data.email},
       ${data.name ?? null},
       ${data.image ?? null},
@@ -53,13 +55,34 @@ export async function updateUser(id: string, data: UpdateUser): Promise<User | n
   return (result[0] as User) || null;
 }
 
+/**
+ * Upserts a user, ensuring they have an account. Creates a new account on first
+ * sign-in (one account per user for v1).
+ */
 export async function upsertUser(data: CreateUser): Promise<User> {
   const sql = getDb();
+
+  // Ensure the user has an account. New users get a fresh one named after their domain.
+  const existing = await sql`SELECT id, account_id FROM users WHERE email = ${data.email}`;
+  let accountId: string;
+  if (existing[0]?.account_id) {
+    accountId = existing[0].account_id;
+  } else {
+    const domain = data.email.split("@")[1]?.toLowerCase() ?? null;
+    const accountResult = await sql`
+      INSERT INTO accounts (name, internal_domain)
+      VALUES (${domain ?? "Workspace"}, ${domain})
+      RETURNING id
+    `;
+    accountId = accountResult[0].id;
+  }
+
   const result = await sql`
     INSERT INTO users (
-      email, name, image, google_access_token, google_refresh_token, google_token_expires_at
+      account_id, email, name, image, google_access_token, google_refresh_token, google_token_expires_at
     )
     VALUES (
+      ${accountId},
       ${data.email},
       ${data.name ?? null},
       ${data.image ?? null},
@@ -75,6 +98,7 @@ export async function upsertUser(data: CreateUser): Promise<User> {
       google_token_expires_at = COALESCE(EXCLUDED.google_token_expires_at, users.google_token_expires_at)
     RETURNING *
   `;
+  await ensureSubscription(accountId);
   return result[0] as User;
 }
 
@@ -96,14 +120,15 @@ export async function updateUserGoogleTokens(
   return (result[0] as User) || null;
 }
 
+export async function markUserOnboarded(id: string): Promise<void> {
+  const sql = getDb();
+  await sql`UPDATE users SET onboarded_at = NOW() WHERE id = ${id} AND onboarded_at IS NULL`;
+}
+
 export async function deleteUser(id: string): Promise<boolean> {
   const sql = getDb();
   const result = await sql`DELETE FROM users WHERE id = ${id} RETURNING id`;
   return result.length > 0;
-}
-
-export async function isMarkerLearningEmployee(email: string): Promise<boolean> {
-  return email.endsWith("@markerlearning.com");
 }
 
 // Microsoft Teams token management
@@ -116,9 +141,26 @@ export async function upsertUserMicrosoftTokens(data: {
   ms_token_expires_at: Date | null;
 }): Promise<User> {
   const sql = getDb();
+
+  // Ensure the user has an account before linking Microsoft tokens.
+  const existing = await sql`SELECT id, account_id FROM users WHERE email = ${data.email}`;
+  let accountId: string;
+  if (existing[0]?.account_id) {
+    accountId = existing[0].account_id;
+  } else {
+    const domain = data.email.split("@")[1]?.toLowerCase() ?? null;
+    const accountResult = await sql`
+      INSERT INTO accounts (name, internal_domain)
+      VALUES (${domain ?? "Workspace"}, ${domain})
+      RETURNING id
+    `;
+    accountId = accountResult[0].id;
+  }
+
   const result = await sql`
-    INSERT INTO users (email, name, image, ms_access_token, ms_refresh_token, ms_token_expires_at)
+    INSERT INTO users (account_id, email, name, image, ms_access_token, ms_refresh_token, ms_token_expires_at)
     VALUES (
+      ${accountId},
       ${data.email},
       ${data.name ?? null},
       ${data.image ?? null},
@@ -134,6 +176,7 @@ export async function upsertUserMicrosoftTokens(data: {
       ms_token_expires_at = COALESCE(EXCLUDED.ms_token_expires_at, users.ms_token_expires_at)
     RETURNING *
   `;
+  await ensureSubscription(accountId);
   return result[0] as User;
 }
 
@@ -246,7 +289,7 @@ export async function updateUserSyncDaysPreference(
   return clampedDays;
 }
 
-// Prompt templates
+// Prompt templates (stored on the user's account)
 
 export interface UserPromptTemplates {
   deal_email_prompt_template: string | null;
@@ -257,8 +300,9 @@ export interface UserPromptTemplates {
 export async function getUserPromptTemplates(userId: string): Promise<UserPromptTemplates> {
   const sql = getDb();
   const result = await sql`
-    SELECT deal_email_prompt_template, customer_email_prompt_template, notes_prompt_template
-    FROM users WHERE id = ${userId}
+    SELECT a.deal_email_prompt_template, a.customer_email_prompt_template, a.notes_prompt_template
+    FROM users u JOIN accounts a ON a.id = u.account_id
+    WHERE u.id = ${userId}
   `;
   return {
     deal_email_prompt_template: result[0]?.deal_email_prompt_template ?? null,
@@ -272,36 +316,38 @@ export async function updateUserPromptTemplate(
   templateType: PromptTemplateType,
   template: string
 ): Promise<void> {
+  const accountId = await getAccountIdForUser(userId);
+  if (!accountId) return;
   const sql = getDb();
-  switch (templateType) {
-    case "deal_email":
-      await sql`UPDATE users SET deal_email_prompt_template = ${template} WHERE id = ${userId}`;
-      break;
-    case "customer_email":
-      await sql`UPDATE users SET customer_email_prompt_template = ${template} WHERE id = ${userId}`;
-      break;
-    case "notes":
-      await sql`UPDATE users SET notes_prompt_template = ${template} WHERE id = ${userId}`;
-      break;
-  }
+  const column =
+    templateType === "deal_email"
+      ? "deal_email_prompt_template"
+      : templateType === "customer_email"
+        ? "customer_email_prompt_template"
+        : "notes_prompt_template";
+  await sql(`UPDATE accounts SET ${column} = $1 WHERE id = $2`, [template, accountId]);
 }
 
 export async function resetUserPromptTemplate(
   userId: string,
   templateType: PromptTemplateType
 ): Promise<void> {
+  const accountId = await getAccountIdForUser(userId);
+  if (!accountId) return;
   const sql = getDb();
-  switch (templateType) {
-    case "deal_email":
-      await sql`UPDATE users SET deal_email_prompt_template = NULL WHERE id = ${userId}`;
-      break;
-    case "customer_email":
-      await sql`UPDATE users SET customer_email_prompt_template = NULL WHERE id = ${userId}`;
-      break;
-    case "notes":
-      await sql`UPDATE users SET notes_prompt_template = NULL WHERE id = ${userId}`;
-      break;
-  }
+  const column =
+    templateType === "deal_email"
+      ? "deal_email_prompt_template"
+      : templateType === "customer_email"
+        ? "customer_email_prompt_template"
+        : "notes_prompt_template";
+  await sql(`UPDATE accounts SET ${column} = NULL WHERE id = $1`, [accountId]);
+}
+
+async function getAccountIdForUser(userId: string): Promise<string | null> {
+  const sql = getDb();
+  const result = await sql`SELECT account_id FROM users WHERE id = ${userId}`;
+  return result[0]?.account_id ?? null;
 }
 
 // Notification preferences

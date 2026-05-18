@@ -1,24 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountId } from "@/lib/account-context";
 import { companies } from "@/lib/db";
 
-/**
- * Search companies by name or domain.
- * GET /api/companies/search?q=search_term
- */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
 
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get("q");
 
     if (!query || query.trim().length < 1) {
-      // Return all companies if no query
-      const allCompanies = await companies.getCompanies();
+      const allCompanies = await companies.getCompanies(accountId);
       return NextResponse.json({
         success: true,
         companies: allCompanies,
@@ -26,7 +18,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const results = await companies.searchCompanies(query);
+    const results = await companies.searchCompanies(accountId, query);
 
     return NextResponse.json({
       success: true,
@@ -36,9 +28,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Company search error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json(
-      { error: "Failed to search companies", details: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to search companies", details: message }, { status: 500 });
   }
 }

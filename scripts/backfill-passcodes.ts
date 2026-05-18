@@ -3,15 +3,15 @@
  * Fetches recording_play_passcode from the Zoom API and updates DB meetings.
  *
  * Usage: npx tsx scripts/backfill-passcodes.ts
- * Requires: .env.development.local with DATABASE_URL
+ * Requires: .env.local with DATABASE_URL
  */
 
 import { neon, NeonQueryFunction } from "@neondatabase/serverless";
 import { config } from "dotenv";
 import { resolve } from "path";
 
-// Load env from .env.development.local
-config({ path: resolve(__dirname, "../.env.development.local") });
+// Load env from .env.local
+config({ path: resolve(__dirname, "../.env.local") });
 
 const ZOOM_API_BASE = "https://api.zoom.us/v2";
 const ZOOM_AUTH_URL = "https://zoom.us/oauth/token";

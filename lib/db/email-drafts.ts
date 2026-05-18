@@ -6,45 +6,49 @@ import {
   EmailDraftStatus,
 } from "./types";
 
-export async function getEmailDraftById(id: string): Promise<EmailDraft | null> {
+export async function getEmailDraftById(accountId: string, id: string): Promise<EmailDraft | null> {
   const sql = getDb();
-  const result = await sql`SELECT * FROM email_drafts WHERE id = ${id}`;
+  const result = await sql`SELECT * FROM email_drafts WHERE id = ${id} AND account_id = ${accountId}`;
   return (result[0] as EmailDraft) || null;
 }
 
 export async function getEmailDraftsByMeetingId(
+  accountId: string,
   meetingId: string
 ): Promise<EmailDraft[]> {
   const sql = getDb();
   const result = await sql`
     SELECT * FROM email_drafts
-    WHERE meeting_id = ${meetingId}
+    WHERE meeting_id = ${meetingId} AND account_id = ${accountId}
     ORDER BY created_at DESC
   `;
   return result as EmailDraft[];
 }
 
 export async function getEmailDraftsByStatus(
+  accountId: string,
   status: EmailDraftStatus
 ): Promise<EmailDraft[]> {
   const sql = getDb();
   const result = await sql`
     SELECT * FROM email_drafts
-    WHERE status = ${status}
+    WHERE status = ${status} AND account_id = ${accountId}
     ORDER BY created_at DESC
   `;
   return result as EmailDraft[];
 }
 
 export async function createEmailDraft(
+  accountId: string,
   data: CreateEmailDraft
 ): Promise<EmailDraft> {
   const sql = getDb();
   const result = await sql`
     INSERT INTO email_drafts (
-      meeting_id, draft_type, subject, body, recipient_email, recipient_name, status
+      account_id, meeting_id, draft_type, subject, body, recipient_email, recipient_name, status
     )
     VALUES (
+      ${accountId},
       ${data.meeting_id},
       ${data.draft_type},
       ${data.subject ?? null},
@@ -59,13 +63,13 @@ export async function createEmailDraft(
 }
 
 export async function updateEmailDraft(
+  accountId: string,
   id: string,
   data: UpdateEmailDraft
 ): Promise<EmailDraft | null> {
   const sql = getDb();
 
-  // Get current draft to merge with updates
-  const current = await getEmailDraftById(id);
+  const current = await getEmailDraftById(accountId, id);
   if (!current) return null;
 
   const result = await sql`
@@ -76,52 +80,50 @@ export async function updateEmailDraft(
       recipient_name = ${data.recipient_name !== undefined ? data.recipient_name : current.recipient_name},
       status = ${data.status ?? current.status},
       sent_at = ${data.sent_at !== undefined ? data.sent_at : current.sent_at}
-    WHERE id = ${id}
+    WHERE id = ${id} AND account_id = ${accountId}
     RETURNING *
   `;
 
   return (result[0] as EmailDraft) || null;
 }
 
-export async function deleteEmailDraft(id: string): Promise<boolean> {
+export async function deleteEmailDraft(accountId: string, id: string): Promise<boolean> {
   const sql = getDb();
-  const result = await sql`DELETE FROM email_drafts WHERE id = ${id} RETURNING id`;
+  const result = await sql`DELETE FROM email_drafts WHERE id = ${id} AND account_id = ${accountId} RETURNING id`;
   return result.length > 0;
 }
 
-export async function markEmailDraftAsSent(id: string): Promise<EmailDraft | null> {
+export async function markEmailDraftAsSent(accountId: string, id: string): Promise<EmailDraft | null> {
   const sql = getDb();
   const result = await sql`
     UPDATE email_drafts SET
       status = 'sent',
       sent_at = NOW()
-    WHERE id = ${id}
+    WHERE id = ${id} AND account_id = ${accountId}
     RETURNING *
   `;
   return (result[0] as EmailDraft) || null;
 }
 
 export async function markEmailDraftAsDiscarded(
+  accountId: string,
   id: string
 ): Promise<EmailDraft | null> {
   const sql = getDb();
   const result = await sql`
     UPDATE email_drafts SET status = 'discarded'
-    WHERE id = ${id}
+    WHERE id = ${id} AND account_id = ${accountId}
     RETURNING *
   `;
   return (result[0] as EmailDraft) || null;
 }
 
 /**
- * Transfers all email drafts from one meeting to another.
+ * Transfers all email drafts from one meeting to another within the same account.
  * Used during deduplication to preserve drafts before deleting a duplicate meeting.
- *
- * @param fromMeetingId The meeting ID to transfer drafts from
- * @param toMeetingId The meeting ID to transfer drafts to
- * @returns Number of drafts transferred
  */
 export async function transferEmailDraftsToMeeting(
+  accountId: string,
   fromMeetingId: string,
   toMeetingId: string
 ): Promise<number> {
@@ -129,7 +131,7 @@ export async function transferEmailDraftsToMeeting(
   const result = await sql`
     UPDATE email_drafts
     SET meeting_id = ${toMeetingId}, updated_at = NOW()
-    WHERE meeting_id = ${fromMeetingId}
+    WHERE meeting_id = ${fromMeetingId} AND account_id = ${accountId}
     RETURNING id
   `;
   return result.length;

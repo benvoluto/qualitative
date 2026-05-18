@@ -229,15 +229,12 @@ export async function findMeetRecording(
 
 // Sync a single Google Meet event to the database
 export async function syncMeetingToDatabase(
+  accountId: string,
   event: GoogleMeetEvent
 ): Promise<Meeting> {
-  // Check if meeting already exists
-  const existing = await meetings.getMeetingByExternalId(event.id);
-  if (existing) {
-    return existing;
-  }
+  const existing = await meetings.getMeetingByExternalId(accountId, event.id);
+  if (existing) return existing;
 
-  // Try to find organizer name from attendees list if not provided
   let hostName = event.organizerName;
   if (!hostName && event.organizerEmail) {
     const organizer = event.attendees.find(
@@ -246,8 +243,7 @@ export async function syncMeetingToDatabase(
     hostName = organizer?.displayName || null;
   }
 
-  // Create new meeting record with host information
-  const meeting = await meetings.createMeeting({
+  const meeting = await meetings.createMeeting(accountId, {
     external_id: event.id,
     name: event.summary,
     meeting_date: event.start,
@@ -269,35 +265,29 @@ interface SyncMeetingResult {
 
 // Sync a Google Meet event with attendees as participants
 export async function syncMeetingWithAttendees(
+  accountId: string,
   event: GoogleMeetEvent,
   personnelDb: {
-    getPersonnelByEmail: (email: string) => Promise<{ id: string } | null>;
-    createPersonnel: (data: { name: string; email?: string | null }) => Promise<{ id: string }>;
+    getPersonnelByEmail: (accountId: string, email: string) => Promise<{ id: string } | null>;
+    createPersonnel: (accountId: string, data: { name: string; email?: string | null }) => Promise<{ id: string }>;
   },
   userId?: string
 ): Promise<SyncMeetingResult> {
-  // Check if meeting already exists
-  const existing = await meetings.getMeetingByExternalId(event.id);
+  const existing = await meetings.getMeetingByExternalId(accountId, event.id);
   if (existing) {
     return { meeting: existing, transcriptFound: !!existing.transcript, transcriptFailed: false };
   }
 
-  // Try to find and download transcript from Google Drive during sync
   let transcript: string | null = null;
   let transcriptSource: "google_meet" | null = null;
   let transcriptFailed = false;
 
   if (userId && event.summary && event.start) {
-    console.log(`[Google Sync] Searching for transcript for "${event.summary}"...`);
     try {
       const transcriptFile = await findMeetTranscript(userId, event.summary, event.start);
       if (transcriptFile) {
-        console.log(`[Google Sync] Found transcript file: ${transcriptFile.name}`);
         transcript = await getTranscriptContent(userId, transcriptFile.fileId);
         transcriptSource = "google_meet";
-        console.log(`[Google Sync] Successfully downloaded transcript (${transcript.length} chars) for "${event.summary}"`);
-      } else {
-        console.log(`[Google Sync] No transcript found in Drive for "${event.summary}"`);
       }
     } catch (error) {
       transcriptFailed = true;
@@ -305,8 +295,7 @@ export async function syncMeetingWithAttendees(
     }
   }
 
-  // Create new meeting record with host info and transcript if found
-  const meeting = await meetings.createMeeting({
+  const meeting = await meetings.createMeeting(accountId, {
     external_id: event.id,
     name: event.summary,
     meeting_date: event.start,
@@ -319,31 +308,22 @@ export async function syncMeetingWithAttendees(
     meeting_url: event.meetLink,
   });
 
-  // Add attendees as participants (excluding the organizer)
   for (const attendee of event.attendees) {
-    // Skip organizer (check both by email match and isOrganizer flag)
     const isOrganizer = attendee.isOrganizer ||
       (event.organizerEmail && attendee.email.toLowerCase() === event.organizerEmail.toLowerCase());
 
-    if (isOrganizer) {
-      continue;
-    }
+    if (isOrganizer) continue;
 
     try {
-      // Find or create personnel record
-      let personnelRecord = await personnelDb.getPersonnelByEmail(attendee.email);
-
+      let personnelRecord = await personnelDb.getPersonnelByEmail(accountId, attendee.email);
       if (!personnelRecord) {
-        // Use display name if available, otherwise extract from email
         const name = attendee.displayName || attendee.email.split("@")[0];
-        personnelRecord = await personnelDb.createPersonnel({
+        personnelRecord = await personnelDb.createPersonnel(accountId, {
           name,
           email: attendee.email,
         });
       }
-
-      // Add as meeting participant
-      await meetings.addMeetingParticipant(meeting.id, personnelRecord.id);
+      await meetings.addMeetingParticipant(accountId, meeting.id, personnelRecord.id);
     } catch (error) {
       console.error(`Failed to add attendee ${attendee.email}:`, error);
     }
@@ -352,8 +332,8 @@ export async function syncMeetingWithAttendees(
   return { meeting, transcriptFound: !!transcript, transcriptFailed };
 }
 
-// Sync all recent meetings for a user
 export async function syncUserMeetings(
+  accountId: string,
   userId: string,
   days: number = 7
 ): Promise<{ synced: number; existing: number; errors: string[] }> {
@@ -365,13 +345,12 @@ export async function syncUserMeetings(
 
   for (const event of googleMeetings) {
     try {
-      const existingMeeting = await meetings.getMeetingByExternalId(event.id);
+      const existingMeeting = await meetings.getMeetingByExternalId(accountId, event.id);
       if (existingMeeting) {
         existing++;
         continue;
       }
-
-      await syncMeetingToDatabase(event);
+      await syncMeetingToDatabase(accountId, event);
       synced++;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -382,62 +361,44 @@ export async function syncUserMeetings(
   return { synced, existing, errors };
 }
 
-// Process a meeting: find transcript or prepare for Gemini transcription
 export async function processMeetingTranscript(
+  accountId: string,
   userId: string,
   meetingId: string
 ): Promise<{ success: boolean; source?: string; error?: string }> {
-  const meeting = await meetings.getMeetingById(meetingId);
-  if (!meeting) {
-    return { success: false, error: "Meeting not found" };
-  }
+  const meeting = await meetings.getMeetingById(accountId, meetingId);
+  if (!meeting) return { success: false, error: "Meeting not found" };
 
-  // Skip if already has transcript
   if (meeting.transcript) {
     return { success: true, source: meeting.transcript_source || "existing" };
   }
 
-  // Update status to processing
-  await meetings.updateMeetingStatus(meetingId, "processing");
+  await meetings.updateMeetingStatus(accountId, meetingId, "processing");
 
   try {
-    // Try to find transcript in Google Drive
     if (meeting.name && meeting.meeting_date) {
-      const transcript = await findMeetTranscript(
-        userId,
-        meeting.name,
-        meeting.meeting_date
-      );
+      const transcript = await findMeetTranscript(userId, meeting.name, meeting.meeting_date);
 
       if (transcript) {
         const content = await getTranscriptContent(userId, transcript.fileId);
-        await meetings.updateMeetingTranscript(meetingId, content, "google_meet");
-        await meetings.updateMeetingStatus(meetingId, "completed");
+        await meetings.updateMeetingTranscript(accountId, meetingId, content, "google_meet");
+        await meetings.updateMeetingStatus(accountId, meetingId, "completed");
         return { success: true, source: "google_meet" };
       }
 
-      // Try to find recording for Gemini transcription
-      const recording = await findMeetRecording(
-        userId,
-        meeting.name,
-        meeting.meeting_date
-      );
-
+      const recording = await findMeetRecording(userId, meeting.name, meeting.meeting_date);
       if (recording) {
-        // Store recording info for Gemini processing
-        await meetings.updateMeeting(meetingId, {
+        await meetings.updateMeeting(accountId, meetingId, {
           recording_url: `drive:${recording.fileId}`,
         });
-        // Status remains "processing" - Gemini integration will handle transcription
         return { success: true, source: "pending_gemini" };
       }
     }
 
-    // No transcript or recording found
-    await meetings.updateMeetingStatus(meetingId, "failed");
+    await meetings.updateMeetingStatus(accountId, meetingId, "failed");
     return { success: false, error: "No transcript or recording found" };
   } catch (error) {
-    await meetings.updateMeetingStatus(meetingId, "failed");
+    await meetings.updateMeetingStatus(accountId, meetingId, "failed");
     const message = error instanceof Error ? error.message : "Unknown error";
     return { success: false, error: message };
   }

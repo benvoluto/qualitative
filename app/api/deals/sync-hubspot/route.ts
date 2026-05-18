@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountId } from "@/lib/account-context";
 import { customers } from "@/lib/db";
 import {
   fetchAllHubSpotDeals,
@@ -12,10 +12,7 @@ export const maxDuration = 300;
 
 export async function POST() {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
 
     if (!isHubSpotConfigured()) {
       return NextResponse.json(
@@ -34,8 +31,7 @@ export async function POST() {
 
     for (const deal of hubspotDeals) {
       try {
-        // Check if we already have this deal
-        const existing = await customers.getCustomerByHubSpotDealId(deal.id);
+        const existing = await customers.getCustomerByHubSpotDealId(accountId, deal.id);
 
         // Get associated companies for this deal
         const companyIds = await getHubSpotDealCompanies(deal.id);
@@ -49,8 +45,7 @@ export async function POST() {
         }
 
         if (existing) {
-          // Update existing customer (include domain if we have it)
-          await customers.updateCustomer(existing.id, {
+          await customers.updateCustomer(accountId, existing.id, {
             name: deal.name || existing.name,
             customer_type: "deal",
             hubspot_company_id: hubspotCompanyId || existing.hubspot_company_id,
@@ -63,8 +58,7 @@ export async function POST() {
             continue;
           }
 
-          // Create new customer as a deal
-          await customers.createCustomer({
+          await customers.createCustomer(accountId, {
             name: deal.name,
             customer_type: "deal",
             hubspot_deal_id: deal.id,

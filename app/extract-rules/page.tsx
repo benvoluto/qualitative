@@ -1,4 +1,5 @@
 import { extractRules, tags } from "@/lib/db";
+import { requireAccountId } from "@/lib/account-context";
 import { RulesList } from "./rules-list";
 import { GenerateRulesForm } from "./generate-rules-form";
 import { AddRuleForm } from "./add-rule-form";
@@ -9,10 +10,11 @@ import { LogoMenu } from "@/components/logo-menu";
 export const dynamic = "force-dynamic";
 
 export default async function ExtractRulesPage() {
-  const rules = await extractRules.getExtractRulesWithTags();
+  const accountId = await requireAccountId();
+  const rules = await extractRules.getExtractRulesWithTags(accountId);
   const [allTags, usedColors] = await Promise.all([
-    tags.getTags(),
-    tags.getUsedColors(),
+    tags.getTags(accountId),
+    tags.getUsedColors(accountId),
   ]);
   const usedColorSet = new Set(usedColors);
   const availableColors = TAG_COLORS.filter((c) => !usedColorSet.has(c));

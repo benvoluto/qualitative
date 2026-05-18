@@ -1,21 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountContext } from "@/lib/account-context";
 import { fetchGoogleMeetings, syncMeetingWithAttendees, GoogleMeetEvent } from "@/lib/google/meetings";
 import { users, meetings, personnel } from "@/lib/db";
 import { matchMeetingToCompanyByEmails, isInternalMeeting, ensureCompaniesAreSynced } from "@/lib/meetings";
 
-/** Maximum duration for this serverless function (seconds) - Vercel Pro allows up to 300s */
 export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { accountId, userId } = await requireAccountContext();
 
-    // Get user from database
-    const user = await users.getUserByEmail(session.user.email);
+    const user = await users.getUserById(userId);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -42,8 +37,7 @@ export async function POST(request: NextRequest) {
       // Use defaults if no body or invalid JSON
     }
 
-    // Ensure companies are synced with HubSpot deal stages (if not synced in past hour)
-    const companySyncResult = await ensureCompaniesAreSynced(1);
+    const companySyncResult = await ensureCompaniesAreSynced(accountId, 1);
 
     // Fetch meetings from Google
     const googleMeetings = await fetchGoogleMeetings(user.id, days);
@@ -83,41 +77,31 @@ export async function POST(request: NextRequest) {
         // Check if this is an internal meeting (for tracking and marking)
         const isInternal = isInternalMeeting(allAttendeeEmails);
 
-        // Check if already exists
-        const existingMeeting = await meetings.getMeetingByExternalId(event.id);
+        const existingMeeting = await meetings.getMeetingByExternalId(accountId, event.id);
         if (existingMeeting) {
-          // Update existing meeting with participant info if missing
           await updateMeetingParticipants(existingMeeting.id, event);
 
-          // Try to match to company if not already matched
           if (!existingMeeting.customer_id) {
-            await matchMeetingToCompanyByEmails(existingMeeting.id, participantEmails);
+            await matchMeetingToCompanyByEmails(accountId, existingMeeting.id, participantEmails);
           }
 
           existing++;
           continue;
         }
 
-        const syncResult = await syncMeetingWithAttendees(event, personnel, user.id);
+        const syncResult = await syncMeetingWithAttendees(accountId, event, personnel, user.id);
         const newMeeting = syncResult.meeting;
 
-        // Track transcript results
-        if (syncResult.transcriptFound) {
-          transcriptsFound++;
-        }
-        if (syncResult.transcriptFailed) {
-          transcriptDownloadFailed++;
-        }
+        if (syncResult.transcriptFound) transcriptsFound++;
+        if (syncResult.transcriptFailed) transcriptDownloadFailed++;
 
-        // Mark as internal if applicable
         if (isInternal) {
-          await meetings.updateMeeting(newMeeting.id, { is_internal: true });
-          internalSkipped++; // Track as "internal synced" for the message
+          await meetings.updateMeeting(accountId, newMeeting.id, { is_internal: true });
+          internalSkipped++;
         }
 
-        // Try to match meeting to a company by participant email domains (only for non-internal)
         if (!isInternal) {
-          const matchResult = await matchMeetingToCompanyByEmails(newMeeting.id, participantEmails);
+          const matchResult = await matchMeetingToCompanyByEmails(accountId, newMeeting.id, participantEmails);
 
           // Track unmatched meetings for user notification
           if (!matchResult.customerId && matchResult.unmatchedDomains.length > 0) {
@@ -137,53 +121,35 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Helper function to update participants for existing meetings
     async function updateMeetingParticipants(meetingId: string, event: GoogleMeetEvent) {
-      // Check if meeting already has participants
-      const existingParticipants = await meetings.getMeetingParticipantsWithDetails(meetingId);
-      if (existingParticipants.length > 0) {
-        return; // Already has participants
-      }
+      const existingParticipants = await meetings.getMeetingParticipantsWithDetails(accountId, meetingId);
+      if (existingParticipants.length > 0) return;
 
-      // Update host info if missing (organizerName is already resolved from attendees in fetchGoogleMeetings)
-      const meeting = await meetings.getMeetingById(meetingId);
+      const meeting = await meetings.getMeetingById(accountId, meetingId);
       if (meeting && (!meeting.host_name || !meeting.host_email)) {
         const updates: { host_name?: string; host_email?: string } = {};
-        if (!meeting.host_name && event.organizerName) {
-          updates.host_name = event.organizerName;
-        }
-        if (!meeting.host_email && event.organizerEmail) {
-          updates.host_email = event.organizerEmail;
-        }
+        if (!meeting.host_name && event.organizerName) updates.host_name = event.organizerName;
+        if (!meeting.host_email && event.organizerEmail) updates.host_email = event.organizerEmail;
         if (Object.keys(updates).length > 0) {
-          await meetings.updateMeeting(meetingId, updates);
+          await meetings.updateMeeting(accountId, meetingId, updates);
         }
       }
 
-      // Add attendees as participants
       for (const attendee of event.attendees) {
-        // Skip organizer (check both by email match and isOrganizer flag)
         const isOrganizer = attendee.isOrganizer ||
           (event.organizerEmail && attendee.email.toLowerCase() === event.organizerEmail.toLowerCase());
-
-        if (isOrganizer) {
-          continue;
-        }
+        if (isOrganizer) continue;
 
         try {
-          // Find or create personnel record
-          let personnelRecord = await personnel.getPersonnelByEmail(attendee.email);
-
+          let personnelRecord = await personnel.getPersonnelByEmail(accountId, attendee.email);
           if (!personnelRecord) {
             const name = attendee.displayName || attendee.email.split("@")[0];
-            personnelRecord = await personnel.createPersonnel({
+            personnelRecord = await personnel.createPersonnel(accountId, {
               name,
               email: attendee.email,
             });
           }
-
-          // Add as meeting participant
-          await meetings.addMeetingParticipant(meetingId, personnelRecord.id);
+          await meetings.addMeetingParticipant(accountId, meetingId, personnelRecord.id);
         } catch (error) {
           console.error(`Failed to add attendee ${attendee.email}:`, error);
         }

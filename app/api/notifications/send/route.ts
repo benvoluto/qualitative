@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAccountId } from "@/lib/account-context";
 import { meetings, extracts, customers, emailDrafts } from "@/lib/db";
 import {
   sendMeetingProcessedNotification,
@@ -10,6 +11,7 @@ type NotificationType = "meeting_processed" | "drafts_ready";
 
 export async function POST(request: NextRequest) {
   try {
+    const accountId = await requireAccountId();
     if (!isMailjetConfigured()) {
       return NextResponse.json(
         { error: "Email notifications are not configured. Set MAILJET_API_KEY, MAILJET_SECRET_KEY, and MAILJET_FROM_EMAIL." },
@@ -38,8 +40,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get meeting
-    const meeting = await meetings.getMeetingById(meetingId);
+    const meeting = await meetings.getMeetingById(accountId, meetingId);
     if (!meeting) {
       return NextResponse.json(
         { error: "Meeting not found" },
@@ -56,18 +57,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get customer if linked
     let customer = null;
     if (meeting.customer_id) {
-      customer = await customers.getCustomerById(meeting.customer_id);
+      customer = await customers.getCustomerById(accountId, meeting.customer_id);
     }
 
     let result;
 
     switch (notificationType) {
       case "meeting_processed": {
-        // Get extract counts
-        const meetingExtracts = await extracts.getExtractsByMeetingId(meetingId);
+        const meetingExtracts = await extracts.getExtractsByMeetingId(accountId, meetingId);
         const actionItemCount = meetingExtracts.filter((e) => e.is_action_item).length;
 
         result = await sendMeetingProcessedNotification(
@@ -81,8 +80,7 @@ export async function POST(request: NextRequest) {
       }
 
       case "drafts_ready": {
-        // Get email drafts
-        const drafts = await emailDrafts.getEmailDraftsByMeetingId(meetingId);
+        const drafts = await emailDrafts.getEmailDraftsByMeetingId(accountId, meetingId);
         if (drafts.length === 0) {
           return NextResponse.json(
             { error: "No email drafts found for this meeting" },

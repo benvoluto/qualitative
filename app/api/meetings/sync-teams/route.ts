@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountContext } from "@/lib/account-context";
 import { users } from "@/lib/db";
 import {
   isMicrosoftConfigured,
@@ -13,20 +13,13 @@ export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { accountId, userId } = await requireAccountContext();
 
     if (!isMicrosoftConfigured()) {
-      return NextResponse.json(
-        { error: "Microsoft Teams is not configured" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Microsoft Teams is not configured" }, { status: 400 });
     }
 
-    // Get user from database to get their ID
-    const user = await users.getUserByEmail(session.user.email);
+    const user = await users.getUserById(userId);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -52,8 +45,7 @@ export async function POST(request: NextRequest) {
 
     const skipSet = new Set<string>(skipExternalIds);
 
-    // Get all Teams meetings
-    const teamsMeetings = await getTeamsMeetingsForSync(user.id, days);
+    const teamsMeetings = await getTeamsMeetingsForSync(accountId, user.id, days);
 
     // Filter out already synced and skipped meetings
     const toSync = teamsMeetings.filter(
@@ -72,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     for (const teamsMeeting of toSync) {
       try {
-        const meeting = await syncTeamsMeetingToDatabase(user.id, teamsMeeting);
+        const meeting = await syncTeamsMeetingToDatabase(accountId, user.id, teamsMeeting);
         results.synced.push({
           id: meeting.id,
           name: meeting.name || teamsMeeting.subject,
@@ -105,10 +97,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { accountId, userId } = await requireAccountContext();
 
     if (!isMicrosoftConfigured()) {
       return NextResponse.json({
@@ -117,8 +106,7 @@ export async function GET() {
       });
     }
 
-    // Get user from database
-    const user = await users.getUserByEmail(session.user.email);
+    const user = await users.getUserById(userId);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -134,8 +122,7 @@ export async function GET() {
       });
     }
 
-    // Return available meetings for preview
-    const meetings = await getTeamsMeetingsForSync(user.id, 30);
+    const meetings = await getTeamsMeetingsForSync(accountId, user.id, 30);
 
     return NextResponse.json({
       configured: true,

@@ -1,105 +1,102 @@
 import { getDb } from "./client";
 import { Extract, CreateExtract, UpdateExtract, ActionItemStatus, RequestStatus } from "./types";
 
-export async function getExtracts(): Promise<Extract[]> {
+export async function getExtracts(accountId: string): Promise<Extract[]> {
   const sql = getDb();
-  const result = await sql`SELECT * FROM extracts ORDER BY created_at DESC`;
+  const result = await sql`SELECT * FROM extracts WHERE account_id = ${accountId} ORDER BY created_at DESC`;
   return result as Extract[];
 }
 
-export async function getExtractById(id: string): Promise<Extract | null> {
+export async function getExtractById(accountId: string, id: string): Promise<Extract | null> {
   const sql = getDb();
-  const result = await sql`SELECT * FROM extracts WHERE id = ${id}`;
+  const result = await sql`SELECT * FROM extracts WHERE id = ${id} AND account_id = ${accountId}`;
   return (result[0] as Extract) || null;
 }
 
-export async function getExtractsByMeetingId(meetingId: string): Promise<Extract[]> {
+export async function getExtractsByMeetingId(accountId: string, meetingId: string): Promise<Extract[]> {
   const sql = getDb();
   const result = await sql`
-    SELECT * FROM extracts WHERE meeting_id = ${meetingId} ORDER BY created_at
+    SELECT * FROM extracts WHERE meeting_id = ${meetingId} AND account_id = ${accountId} ORDER BY created_at
   `;
   return result as Extract[];
 }
 
-/**
- * Get the count of extracts for a specific meeting.
- * Used for verification during deduplication.
- */
-export async function getExtractCountByMeetingId(meetingId: string): Promise<number> {
+export async function getExtractCountByMeetingId(accountId: string, meetingId: string): Promise<number> {
   const sql = getDb();
   const result = await sql`
-    SELECT COUNT(*) as count FROM extracts WHERE meeting_id = ${meetingId}
+    SELECT COUNT(*) as count FROM extracts WHERE meeting_id = ${meetingId} AND account_id = ${accountId}
   `;
   return parseInt(result[0]?.count || "0", 10);
 }
 
-/**
- * Batch fetch extracts for multiple meeting IDs in a single query.
- * Returns a Map of meeting_id -> Extract[]
- */
-export async function getExtractsByMeetingIds(meetingIds: string[]): Promise<Map<string, Extract[]>> {
-  if (meetingIds.length === 0) {
-    return new Map();
-  }
-  const sql = getDb();
-  const result = await sql`
-    SELECT * FROM extracts WHERE meeting_id = ANY(${meetingIds}) ORDER BY created_at
-  `;
-  const extractsByMeetingId = new Map<string, Extract[]>();
-  for (const meetingId of meetingIds) {
-    extractsByMeetingId.set(meetingId, []);
-  }
-  for (const extract of result as Extract[]) {
-    const meetingExtracts = extractsByMeetingId.get(extract.meeting_id) || [];
-    meetingExtracts.push(extract);
-    extractsByMeetingId.set(extract.meeting_id, meetingExtracts);
-  }
-  return extractsByMeetingId;
-}
-
-export async function getExtractsByCustomerId(customerId: string): Promise<Extract[]> {
-  const sql = getDb();
-  const result = await sql`
-    SELECT * FROM extracts WHERE customer_id = ${customerId} ORDER BY extract_date DESC
-  `;
-  return result as Extract[];
-}
-
-export async function getExtractsByCompanyId(companyId: string): Promise<Extract[]> {
-  const sql = getDb();
-  const result = await sql`
-    SELECT * FROM extracts WHERE company_id = ${companyId} ORDER BY extract_date DESC
-  `;
-  return result as Extract[];
-}
-
-export async function getActionItems(): Promise<Extract[]> {
+export async function getExtractsByMeetingIds(
+  accountId: string,
+  meetingIds: string[]
+): Promise<Map<string, Extract[]>> {
+  if (meetingIds.length === 0) return new Map();
   const sql = getDb();
   const result = await sql`
     SELECT * FROM extracts
-    WHERE is_action_item = true
+    WHERE meeting_id = ANY(${meetingIds}) AND account_id = ${accountId}
+    ORDER BY created_at
+  `;
+  const map = new Map<string, Extract[]>();
+  for (const id of meetingIds) map.set(id, []);
+  for (const e of result as Extract[]) {
+    const arr = map.get(e.meeting_id) || [];
+    arr.push(e);
+    map.set(e.meeting_id, arr);
+  }
+  return map;
+}
+
+export async function getExtractsByCustomerId(accountId: string, customerId: string): Promise<Extract[]> {
+  const sql = getDb();
+  const result = await sql`
+    SELECT * FROM extracts WHERE customer_id = ${customerId} AND account_id = ${accountId} ORDER BY extract_date DESC
+  `;
+  return result as Extract[];
+}
+
+export async function getExtractsByCompanyId(accountId: string, companyId: string): Promise<Extract[]> {
+  const sql = getDb();
+  const result = await sql`
+    SELECT * FROM extracts WHERE company_id = ${companyId} AND account_id = ${accountId} ORDER BY extract_date DESC
+  `;
+  return result as Extract[];
+}
+
+export async function getActionItems(accountId: string): Promise<Extract[]> {
+  const sql = getDb();
+  const result = await sql`
+    SELECT * FROM extracts
+    WHERE account_id = ${accountId} AND is_action_item = true
     ORDER BY created_at DESC
   `;
   return result as Extract[];
 }
 
-export async function getPendingActionItems(): Promise<Extract[]> {
+export async function getPendingActionItems(accountId: string): Promise<Extract[]> {
   const sql = getDb();
   const result = await sql`
     SELECT * FROM extracts
-    WHERE is_action_item = true AND (action_item_status IS NULL OR action_item_status = 'pending')
+    WHERE account_id = ${accountId}
+      AND is_action_item = true
+      AND (action_item_status IS NULL OR action_item_status = 'pending')
     ORDER BY created_at DESC
   `;
   return result as Extract[];
 }
 
-export async function createExtract(data: CreateExtract): Promise<Extract> {
+export async function createExtract(accountId: string, data: CreateExtract): Promise<Extract> {
   const sql = getDb();
   const result = await sql`
     INSERT INTO extracts (
-      meeting_id, customer_id, company_id, extract_rule_id, extract_date, summary, quotes, is_action_item, action_item_status, request_status, participant_name, participant_email
+      account_id, meeting_id, customer_id, company_id, extract_rule_id, extract_date, summary, quotes,
+      is_action_item, action_item_status, request_status, participant_name, participant_email
     )
     VALUES (
+      ${accountId},
       ${data.meeting_id},
       ${data.customer_id ?? null},
       ${data.company_id ?? null},
@@ -118,7 +115,11 @@ export async function createExtract(data: CreateExtract): Promise<Extract> {
   return result[0] as Extract;
 }
 
-export async function updateExtract(id: string, data: UpdateExtract): Promise<Extract | null> {
+export async function updateExtract(
+  accountId: string,
+  id: string,
+  data: UpdateExtract
+): Promise<Extract | null> {
   const sql = getDb();
   const result = await sql`
     UPDATE extracts SET
@@ -133,45 +134,48 @@ export async function updateExtract(id: string, data: UpdateExtract): Promise<Ex
       request_status = COALESCE(${data.request_status ?? null}, request_status),
       participant_name = COALESCE(${data.participant_name ?? null}, participant_name),
       participant_email = COALESCE(${data.participant_email ?? null}, participant_email)
-    WHERE id = ${id}
+    WHERE id = ${id} AND account_id = ${accountId}
     RETURNING *
   `;
   return (result[0] as Extract) || null;
 }
 
 export async function updateActionItemStatus(
+  accountId: string,
   id: string,
   status: ActionItemStatus
 ): Promise<Extract | null> {
   const sql = getDb();
   const result = await sql`
     UPDATE extracts SET action_item_status = ${status}, updated_at = NOW()
-    WHERE id = ${id}
+    WHERE id = ${id} AND account_id = ${accountId}
     RETURNING *
   `;
   return (result[0] as Extract) || null;
 }
 
 export async function updateRequestStatus(
+  accountId: string,
   id: string,
   status: RequestStatus
 ): Promise<Extract | null> {
   const sql = getDb();
   const result = await sql`
     UPDATE extracts SET request_status = ${status}, updated_at = NOW()
-    WHERE id = ${id}
+    WHERE id = ${id} AND account_id = ${accountId}
     RETURNING *
   `;
   return (result[0] as Extract) || null;
 }
 
-export async function deleteExtract(id: string): Promise<boolean> {
+export async function deleteExtract(accountId: string, id: string): Promise<boolean> {
   const sql = getDb();
-  const result = await sql`DELETE FROM extracts WHERE id = ${id} RETURNING id`;
+  const result = await sql`DELETE FROM extracts WHERE id = ${id} AND account_id = ${accountId} RETURNING id`;
   return result.length > 0;
 }
 
 export async function updateExtractsCustomerByMeetingId(
+  accountId: string,
   meetingId: string,
   customerId: string | null
 ): Promise<number> {
@@ -179,77 +183,100 @@ export async function updateExtractsCustomerByMeetingId(
   const result = await sql`
     UPDATE extracts
     SET customer_id = ${customerId}, updated_at = NOW()
-    WHERE meeting_id = ${meetingId}
+    WHERE meeting_id = ${meetingId} AND account_id = ${accountId}
     RETURNING id
   `;
   return result.length;
 }
 
-// Tag management for extracts
-export async function addExtractTag(extractId: string, tagId: string): Promise<void> {
+// Junction tables (extract_tags, extract_participants) — isolation via parent extract.
+export async function addExtractTag(
+  accountId: string,
+  extractId: string,
+  tagId: string
+): Promise<void> {
   const sql = getDb();
   await sql`
     INSERT INTO extract_tags (extract_id, tag_id)
-    VALUES (${extractId}, ${tagId})
+    SELECT ${extractId}, ${tagId}
+    WHERE EXISTS (SELECT 1 FROM extracts WHERE id = ${extractId} AND account_id = ${accountId})
     ON CONFLICT (extract_id, tag_id) DO NOTHING
   `;
 }
 
-export async function removeExtractTag(extractId: string, tagId: string): Promise<void> {
+export async function removeExtractTag(
+  accountId: string,
+  extractId: string,
+  tagId: string
+): Promise<void> {
   const sql = getDb();
   await sql`
-    DELETE FROM extract_tags WHERE extract_id = ${extractId} AND tag_id = ${tagId}
+    DELETE FROM extract_tags
+    WHERE extract_id = ${extractId} AND tag_id = ${tagId}
+      AND EXISTS (SELECT 1 FROM extracts WHERE id = ${extractId} AND account_id = ${accountId})
   `;
 }
 
-export async function removeAllExtractTags(extractId: string): Promise<void> {
+export async function removeAllExtractTags(accountId: string, extractId: string): Promise<void> {
   const sql = getDb();
-  await sql`DELETE FROM extract_tags WHERE extract_id = ${extractId}`;
+  await sql`
+    DELETE FROM extract_tags
+    WHERE extract_id = ${extractId}
+      AND EXISTS (SELECT 1 FROM extracts WHERE id = ${extractId} AND account_id = ${accountId})
+  `;
 }
 
-export async function getExtractTagIds(extractId: string): Promise<string[]> {
+export async function getExtractTagIds(accountId: string, extractId: string): Promise<string[]> {
   const sql = getDb();
   const result = await sql`
-    SELECT tag_id FROM extract_tags WHERE extract_id = ${extractId}
+    SELECT et.tag_id FROM extract_tags et
+    JOIN extracts e ON e.id = et.extract_id
+    WHERE et.extract_id = ${extractId} AND e.account_id = ${accountId}
   `;
   return (result as Array<{ tag_id: string }>).map((r) => r.tag_id);
 }
 
-export async function getExtractsByTagId(tagId: string): Promise<Extract[]> {
+export async function getExtractsByTagId(accountId: string, tagId: string): Promise<Extract[]> {
   const sql = getDb();
   const result = await sql`
     SELECT e.* FROM extracts e
     JOIN extract_tags et ON e.id = et.extract_id
-    WHERE et.tag_id = ${tagId}
+    WHERE et.tag_id = ${tagId} AND e.account_id = ${accountId}
     ORDER BY e.created_at DESC
   `;
   return result as Extract[];
 }
 
-// Participant management for extracts
-export async function addExtractParticipant(extractId: string, personnelId: string): Promise<void> {
+export async function addExtractParticipant(
+  accountId: string,
+  extractId: string,
+  personnelId: string
+): Promise<void> {
   const sql = getDb();
   await sql`
     INSERT INTO extract_participants (extract_id, personnel_id)
-    VALUES (${extractId}, ${personnelId})
+    SELECT ${extractId}, ${personnelId}
+    WHERE EXISTS (SELECT 1 FROM extracts WHERE id = ${extractId} AND account_id = ${accountId})
     ON CONFLICT (extract_id, personnel_id) DO NOTHING
   `;
 }
 
-export async function getExtractParticipantIds(extractId: string): Promise<string[]> {
+export async function getExtractParticipantIds(accountId: string, extractId: string): Promise<string[]> {
   const sql = getDb();
   const result = await sql`
-    SELECT personnel_id FROM extract_participants WHERE extract_id = ${extractId}
+    SELECT ep.personnel_id FROM extract_participants ep
+    JOIN extracts e ON e.id = ep.extract_id
+    WHERE ep.extract_id = ${extractId} AND e.account_id = ${accountId}
   `;
   return (result as Array<{ personnel_id: string }>).map((r) => r.personnel_id);
 }
 
-export async function searchExtracts(query: string): Promise<Extract[]> {
+export async function searchExtracts(accountId: string, query: string): Promise<Extract[]> {
   const sql = getDb();
   const searchPattern = `%${query}%`;
   const result = await sql`
     SELECT * FROM extracts
-    WHERE summary ILIKE ${searchPattern}
+    WHERE account_id = ${accountId} AND summary ILIKE ${searchPattern}
     ORDER BY created_at DESC
   `;
   return result as Extract[];
@@ -263,45 +290,49 @@ export interface ExtractWithRule extends Extract {
   rule_name: string | null;
 }
 
-export async function getExtractsWithRuleByMeetingId(meetingId: string): Promise<ExtractWithRule[]> {
+export async function getExtractsWithRuleByMeetingId(
+  accountId: string,
+  meetingId: string
+): Promise<ExtractWithRule[]> {
   const sql = getDb();
   const result = await sql`
     SELECT e.*, er.name as rule_name
     FROM extracts e
     LEFT JOIN extract_rules er ON e.extract_rule_id = er.id
-    WHERE e.meeting_id = ${meetingId}
+    WHERE e.meeting_id = ${meetingId} AND e.account_id = ${accountId}
     ORDER BY e.created_at
   `;
   return result as ExtractWithRule[];
 }
 
-export async function getExtractsByRuleId(ruleId: string): Promise<Extract[]> {
+export async function getExtractsByRuleId(accountId: string, ruleId: string): Promise<Extract[]> {
   const sql = getDb();
   const result = await sql`
-    SELECT * FROM extracts WHERE extract_rule_id = ${ruleId} ORDER BY created_at DESC
+    SELECT * FROM extracts WHERE extract_rule_id = ${ruleId} AND account_id = ${accountId}
+    ORDER BY created_at DESC
   `;
   return result as Extract[];
 }
 
-export async function getExtractCountByRuleId(ruleId: string): Promise<number> {
+export async function getExtractCountByRuleId(accountId: string, ruleId: string): Promise<number> {
   const sql = getDb();
   const result = await sql`
-    SELECT COUNT(*) as count FROM extracts WHERE extract_rule_id = ${ruleId}
+    SELECT COUNT(*) as count FROM extracts
+    WHERE extract_rule_id = ${ruleId} AND account_id = ${accountId}
   `;
   return parseInt((result[0] as { count: string }).count, 10);
 }
 
-export async function getExtractsWithTagsByMeetingId(meetingId: string): Promise<ExtractWithTags[]> {
+export async function getExtractsWithTagsByMeetingId(
+  accountId: string,
+  meetingId: string
+): Promise<ExtractWithTags[]> {
   const sql = getDb();
-
-  // Get extracts for this meeting
   const extractsResult = await sql`
-    SELECT * FROM extracts WHERE meeting_id = ${meetingId} ORDER BY created_at
+    SELECT * FROM extracts WHERE meeting_id = ${meetingId} AND account_id = ${accountId} ORDER BY created_at
   `;
-
   const extractsList = extractsResult as Extract[];
 
-  // Get tags for each extract
   const extractsWithTags: ExtractWithTags[] = await Promise.all(
     extractsList.map(async (extract) => {
       const tagsResult = await sql`
@@ -309,21 +340,21 @@ export async function getExtractsWithTagsByMeetingId(meetingId: string): Promise
         JOIN extract_tags et ON t.id = et.tag_id
         WHERE et.extract_id = ${extract.id}
       `;
-      return {
-        ...extract,
-        tags: tagsResult as Array<{ id: string; name: string }>,
-      };
+      return { ...extract, tags: tagsResult as Array<{ id: string; name: string }> };
     })
   );
 
   return extractsWithTags;
 }
 
-export async function getExtractsByParticipantEmail(email: string): Promise<Extract[]> {
+export async function getExtractsByParticipantEmail(
+  accountId: string,
+  email: string
+): Promise<Extract[]> {
   const sql = getDb();
   const result = await sql`
     SELECT * FROM extracts
-    WHERE participant_email = ${email}
+    WHERE participant_email = ${email} AND account_id = ${accountId}
     ORDER BY created_at DESC
   `;
   return result as Extract[];
@@ -336,6 +367,7 @@ export interface PaginatedExtractsParams {
 
 export interface ExtractWithDetails {
   id: string;
+  account_id: string;
   meeting_id: string;
   customer_id: string | null;
   company_id: string | null;
@@ -371,21 +403,17 @@ export interface PaginatedExtractsResult {
   customerCounts: Record<string, number>;
 }
 
-/**
- * Get paginated extracts with all related data in optimized queries
- */
 export async function getExtractsWithDetailsPaginated(
+  accountId: string,
   params: PaginatedExtractsParams = {}
 ): Promise<PaginatedExtractsResult> {
   const sql = getDb();
   const limit = params.limit ?? 100;
   const offset = params.offset ?? 0;
 
-  // Get total count
-  const countResult = await sql`SELECT COUNT(*) as count FROM extracts`;
+  const countResult = await sql`SELECT COUNT(*) as count FROM extracts WHERE account_id = ${accountId}`;
   const total = parseInt((countResult[0] as { count: string }).count, 10);
 
-  // Get extracts with all related data in a single optimized query
   const extractsResult = await sql`
     SELECT
       e.*,
@@ -397,33 +425,26 @@ export async function getExtractsWithDetailsPaginated(
       er.name as rule_name,
       c.name as customer_name,
       c.customer_type as customer_type,
-      COALESCE(
-        array_agg(DISTINCT t.id) FILTER (WHERE t.id IS NOT NULL),
-        '{}'::uuid[]
-      ) as tag_ids,
-      COALESCE(
-        array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL),
-        '{}'::text[]
-      ) as tag_names,
-      COALESCE(
-        array_agg(DISTINCT t.color) FILTER (WHERE t.id IS NOT NULL),
-        '{}'::text[]
-      ) as tag_colors
+      COALESCE(array_agg(DISTINCT t.id) FILTER (WHERE t.id IS NOT NULL), '{}'::uuid[]) as tag_ids,
+      COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}'::text[]) as tag_names,
+      COALESCE(array_agg(DISTINCT t.color) FILTER (WHERE t.id IS NOT NULL), '{}'::text[]) as tag_colors
     FROM extracts e
     LEFT JOIN meetings m ON e.meeting_id = m.id
     LEFT JOIN extract_rules er ON e.extract_rule_id = er.id
     LEFT JOIN customers c ON e.customer_id = c.id
     LEFT JOIN extract_tags et ON e.id = et.extract_id
     LEFT JOIN tags t ON et.tag_id = t.id
+    WHERE e.account_id = ${accountId}
     GROUP BY e.id, m.name, m.meeting_date, m.recording_url, m.recording_passcode, m.is_internal, er.name, c.name, c.customer_type
     ORDER BY e.created_at DESC
     LIMIT ${limit} OFFSET ${offset}
   `;
 
-  // Get tag counts (only for tags that have extracts)
   const tagCountsResult = await sql`
     SELECT et.tag_id, COUNT(*) as count
     FROM extract_tags et
+    JOIN extracts e ON e.id = et.extract_id
+    WHERE e.account_id = ${accountId}
     GROUP BY et.tag_id
   `;
   const tagCounts: Record<string, number> = {};
@@ -431,11 +452,10 @@ export async function getExtractsWithDetailsPaginated(
     tagCounts[row.tag_id] = parseInt(row.count, 10);
   }
 
-  // Get rule counts
   const ruleCountsResult = await sql`
     SELECT extract_rule_id, COUNT(*) as count
     FROM extracts
-    WHERE extract_rule_id IS NOT NULL
+    WHERE account_id = ${accountId} AND extract_rule_id IS NOT NULL
     GROUP BY extract_rule_id
   `;
   const ruleCounts: Record<string, number> = {};
@@ -443,11 +463,10 @@ export async function getExtractsWithDetailsPaginated(
     ruleCounts[row.extract_rule_id] = parseInt(row.count, 10);
   }
 
-  // Get customer counts
   const customerCountsResult = await sql`
     SELECT customer_id, COUNT(*) as count
     FROM extracts
-    WHERE customer_id IS NOT NULL
+    WHERE account_id = ${accountId} AND customer_id IS NOT NULL
     GROUP BY customer_id
   `;
   const customerCounts: Record<string, number> = {};
@@ -464,12 +483,9 @@ export async function getExtractsWithDetailsPaginated(
   };
 }
 
-/**
- * Search parameters for cursor-based pagination
- */
 export interface CursorSearchParams {
   search?: string;
-  cursor?: string; // Format: "timestamp_id" (e.g., "2024-01-15T10:30:00Z_abc123")
+  cursor?: string;
   limit?: number;
   filters?: {
     customerId?: string;
@@ -487,9 +503,6 @@ export interface CursorSearchResult {
   total: number;
 }
 
-/**
- * Parse a cursor string into its components
- */
 function parseCursor(cursor: string): { createdAt: Date; id: string } | null {
   const parts = cursor.split("_");
   if (parts.length < 2) return null;
@@ -500,364 +513,144 @@ function parseCursor(cursor: string): { createdAt: Date; id: string } | null {
   return { createdAt, id };
 }
 
-/**
- * Create a cursor string from an extract
- */
 function createCursor(extract: ExtractWithDetails): string {
   return `${new Date(extract.created_at).toISOString()}_${extract.id}`;
 }
 
 /**
- * Search extracts with cursor-based pagination and full-text search
- * Uses PostgreSQL tsvector for efficient searching
+ * Search extracts with cursor-based pagination. The original implementation used
+ * eight separate static SQL branches for each combination of (cursor, tagId, search).
+ * Now that we filter by account_id everywhere, the simplest correct approach is to
+ * construct the WHERE clause dynamically — much less SQL surface to keep in sync.
  */
 export async function searchExtractsWithCursor(
+  accountId: string,
   params: CursorSearchParams = {}
 ): Promise<CursorSearchResult> {
   const sql = getDb();
   const limit = Math.min(params.limit ?? 50, 100);
   const filters = params.filters || {};
 
-  // Parse search terms for full-text search
   const searchTerms = params.search?.trim()
     ? params.search.trim().split(/\s+/).join(" & ")
     : null;
-
-  // Parse cursor
   const cursorData = params.cursor ? parseCursor(params.cursor) : null;
 
-  // Get total count first (only on initial load without cursor)
+  const where: string[] = ["e.account_id = $1"];
+  const values: unknown[] = [accountId];
+  let i = 2;
+
+  if (searchTerms) {
+    where.push(`e.search_vector @@ to_tsquery('english', $${i++})`);
+    values.push(searchTerms);
+  }
+  if (cursorData) {
+    where.push(`(e.created_at, e.id) < ($${i++}, $${i++})`);
+    values.push(cursorData.createdAt, cursorData.id);
+  }
+  if (filters.customerId) {
+    where.push(`e.customer_id = $${i++}`);
+    values.push(filters.customerId);
+  }
+  if (filters.ruleId) {
+    where.push(`e.extract_rule_id = $${i++}`);
+    values.push(filters.ruleId);
+  }
+  if (filters.isActionItem !== undefined) {
+    where.push(`e.is_action_item = $${i++}`);
+    values.push(filters.isActionItem);
+  }
+  if (filters.type === "internal") {
+    where.push(`m.is_internal = true`);
+  } else if (filters.type === "customer" || filters.type === "deal") {
+    where.push(`c.customer_type = $${i++}`);
+    values.push(filters.type);
+  }
+
+  let tagFilterJoin = "";
+  if (filters.tagId) {
+    tagFilterJoin = `JOIN extract_tags et_filter ON e.id = et_filter.extract_id AND et_filter.tag_id = $${i++}`;
+    values.push(filters.tagId);
+  }
+
+  // Total count — only fetched on first page.
   let total = 0;
   if (!params.cursor) {
-    if (searchTerms && filters.tagId) {
-      const countResult = await sql`
-        SELECT COUNT(DISTINCT e.id) as count
-        FROM extracts e
-        LEFT JOIN meetings m ON e.meeting_id = m.id
-        LEFT JOIN customers c ON e.customer_id = c.id
-        JOIN extract_tags et_filter ON e.id = et_filter.extract_id AND et_filter.tag_id = ${filters.tagId}
-        WHERE e.search_vector @@ to_tsquery('english', ${searchTerms})
-          AND (${filters.customerId}::uuid IS NULL OR e.customer_id = ${filters.customerId})
-          AND (${filters.ruleId}::uuid IS NULL OR e.extract_rule_id = ${filters.ruleId})
-          AND (${filters.isActionItem}::boolean IS NULL OR e.is_action_item = ${filters.isActionItem})
-          AND (${filters.type}::text IS NULL OR (
-            (${filters.type} = 'internal' AND m.is_internal = true) OR
-            (${filters.type} != 'internal' AND c.customer_type = ${filters.type})
-          ))
-      `;
-      total = parseInt((countResult[0] as { count: string }).count, 10);
-    } else if (searchTerms) {
-      const countResult = await sql`
-        SELECT COUNT(DISTINCT e.id) as count
-        FROM extracts e
-        LEFT JOIN meetings m ON e.meeting_id = m.id
-        LEFT JOIN customers c ON e.customer_id = c.id
-        WHERE e.search_vector @@ to_tsquery('english', ${searchTerms})
-          AND (${filters.customerId}::uuid IS NULL OR e.customer_id = ${filters.customerId})
-          AND (${filters.ruleId}::uuid IS NULL OR e.extract_rule_id = ${filters.ruleId})
-          AND (${filters.isActionItem}::boolean IS NULL OR e.is_action_item = ${filters.isActionItem})
-          AND (${filters.type}::text IS NULL OR (
-            (${filters.type} = 'internal' AND m.is_internal = true) OR
-            (${filters.type} != 'internal' AND c.customer_type = ${filters.type})
-          ))
-      `;
-      total = parseInt((countResult[0] as { count: string }).count, 10);
-    } else if (filters.tagId) {
-      const countResult = await sql`
-        SELECT COUNT(DISTINCT e.id) as count
-        FROM extracts e
-        LEFT JOIN meetings m ON e.meeting_id = m.id
-        LEFT JOIN customers c ON e.customer_id = c.id
-        JOIN extract_tags et_filter ON e.id = et_filter.extract_id AND et_filter.tag_id = ${filters.tagId}
-        WHERE (${filters.customerId}::uuid IS NULL OR e.customer_id = ${filters.customerId})
-          AND (${filters.ruleId}::uuid IS NULL OR e.extract_rule_id = ${filters.ruleId})
-          AND (${filters.isActionItem}::boolean IS NULL OR e.is_action_item = ${filters.isActionItem})
-          AND (${filters.type}::text IS NULL OR (
-            (${filters.type} = 'internal' AND m.is_internal = true) OR
-            (${filters.type} != 'internal' AND c.customer_type = ${filters.type})
-          ))
-      `;
-      total = parseInt((countResult[0] as { count: string }).count, 10);
-    } else {
-      const countResult = await sql`
-        SELECT COUNT(DISTINCT e.id) as count
-        FROM extracts e
-        LEFT JOIN meetings m ON e.meeting_id = m.id
-        LEFT JOIN customers c ON e.customer_id = c.id
-        WHERE (${filters.customerId}::uuid IS NULL OR e.customer_id = ${filters.customerId})
-          AND (${filters.ruleId}::uuid IS NULL OR e.extract_rule_id = ${filters.ruleId})
-          AND (${filters.isActionItem}::boolean IS NULL OR e.is_action_item = ${filters.isActionItem})
-          AND (${filters.type}::text IS NULL OR (
-            (${filters.type} = 'internal' AND m.is_internal = true) OR
-            (${filters.type} != 'internal' AND c.customer_type = ${filters.type})
-          ))
-      `;
-      total = parseInt((countResult[0] as { count: string }).count, 10);
-    }
+    const countWhere = where.filter((w) => !w.startsWith("(e.created_at, e.id)"));
+    const countValues = values.slice(0, countWhere.length === where.length ? values.length : values.length);
+    // Simpler: re-run count without the cursor clause.
+    const cw: string[] = ["e.account_id = $1"];
+    const cv: unknown[] = [accountId];
+    let ci = 2;
+    if (searchTerms) { cw.push(`e.search_vector @@ to_tsquery('english', $${ci++})`); cv.push(searchTerms); }
+    if (filters.customerId) { cw.push(`e.customer_id = $${ci++}`); cv.push(filters.customerId); }
+    if (filters.ruleId) { cw.push(`e.extract_rule_id = $${ci++}`); cv.push(filters.ruleId); }
+    if (filters.isActionItem !== undefined) { cw.push(`e.is_action_item = $${ci++}`); cv.push(filters.isActionItem); }
+    if (filters.type === "internal") cw.push(`m.is_internal = true`);
+    else if (filters.type === "customer" || filters.type === "deal") { cw.push(`c.customer_type = $${ci++}`); cv.push(filters.type); }
+    let ctf = "";
+    if (filters.tagId) { ctf = `JOIN extract_tags et_filter ON e.id = et_filter.extract_id AND et_filter.tag_id = $${ci++}`; cv.push(filters.tagId); }
+
+    const countQuery = `
+      SELECT COUNT(DISTINCT e.id) as count
+      FROM extracts e
+      LEFT JOIN meetings m ON e.meeting_id = m.id
+      LEFT JOIN customers c ON e.customer_id = c.id
+      ${ctf}
+      WHERE ${cw.join(" AND ")}
+    `;
+    const countResult = await sql(countQuery, cv);
+    total = parseInt((countResult[0] as { count: string }).count, 10);
+    void countValues;
   }
 
-  // Main query - separate branches for tag filter and search combinations
-  let extracts: ExtractWithDetails[];
   const fetchLimit = limit + 1;
+  values.push(fetchLimit);
+  const limitParam = i;
+  const mainQuery = `
+    SELECT DISTINCT
+      e.*,
+      m.name as meeting_name,
+      m.meeting_date,
+      m.recording_url as meeting_recording_url,
+      m.recording_passcode as meeting_recording_passcode,
+      m.is_internal as meeting_is_internal,
+      er.name as rule_name,
+      c.name as customer_name,
+      c.customer_type,
+      COALESCE(array_agg(DISTINCT t.id) FILTER (WHERE t.id IS NOT NULL), '{}'::uuid[]) as tag_ids,
+      COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}'::text[]) as tag_names,
+      COALESCE(array_agg(DISTINCT t.color) FILTER (WHERE t.id IS NOT NULL), '{}'::text[]) as tag_colors
+    FROM extracts e
+    LEFT JOIN meetings m ON e.meeting_id = m.id
+    LEFT JOIN extract_rules er ON e.extract_rule_id = er.id
+    LEFT JOIN customers c ON e.customer_id = c.id
+    LEFT JOIN extract_tags et ON e.id = et.extract_id
+    LEFT JOIN tags t ON et.tag_id = t.id
+    ${tagFilterJoin}
+    WHERE ${where.join(" AND ")}
+    GROUP BY e.id, m.name, m.meeting_date, m.recording_url, m.recording_passcode, m.is_internal, er.name, c.name, c.customer_type
+    ORDER BY e.created_at DESC, e.id DESC
+    LIMIT $${limitParam}
+  `;
+  const extractsResult = await sql(mainQuery, values);
+  const extracts = extractsResult as ExtractWithDetails[];
 
-  if (searchTerms && filters.tagId && cursorData) {
-    const result = await sql`
-      SELECT DISTINCT
-        e.*,
-        m.name as meeting_name, m.meeting_date, m.recording_url as meeting_recording_url, m.is_internal as meeting_is_internal,
-        er.name as rule_name, c.name as customer_name, c.customer_type,
-        COALESCE(array_agg(DISTINCT t.id) FILTER (WHERE t.id IS NOT NULL), '{}'::uuid[]) as tag_ids,
-        COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}'::text[]) as tag_names,
-        COALESCE(array_agg(DISTINCT t.color) FILTER (WHERE t.id IS NOT NULL), '{}'::text[]) as tag_colors
-      FROM extracts e
-      LEFT JOIN meetings m ON e.meeting_id = m.id
-      LEFT JOIN extract_rules er ON e.extract_rule_id = er.id
-      LEFT JOIN customers c ON e.customer_id = c.id
-      LEFT JOIN extract_tags et ON e.id = et.extract_id
-      LEFT JOIN tags t ON et.tag_id = t.id
-      JOIN extract_tags et_filter ON e.id = et_filter.extract_id AND et_filter.tag_id = ${filters.tagId}
-      WHERE e.search_vector @@ to_tsquery('english', ${searchTerms})
-        AND (e.created_at, e.id) < (${cursorData.createdAt}, ${cursorData.id})
-        AND (${filters.customerId}::uuid IS NULL OR e.customer_id = ${filters.customerId})
-        AND (${filters.ruleId}::uuid IS NULL OR e.extract_rule_id = ${filters.ruleId})
-        AND (${filters.isActionItem}::boolean IS NULL OR e.is_action_item = ${filters.isActionItem})
-        AND (${filters.type}::text IS NULL OR (
-          (${filters.type} = 'internal' AND m.is_internal = true) OR
-          (${filters.type} != 'internal' AND c.customer_type = ${filters.type})
-        ))
-      GROUP BY e.id, m.name, m.meeting_date, m.recording_url, m.recording_passcode, m.is_internal, er.name, c.name, c.customer_type
-      ORDER BY e.created_at DESC, e.id DESC
-      LIMIT ${fetchLimit}
-    `;
-    extracts = result as ExtractWithDetails[];
-  } else if (searchTerms && filters.tagId) {
-    const result = await sql`
-      SELECT DISTINCT
-        e.*,
-        m.name as meeting_name, m.meeting_date, m.recording_url as meeting_recording_url, m.is_internal as meeting_is_internal,
-        er.name as rule_name, c.name as customer_name, c.customer_type,
-        COALESCE(array_agg(DISTINCT t.id) FILTER (WHERE t.id IS NOT NULL), '{}'::uuid[]) as tag_ids,
-        COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}'::text[]) as tag_names,
-        COALESCE(array_agg(DISTINCT t.color) FILTER (WHERE t.id IS NOT NULL), '{}'::text[]) as tag_colors
-      FROM extracts e
-      LEFT JOIN meetings m ON e.meeting_id = m.id
-      LEFT JOIN extract_rules er ON e.extract_rule_id = er.id
-      LEFT JOIN customers c ON e.customer_id = c.id
-      LEFT JOIN extract_tags et ON e.id = et.extract_id
-      LEFT JOIN tags t ON et.tag_id = t.id
-      JOIN extract_tags et_filter ON e.id = et_filter.extract_id AND et_filter.tag_id = ${filters.tagId}
-      WHERE e.search_vector @@ to_tsquery('english', ${searchTerms})
-        AND (${filters.customerId}::uuid IS NULL OR e.customer_id = ${filters.customerId})
-        AND (${filters.ruleId}::uuid IS NULL OR e.extract_rule_id = ${filters.ruleId})
-        AND (${filters.isActionItem}::boolean IS NULL OR e.is_action_item = ${filters.isActionItem})
-        AND (${filters.type}::text IS NULL OR (
-          (${filters.type} = 'internal' AND m.is_internal = true) OR
-          (${filters.type} != 'internal' AND c.customer_type = ${filters.type})
-        ))
-      GROUP BY e.id, m.name, m.meeting_date, m.recording_url, m.recording_passcode, m.is_internal, er.name, c.name, c.customer_type
-      ORDER BY e.created_at DESC, e.id DESC
-      LIMIT ${fetchLimit}
-    `;
-    extracts = result as ExtractWithDetails[];
-  } else if (searchTerms && cursorData) {
-    const result = await sql`
-      SELECT DISTINCT
-        e.*,
-        m.name as meeting_name, m.meeting_date, m.recording_url as meeting_recording_url, m.is_internal as meeting_is_internal,
-        er.name as rule_name, c.name as customer_name, c.customer_type,
-        COALESCE(array_agg(DISTINCT t.id) FILTER (WHERE t.id IS NOT NULL), '{}'::uuid[]) as tag_ids,
-        COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}'::text[]) as tag_names,
-        COALESCE(array_agg(DISTINCT t.color) FILTER (WHERE t.id IS NOT NULL), '{}'::text[]) as tag_colors
-      FROM extracts e
-      LEFT JOIN meetings m ON e.meeting_id = m.id
-      LEFT JOIN extract_rules er ON e.extract_rule_id = er.id
-      LEFT JOIN customers c ON e.customer_id = c.id
-      LEFT JOIN extract_tags et ON e.id = et.extract_id
-      LEFT JOIN tags t ON et.tag_id = t.id
-      WHERE e.search_vector @@ to_tsquery('english', ${searchTerms})
-        AND (e.created_at, e.id) < (${cursorData.createdAt}, ${cursorData.id})
-        AND (${filters.customerId}::uuid IS NULL OR e.customer_id = ${filters.customerId})
-        AND (${filters.ruleId}::uuid IS NULL OR e.extract_rule_id = ${filters.ruleId})
-        AND (${filters.isActionItem}::boolean IS NULL OR e.is_action_item = ${filters.isActionItem})
-        AND (${filters.type}::text IS NULL OR (
-          (${filters.type} = 'internal' AND m.is_internal = true) OR
-          (${filters.type} != 'internal' AND c.customer_type = ${filters.type})
-        ))
-      GROUP BY e.id, m.name, m.meeting_date, m.recording_url, m.recording_passcode, m.is_internal, er.name, c.name, c.customer_type
-      ORDER BY e.created_at DESC, e.id DESC
-      LIMIT ${fetchLimit}
-    `;
-    extracts = result as ExtractWithDetails[];
-  } else if (searchTerms) {
-    const result = await sql`
-      SELECT DISTINCT
-        e.*,
-        m.name as meeting_name, m.meeting_date, m.recording_url as meeting_recording_url, m.is_internal as meeting_is_internal,
-        er.name as rule_name, c.name as customer_name, c.customer_type,
-        COALESCE(array_agg(DISTINCT t.id) FILTER (WHERE t.id IS NOT NULL), '{}'::uuid[]) as tag_ids,
-        COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}'::text[]) as tag_names,
-        COALESCE(array_agg(DISTINCT t.color) FILTER (WHERE t.id IS NOT NULL), '{}'::text[]) as tag_colors
-      FROM extracts e
-      LEFT JOIN meetings m ON e.meeting_id = m.id
-      LEFT JOIN extract_rules er ON e.extract_rule_id = er.id
-      LEFT JOIN customers c ON e.customer_id = c.id
-      LEFT JOIN extract_tags et ON e.id = et.extract_id
-      LEFT JOIN tags t ON et.tag_id = t.id
-      WHERE e.search_vector @@ to_tsquery('english', ${searchTerms})
-        AND (${filters.customerId}::uuid IS NULL OR e.customer_id = ${filters.customerId})
-        AND (${filters.ruleId}::uuid IS NULL OR e.extract_rule_id = ${filters.ruleId})
-        AND (${filters.isActionItem}::boolean IS NULL OR e.is_action_item = ${filters.isActionItem})
-        AND (${filters.type}::text IS NULL OR (
-          (${filters.type} = 'internal' AND m.is_internal = true) OR
-          (${filters.type} != 'internal' AND c.customer_type = ${filters.type})
-        ))
-      GROUP BY e.id, m.name, m.meeting_date, m.recording_url, m.recording_passcode, m.is_internal, er.name, c.name, c.customer_type
-      ORDER BY e.created_at DESC, e.id DESC
-      LIMIT ${fetchLimit}
-    `;
-    extracts = result as ExtractWithDetails[];
-  } else if (filters.tagId && cursorData) {
-    const result = await sql`
-      SELECT DISTINCT
-        e.*,
-        m.name as meeting_name, m.meeting_date, m.recording_url as meeting_recording_url, m.is_internal as meeting_is_internal,
-        er.name as rule_name, c.name as customer_name, c.customer_type,
-        COALESCE(array_agg(DISTINCT t.id) FILTER (WHERE t.id IS NOT NULL), '{}'::uuid[]) as tag_ids,
-        COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}'::text[]) as tag_names,
-        COALESCE(array_agg(DISTINCT t.color) FILTER (WHERE t.id IS NOT NULL), '{}'::text[]) as tag_colors
-      FROM extracts e
-      LEFT JOIN meetings m ON e.meeting_id = m.id
-      LEFT JOIN extract_rules er ON e.extract_rule_id = er.id
-      LEFT JOIN customers c ON e.customer_id = c.id
-      LEFT JOIN extract_tags et ON e.id = et.extract_id
-      LEFT JOIN tags t ON et.tag_id = t.id
-      JOIN extract_tags et_filter ON e.id = et_filter.extract_id AND et_filter.tag_id = ${filters.tagId}
-      WHERE (e.created_at, e.id) < (${cursorData.createdAt}, ${cursorData.id})
-        AND (${filters.customerId}::uuid IS NULL OR e.customer_id = ${filters.customerId})
-        AND (${filters.ruleId}::uuid IS NULL OR e.extract_rule_id = ${filters.ruleId})
-        AND (${filters.isActionItem}::boolean IS NULL OR e.is_action_item = ${filters.isActionItem})
-        AND (${filters.type}::text IS NULL OR (
-          (${filters.type} = 'internal' AND m.is_internal = true) OR
-          (${filters.type} != 'internal' AND c.customer_type = ${filters.type})
-        ))
-      GROUP BY e.id, m.name, m.meeting_date, m.recording_url, m.recording_passcode, m.is_internal, er.name, c.name, c.customer_type
-      ORDER BY e.created_at DESC, e.id DESC
-      LIMIT ${fetchLimit}
-    `;
-    extracts = result as ExtractWithDetails[];
-  } else if (filters.tagId) {
-    const result = await sql`
-      SELECT DISTINCT
-        e.*,
-        m.name as meeting_name, m.meeting_date, m.recording_url as meeting_recording_url, m.is_internal as meeting_is_internal,
-        er.name as rule_name, c.name as customer_name, c.customer_type,
-        COALESCE(array_agg(DISTINCT t.id) FILTER (WHERE t.id IS NOT NULL), '{}'::uuid[]) as tag_ids,
-        COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}'::text[]) as tag_names,
-        COALESCE(array_agg(DISTINCT t.color) FILTER (WHERE t.id IS NOT NULL), '{}'::text[]) as tag_colors
-      FROM extracts e
-      LEFT JOIN meetings m ON e.meeting_id = m.id
-      LEFT JOIN extract_rules er ON e.extract_rule_id = er.id
-      LEFT JOIN customers c ON e.customer_id = c.id
-      LEFT JOIN extract_tags et ON e.id = et.extract_id
-      LEFT JOIN tags t ON et.tag_id = t.id
-      JOIN extract_tags et_filter ON e.id = et_filter.extract_id AND et_filter.tag_id = ${filters.tagId}
-      WHERE (${filters.customerId}::uuid IS NULL OR e.customer_id = ${filters.customerId})
-        AND (${filters.ruleId}::uuid IS NULL OR e.extract_rule_id = ${filters.ruleId})
-        AND (${filters.isActionItem}::boolean IS NULL OR e.is_action_item = ${filters.isActionItem})
-        AND (${filters.type}::text IS NULL OR (
-          (${filters.type} = 'internal' AND m.is_internal = true) OR
-          (${filters.type} != 'internal' AND c.customer_type = ${filters.type})
-        ))
-      GROUP BY e.id, m.name, m.meeting_date, m.recording_url, m.recording_passcode, m.is_internal, er.name, c.name, c.customer_type
-      ORDER BY e.created_at DESC, e.id DESC
-      LIMIT ${fetchLimit}
-    `;
-    extracts = result as ExtractWithDetails[];
-  } else if (cursorData) {
-    const result = await sql`
-      SELECT DISTINCT
-        e.*,
-        m.name as meeting_name, m.meeting_date, m.recording_url as meeting_recording_url, m.is_internal as meeting_is_internal,
-        er.name as rule_name, c.name as customer_name, c.customer_type,
-        COALESCE(array_agg(DISTINCT t.id) FILTER (WHERE t.id IS NOT NULL), '{}'::uuid[]) as tag_ids,
-        COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}'::text[]) as tag_names,
-        COALESCE(array_agg(DISTINCT t.color) FILTER (WHERE t.id IS NOT NULL), '{}'::text[]) as tag_colors
-      FROM extracts e
-      LEFT JOIN meetings m ON e.meeting_id = m.id
-      LEFT JOIN extract_rules er ON e.extract_rule_id = er.id
-      LEFT JOIN customers c ON e.customer_id = c.id
-      LEFT JOIN extract_tags et ON e.id = et.extract_id
-      LEFT JOIN tags t ON et.tag_id = t.id
-      WHERE (e.created_at, e.id) < (${cursorData.createdAt}, ${cursorData.id})
-        AND (${filters.customerId}::uuid IS NULL OR e.customer_id = ${filters.customerId})
-        AND (${filters.ruleId}::uuid IS NULL OR e.extract_rule_id = ${filters.ruleId})
-        AND (${filters.isActionItem}::boolean IS NULL OR e.is_action_item = ${filters.isActionItem})
-        AND (${filters.type}::text IS NULL OR (
-          (${filters.type} = 'internal' AND m.is_internal = true) OR
-          (${filters.type} != 'internal' AND c.customer_type = ${filters.type})
-        ))
-      GROUP BY e.id, m.name, m.meeting_date, m.recording_url, m.recording_passcode, m.is_internal, er.name, c.name, c.customer_type
-      ORDER BY e.created_at DESC, e.id DESC
-      LIMIT ${fetchLimit}
-    `;
-    extracts = result as ExtractWithDetails[];
-  } else {
-    const result = await sql`
-      SELECT DISTINCT
-        e.*,
-        m.name as meeting_name, m.meeting_date, m.recording_url as meeting_recording_url, m.is_internal as meeting_is_internal,
-        er.name as rule_name, c.name as customer_name, c.customer_type,
-        COALESCE(array_agg(DISTINCT t.id) FILTER (WHERE t.id IS NOT NULL), '{}'::uuid[]) as tag_ids,
-        COALESCE(array_agg(DISTINCT t.name) FILTER (WHERE t.name IS NOT NULL), '{}'::text[]) as tag_names,
-        COALESCE(array_agg(DISTINCT t.color) FILTER (WHERE t.id IS NOT NULL), '{}'::text[]) as tag_colors
-      FROM extracts e
-      LEFT JOIN meetings m ON e.meeting_id = m.id
-      LEFT JOIN extract_rules er ON e.extract_rule_id = er.id
-      LEFT JOIN customers c ON e.customer_id = c.id
-      LEFT JOIN extract_tags et ON e.id = et.extract_id
-      LEFT JOIN tags t ON et.tag_id = t.id
-      WHERE (${filters.customerId}::uuid IS NULL OR e.customer_id = ${filters.customerId})
-        AND (${filters.ruleId}::uuid IS NULL OR e.extract_rule_id = ${filters.ruleId})
-        AND (${filters.isActionItem}::boolean IS NULL OR e.is_action_item = ${filters.isActionItem})
-        AND (${filters.type}::text IS NULL OR (
-          (${filters.type} = 'internal' AND m.is_internal = true) OR
-          (${filters.type} != 'internal' AND c.customer_type = ${filters.type})
-        ))
-      GROUP BY e.id, m.name, m.meeting_date, m.recording_url, m.recording_passcode, m.is_internal, er.name, c.name, c.customer_type
-      ORDER BY e.created_at DESC, e.id DESC
-      LIMIT ${fetchLimit}
-    `;
-    extracts = result as ExtractWithDetails[];
-  }
-
-  // Check if there are more results
   const hasMore = extracts.length > limit;
-  if (hasMore) {
-    extracts.pop();
-  }
+  if (hasMore) extracts.pop();
 
-  // Generate next cursor
   const nextCursor = hasMore && extracts.length > 0
     ? createCursor(extracts[extracts.length - 1])
     : null;
 
-  return {
-    extracts,
-    nextCursor,
-    hasMore,
-    total,
-  };
+  return { extracts, nextCursor, hasMore, total };
 }
 
 /**
- * Transfers all extracts from one meeting to another.
- * Used during deduplication to preserve extracts before deleting a duplicate meeting.
- *
- * @param fromMeetingId The meeting ID to transfer extracts from
- * @param toMeetingId The meeting ID to transfer extracts to
- * @returns Number of extracts transferred
+ * Transfers all extracts from one meeting to another within the same account.
  */
 export async function transferExtractsToMeeting(
+  accountId: string,
   fromMeetingId: string,
   toMeetingId: string
 ): Promise<number> {
@@ -865,22 +658,18 @@ export async function transferExtractsToMeeting(
   const result = await sql`
     UPDATE extracts
     SET meeting_id = ${toMeetingId}, updated_at = NOW()
-    WHERE meeting_id = ${fromMeetingId}
+    WHERE meeting_id = ${fromMeetingId} AND account_id = ${accountId}
     RETURNING id
   `;
   return result.length;
 }
 
-/**
- * Get extract counts grouped by meeting ID
- * Returns a map of meeting_id -> extract count
- */
-export async function getExtractCountsByMeetingIds(): Promise<Map<string, number>> {
+export async function getExtractCountsByMeetingIds(accountId: string): Promise<Map<string, number>> {
   const sql = getDb();
   const result = await sql`
     SELECT meeting_id, COUNT(*)::int as count
     FROM extracts
-    WHERE meeting_id IS NOT NULL
+    WHERE account_id = ${accountId} AND meeting_id IS NOT NULL
     GROUP BY meeting_id
   `;
   const countMap = new Map<string, number>();

@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountContext } from "@/lib/account-context";
 import { meetings, personnel } from "@/lib/db";
 import { processMeetingExtracts } from "@/lib/extraction";
 
-// Extend timeout for Gemini processing when transcript is provided
 export const maxDuration = 300;
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { accountId } = await requireAccountContext();
 
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get("status");
@@ -22,32 +18,27 @@ export async function GET(request: NextRequest) {
 
     if (status) {
       meetingList = await meetings.getMeetingsByStatus(
+        accountId,
         status as "pending" | "processing" | "transcribed" | "completed" | "failed"
       );
     } else if (days) {
-      meetingList = await meetings.getRecentMeetings(parseInt(days, 10));
+      meetingList = await meetings.getRecentMeetings(accountId, parseInt(days, 10));
     } else if (customerId) {
-      meetingList = await meetings.getMeetingsByCustomerId(customerId);
+      meetingList = await meetings.getMeetingsByCustomerId(accountId, customerId);
     } else {
-      meetingList = await meetings.getMeetings();
+      meetingList = await meetings.getMeetings(accountId);
     }
 
     return NextResponse.json({ meetings: meetingList });
   } catch (error) {
     console.error("Error fetching meetings:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch meetings" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch meetings" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { accountId } = await requireAccountContext();
 
     const body = await request.json();
     const {
@@ -57,19 +48,14 @@ export async function POST(request: NextRequest) {
       host_name,
       host_email,
       customer_id,
-      participants, // Array of { name: string, email?: string }
+      participants,
     } = body;
 
-    // Validate required fields
     if (!name || !name.trim()) {
-      return NextResponse.json(
-        { error: "Meeting name is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Meeting name is required" }, { status: 400 });
     }
 
-    // Create the meeting
-    const meeting = await meetings.createMeeting({
+    const meeting = await meetings.createMeeting(accountId, {
       name: name.trim(),
       meeting_date: meeting_date ? new Date(meeting_date) : null,
       transcript: transcript?.trim() || null,
@@ -81,43 +67,33 @@ export async function POST(request: NextRequest) {
       transcript_source: transcript?.trim() ? "manual" : null,
     });
 
-    // Add participants if provided
     if (participants && Array.isArray(participants)) {
       for (const participant of participants) {
         if (!participant.name && !participant.email) continue;
 
         try {
-          // Find or create personnel record
           let personnelRecord = participant.email
-            ? await personnel.getPersonnelByEmail(participant.email)
+            ? await personnel.getPersonnelByEmail(accountId, participant.email)
             : null;
 
           if (!personnelRecord) {
-            personnelRecord = await personnel.createPersonnel({
+            personnelRecord = await personnel.createPersonnel(accountId, {
               name: participant.name || participant.email?.split("@")[0] || "Unknown",
               email: participant.email || null,
             });
           }
 
-          // Add as meeting participant
-          await meetings.addMeetingParticipant(meeting.id, personnelRecord.id);
+          await meetings.addMeetingParticipant(accountId, meeting.id, personnelRecord.id);
         } catch (error) {
           console.error(`Failed to add participant:`, error);
         }
       }
     }
 
-    // Automatically extract insights if transcript is provided
     let extractionResult = null;
     if (transcript?.trim()) {
       try {
-        console.log(`Auto-extracting insights for manual meeting ${meeting.id}`);
-        extractionResult = await processMeetingExtracts(meeting.id);
-        if (extractionResult.success) {
-          console.log(`Extracted ${extractionResult.extractsCreated} insights from meeting ${meeting.id}`);
-        } else {
-          console.error(`Extraction failed for meeting ${meeting.id}:`, extractionResult.error);
-        }
+        extractionResult = await processMeetingExtracts(accountId, meeting.id);
       } catch (error) {
         console.error(`Failed to auto-extract insights for meeting ${meeting.id}:`, error);
       }
@@ -134,9 +110,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error creating meeting:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json(
-      { error: "Failed to create meeting", details: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to create meeting", details: message }, { status: 500 });
   }
 }

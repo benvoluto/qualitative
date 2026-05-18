@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountContext } from "@/lib/account-context";
 import { processMeetingExtracts } from "@/lib/extraction";
 import { extracts, meetings, customers, users } from "@/lib/db";
 import { generateMeetingNotesSummary } from "@/lib/gemini";
 import { generateEmailDraft } from "@/lib/workflows/email-workflow";
 import { trackEvent } from "@/lib/analytics";
+import { assertWithinUsage, UsageLimitError } from "@/lib/billing/usage";
 
-// Extend timeout for Gemini processing (requires Vercel Pro)
 export const maxDuration = 300;
 
 export async function POST(
@@ -14,46 +14,33 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    const { accountId, userId } = await requireAccountContext();
     const { id } = await params;
 
-    // Get user for custom prompts
-    const user = await users.getUserByEmail(session.user.email);
-    const userId = user?.id;
+    await assertWithinUsage(accountId);
 
-    // Check if reprocess flag is set
     let reprocess = false;
     try {
       const body = await request.json();
       reprocess = body.reprocess === true;
     } catch {
-      // No body or invalid JSON, continue with default
+      // No body or invalid JSON
     }
 
-    // If reprocessing, delete existing extracts first
     let deletedCount = 0;
     if (reprocess) {
-      const existingExtracts = await extracts.getExtractsByMeetingId(id);
+      const existingExtracts = await extracts.getExtractsByMeetingId(accountId, id);
       for (const extract of existingExtracts) {
-        await extracts.removeAllExtractTags(extract.id);
-        await extracts.deleteExtract(extract.id);
+        await extracts.removeAllExtractTags(accountId, extract.id);
+        await extracts.deleteExtract(accountId, extract.id);
         deletedCount++;
       }
-      console.log(`Deleted ${deletedCount} existing extracts for meeting ${id}`);
     }
 
-    // Process the meeting to extract insights
-    const result = await processMeetingExtracts(id);
+    const result = await processMeetingExtracts(accountId, id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { success: false, error: result.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: result.error }, { status: 400 });
     }
 
     await trackEvent("meeting_extracted", {
@@ -62,22 +49,19 @@ export async function POST(
       reprocess,
     });
 
-    // Auto-generate notes and email draft after successful extraction
     let notesGenerated = false;
     let emailGenerated = false;
     const autoGenErrors: string[] = [];
 
-    // Get fresh extracts and meeting data for generation
-    const meetingExtracts = await extracts.getExtractsByMeetingId(id);
-    const meeting = await meetings.getMeetingById(id);
+    const meetingExtracts = await extracts.getExtractsByMeetingId(accountId, id);
+    const meeting = await meetings.getMeetingById(accountId, id);
 
     if (meeting && meetingExtracts.length > 0) {
-      // Auto-generate meeting notes
       try {
         const customer = meeting.customer_id
-          ? await customers.getCustomerById(meeting.customer_id)
+          ? await customers.getCustomerById(accountId, meeting.customer_id)
           : null;
-        const meetingParticipants = await meetings.getMeetingParticipantsWithDetails(id);
+        const meetingParticipants = await meetings.getMeetingParticipantsWithDetails(accountId, id);
         let customNotesPrompt: string | null = null;
         if (userId) {
           const templates = await users.getUserPromptTemplates(userId);
@@ -95,24 +79,19 @@ export async function POST(
         if (meeting.user_notes && meeting.user_notes.trim()) {
           updatedNotes = `${meeting.user_notes}\n\n---\n\n## AI-Generated Summary (${new Date().toLocaleDateString()})\n\n${notesSummary}`;
         }
-        await meetings.updateMeeting(id, { user_notes: updatedNotes });
+        await meetings.updateMeeting(accountId, id, { user_notes: updatedNotes });
         notesGenerated = true;
-        console.log(`Auto-generated notes for meeting ${id}`);
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : "Unknown error";
         autoGenErrors.push(`Notes: ${errMsg}`);
-        console.error(`Failed to auto-generate notes for meeting ${id}:`, err);
       }
 
-      // Auto-generate email draft
       try {
-        await generateEmailDraft(id, "follow_up", userId);
+        await generateEmailDraft(accountId, id, "follow_up", userId);
         emailGenerated = true;
-        console.log(`Auto-generated email draft for meeting ${id}`);
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : "Unknown error";
         autoGenErrors.push(`Email: ${errMsg}`);
-        console.error(`Failed to auto-generate email for meeting ${id}:`, err);
       }
     }
 
@@ -131,11 +110,11 @@ export async function POST(
       message,
     });
   } catch (error) {
+    if (error instanceof UsageLimitError) {
+      return NextResponse.json({ error: error.message, code: "usage_limit" }, { status: 402 });
+    }
     console.error("Extraction error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json(
-      { error: "Failed to extract insights", details: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to extract insights", details: message }, { status: 500 });
   }
 }

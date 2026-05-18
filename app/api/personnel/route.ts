@@ -1,24 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountId } from "@/lib/account-context";
 import { personnel } from "@/lib/db";
 
-/**
- * Search personnel by name or email.
- * GET /api/personnel?q=search_term
- */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
 
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get("q");
 
     if (!query || query.trim().length < 1) {
-      // Return all personnel if no query
-      const allPersonnel = await personnel.getPersonnel();
+      const allPersonnel = await personnel.getPersonnel(accountId);
       return NextResponse.json({
         success: true,
         personnel: allPersonnel,
@@ -26,7 +18,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const results = await personnel.searchPersonnel(query);
+    const results = await personnel.searchPersonnel(accountId, query);
 
     return NextResponse.json({
       success: true,
@@ -36,10 +28,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Personnel search error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json(
-      { error: "Failed to search personnel", details: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to search personnel", details: message }, { status: 500 });
   }
 }
 
@@ -52,29 +41,19 @@ interface CreatePersonnelBody {
   customer_id?: string;
 }
 
-/**
- * Create a new personnel record.
- * POST /api/personnel
- */
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
 
     const body: CreatePersonnelBody = await request.json();
 
     if (!body.name) {
-      return NextResponse.json(
-        { error: "Name is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    // If hubspot_contact_id is provided, use upsert to avoid duplicates
     if (body.hubspot_contact_id) {
       const newPersonnel = await personnel.upsertPersonnelByHubSpotContactId(
+        accountId,
         body.hubspot_contact_id,
         {
           name: body.name,
@@ -85,27 +64,17 @@ export async function POST(request: NextRequest) {
         }
       );
 
-      return NextResponse.json({
-        success: true,
-        personnel: newPersonnel,
-        created: true,
-      });
+      return NextResponse.json({ success: true, personnel: newPersonnel, created: true });
     }
 
-    // Check if personnel with this email already exists
     if (body.email) {
-      const existing = await personnel.getPersonnelByEmail(body.email);
+      const existing = await personnel.getPersonnelByEmail(accountId, body.email);
       if (existing) {
-        return NextResponse.json({
-          success: true,
-          personnel: existing,
-          created: false,
-        });
+        return NextResponse.json({ success: true, personnel: existing, created: false });
       }
     }
 
-    // Create new personnel
-    const newPersonnel = await personnel.createPersonnel({
+    const newPersonnel = await personnel.createPersonnel(accountId, {
       name: body.name,
       email: body.email,
       title: body.title,
@@ -113,17 +82,10 @@ export async function POST(request: NextRequest) {
       customer_id: body.customer_id,
     });
 
-    return NextResponse.json({
-      success: true,
-      personnel: newPersonnel,
-      created: true,
-    });
+    return NextResponse.json({ success: true, personnel: newPersonnel, created: true });
   } catch (error) {
     console.error("Personnel creation error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json(
-      { error: "Failed to create personnel", details: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to create personnel", details: message }, { status: 500 });
   }
 }

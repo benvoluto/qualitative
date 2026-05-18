@@ -4,8 +4,8 @@
  */
 import { config } from "dotenv";
 
-// Load environment variables from .env.development.local
-config({ path: ".env.development.local" });
+// Load environment variables from .env.local
+config({ path: ".env.local" });
 
 const MAILJET_API_URL = "https://api.mailjet.com/v3.1/send";
 

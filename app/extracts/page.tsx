@@ -1,4 +1,5 @@
 import { extracts, tags, extractRules, customers } from "@/lib/db";
+import { requireAccountId } from "@/lib/account-context";
 import { ExtractsFilter } from "./extracts-filter";
 import { LogoMenu } from "@/components/logo-menu";
 
@@ -6,12 +7,12 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 export default async function ExtractsPage() {
-  // Get all data using optimized queries
+  const accountId = await requireAccountId();
   const [allTags, allRules, allCustomers, paginatedResult] = await Promise.all([
-    tags.getTags(),
-    extractRules.getExtractRules(),
-    customers.getCustomers(),
-    extracts.getExtractsWithDetailsPaginated({ limit: 500 }),
+    tags.getTags(accountId),
+    extractRules.getExtractRules(accountId),
+    customers.getCustomers(accountId),
+    extracts.getExtractsWithDetailsPaginated(accountId, { limit: 500 }),
   ]);
 
   // Transform the paginated result to the format expected by ExtractsFilter

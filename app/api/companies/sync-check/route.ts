@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountId } from "@/lib/account-context";
 import { isHubSpotConfigured, getLatestHubSpotCompanyModifiedDate } from "@/lib/hubspot";
 import { companies } from "@/lib/db";
 
@@ -11,14 +11,11 @@ export const maxDuration = 300;
  */
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
     if (!isHubSpotConfigured()) {
       return NextResponse.json({ needsSync: false, reason: "HubSpot not configured" });
     }
-    const localLastSync = await companies.getLastCompanySyncTime();
+    const localLastSync = await companies.getLastCompanySyncTime(accountId);
     const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
     const isCooldownActive = localLastSync !== null &&
       (Date.now() - localLastSync.getTime()) < TWENTY_FOUR_HOURS_MS;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountContext } from "@/lib/account-context";
 import { users, extracts, emailDrafts } from "@/lib/db";
 import { fetchGoogleMeetings, syncMeetingWithAttendees, GoogleMeetEvent } from "@/lib/google/meetings";
 import { meetings, personnel } from "@/lib/db";
@@ -9,14 +9,7 @@ import { isMicrosoftConfigured, userHasMicrosoftTokens, getTeamsMeetingsForSync,
 import { DeduplicationResult } from "@/lib/db/meetings";
 import { features } from "@/lib/features";
 
-/** Maximum duration for this serverless function (seconds) - Vercel Pro allows up to 300s */
 export const maxDuration = 300;
-
-/**
- * HUBSPOT MEETING SYNC IS PERMANENTLY DISABLED
- * Meeting sources are limited to: Google Meet, Zoom, and Microsoft Teams.
- * The HubSpot sync code has been removed entirely.
- */
 
 interface SyncResult {
   synced: number;
@@ -36,23 +29,15 @@ interface SyncAllResponse {
   message: string;
 }
 
-/**
- * Syncs meetings from all connected sources.
- * Designed for background auto-sync (no conflict checking UI).
- */
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { accountId, userId } = await requireAccountContext();
 
-    const user = await users.getUserByEmail(session.user.email);
+    const user = await users.getUserById(userId);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Parse optional parameters
     let days = 14;
     try {
       const body = await request.json();
@@ -63,8 +48,7 @@ export async function POST(request: NextRequest) {
       // Use defaults
     }
 
-    // Ensure companies are synced first
-    await ensureCompaniesAreSynced(1);
+    await ensureCompaniesAreSynced(accountId, 1);
 
     const response: SyncAllResponse = {
       success: true,
@@ -77,42 +61,35 @@ export async function POST(request: NextRequest) {
       message: "",
     };
 
-    // Sync Google Meet if connected
     if (user.google_access_token) {
-      response.google = await syncGoogleMeetings(user.id, days);
+      response.google = await syncGoogleMeetings(accountId, user.id, days);
       response.totalSynced += response.google.synced;
     }
 
-    // NOTE: HubSpot meeting sync has been permanently disabled
-    // response.hubspot is always null
-
-    // Sync Zoom if connected
     if (features.zoom) {
       const hasZoom = await users.hasZoomConnected(user.id);
       if (hasZoom) {
-        response.zoom = await syncZoomMeetings(user.id, days);
+        response.zoom = await syncZoomMeetings(accountId, user.id, days);
         response.totalSynced += response.zoom.synced;
       }
     }
 
-    // Sync Teams if connected
     if (features.teams && isMicrosoftConfigured()) {
       const hasTeamsTokens = await userHasMicrosoftTokens(user.id);
       if (hasTeamsTokens) {
-        response.teams = await syncTeamsMeetings(user.id, days);
+        response.teams = await syncTeamsMeetings(accountId, user.id, days);
         response.totalSynced += response.teams.synced;
       }
     }
 
-    // Run deduplication to remove duplicate HubSpot meetings
     response.deduplication = await meetings.deduplicateMeetings(
+      accountId,
       days,
       extracts.transferExtractsToMeeting,
       emailDrafts.transferEmailDraftsToMeeting,
       extracts.getExtractCountByMeetingId
     );
 
-    // Build summary message
     const syncedSources: string[] = [];
     if (response.google?.synced) syncedSources.push(`${response.google.synced} from Google`);
     if (response.hubspot?.synced) syncedSources.push(`${response.hubspot.synced} from HubSpot`);
@@ -134,7 +111,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function syncGoogleMeetings(userId: string, days: number): Promise<SyncResult> {
+async function syncGoogleMeetings(accountId: string, userId: string, days: number): Promise<SyncResult> {
   const result: SyncResult = { synced: 0, existing: 0, skipped: 0, errors: [] };
 
   try {
@@ -154,18 +131,18 @@ async function syncGoogleMeetings(userId: string, days: number): Promise<SyncRes
           continue;
         }
 
-        const existingMeeting = await meetings.getMeetingByExternalId(event.id);
+        const existingMeeting = await meetings.getMeetingByExternalId(accountId, event.id);
         if (existingMeeting) {
-          await updateMeetingParticipantsIfNeeded(existingMeeting.id, event);
+          await updateMeetingParticipantsIfNeeded(accountId, existingMeeting.id, event);
           if (!existingMeeting.customer_id) {
-            await matchMeetingToCompanyByEmails(existingMeeting.id, participantEmails);
+            await matchMeetingToCompanyByEmails(accountId, existingMeeting.id, participantEmails);
           }
           result.existing++;
           continue;
         }
 
-        const syncResult = await syncMeetingWithAttendees(event, personnel, userId);
-        await matchMeetingToCompanyByEmails(syncResult.meeting.id, participantEmails);
+        const syncResult = await syncMeetingWithAttendees(accountId, event, personnel, userId);
+        await matchMeetingToCompanyByEmails(accountId, syncResult.meeting.id, participantEmails);
         result.synced++;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -180,23 +157,21 @@ async function syncGoogleMeetings(userId: string, days: number): Promise<SyncRes
   return result;
 }
 
-async function updateMeetingParticipantsIfNeeded(meetingId: string, event: GoogleMeetEvent): Promise<void> {
-  const existingParticipants = await meetings.getMeetingParticipantsWithDetails(meetingId);
-  if (existingParticipants.length > 0) {
-    return;
-  }
+async function updateMeetingParticipantsIfNeeded(
+  accountId: string,
+  meetingId: string,
+  event: GoogleMeetEvent
+): Promise<void> {
+  const existingParticipants = await meetings.getMeetingParticipantsWithDetails(accountId, meetingId);
+  if (existingParticipants.length > 0) return;
 
-  const meeting = await meetings.getMeetingById(meetingId);
+  const meeting = await meetings.getMeetingById(accountId, meetingId);
   if (meeting && (!meeting.host_name || !meeting.host_email)) {
     const updates: { host_name?: string; host_email?: string } = {};
-    if (!meeting.host_name && event.organizerName) {
-      updates.host_name = event.organizerName;
-    }
-    if (!meeting.host_email && event.organizerEmail) {
-      updates.host_email = event.organizerEmail;
-    }
+    if (!meeting.host_name && event.organizerName) updates.host_name = event.organizerName;
+    if (!meeting.host_email && event.organizerEmail) updates.host_email = event.organizerEmail;
     if (Object.keys(updates).length > 0) {
-      await meetings.updateMeeting(meetingId, updates);
+      await meetings.updateMeeting(accountId, meetingId, updates);
     }
   }
 
@@ -206,23 +181,23 @@ async function updateMeetingParticipantsIfNeeded(meetingId: string, event: Googl
     if (isOrganizer) continue;
 
     try {
-      let personnelRecord = await personnel.getPersonnelByEmail(attendee.email);
+      let personnelRecord = await personnel.getPersonnelByEmail(accountId, attendee.email);
       if (!personnelRecord) {
         const name = attendee.displayName || attendee.email.split("@")[0];
-        personnelRecord = await personnel.createPersonnel({ name, email: attendee.email });
+        personnelRecord = await personnel.createPersonnel(accountId, { name, email: attendee.email });
       }
-      await meetings.addMeetingParticipant(meetingId, personnelRecord.id);
+      await meetings.addMeetingParticipant(accountId, meetingId, personnelRecord.id);
     } catch (error) {
       console.error(`Failed to add attendee ${attendee.email}:`, error);
     }
   }
 }
 
-async function syncZoomMeetings(userId: string, days: number): Promise<SyncResult> {
+async function syncZoomMeetings(accountId: string, userId: string, days: number): Promise<SyncResult> {
   const result: SyncResult = { synced: 0, existing: 0, skipped: 0, errors: [] };
 
   try {
-    const zoomMeetings = await getUserZoomMeetingsForSync(userId, days);
+    const zoomMeetings = await getUserZoomMeetingsForSync(accountId, userId, days);
 
     for (const zoomMeeting of zoomMeetings) {
       if (zoomMeeting.alreadySynced) {
@@ -234,9 +209,7 @@ async function syncZoomMeetings(userId: string, days: number): Promise<SyncResul
         let participantEmails: string[] = [];
         try {
           const participants = await getZoomMeetingParticipants(userId, zoomMeeting.uuid);
-          participantEmails = participants
-            .filter((p) => p.user_email)
-            .map((p) => p.user_email);
+          participantEmails = participants.filter((p) => p.user_email).map((p) => p.user_email);
         } catch {
           // Continue with host email only
         }
@@ -250,12 +223,9 @@ async function syncZoomMeetings(userId: string, days: number): Promise<SyncResul
           continue;
         }
 
-        const syncResult = await syncUserZoomMeetingToDatabase(userId, zoomMeeting);
-        if (syncResult.isNew) {
-          result.synced++;
-        } else {
-          result.existing++;
-        }
+        const syncResult = await syncUserZoomMeetingToDatabase(accountId, userId, zoomMeeting);
+        if (syncResult.isNew) result.synced++;
+        else result.existing++;
       } catch (error) {
         if (error instanceof ZoomReauthRequiredError) {
           result.errors.push("Zoom requires re-authentication");
@@ -277,11 +247,11 @@ async function syncZoomMeetings(userId: string, days: number): Promise<SyncResul
   return result;
 }
 
-async function syncTeamsMeetings(userId: string, days: number): Promise<SyncResult> {
+async function syncTeamsMeetings(accountId: string, userId: string, days: number): Promise<SyncResult> {
   const result: SyncResult = { synced: 0, existing: 0, skipped: 0, errors: [] };
 
   try {
-    const teamsMeetings = await getTeamsMeetingsForSync(userId, days);
+    const teamsMeetings = await getTeamsMeetingsForSync(accountId, userId, days);
 
     for (const teamsMeeting of teamsMeetings) {
       if (teamsMeeting.alreadySynced) {
@@ -290,7 +260,7 @@ async function syncTeamsMeetings(userId: string, days: number): Promise<SyncResu
       }
 
       try {
-        await syncTeamsMeetingToDatabase(userId, teamsMeeting);
+        await syncTeamsMeetingToDatabase(accountId, userId, teamsMeeting);
         result.synced++;
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

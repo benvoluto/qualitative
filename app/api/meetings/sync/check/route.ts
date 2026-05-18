@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountContext } from "@/lib/account-context";
 import { fetchGoogleMeetings } from "@/lib/google/meetings";
 import { fetchHubSpotMeetingsLastDays, isHubSpotConfigured } from "@/lib/hubspot";
 import { getUserZoomMeetingsForSync, getZoomMeetingParticipants } from "@/lib/zoom";
@@ -34,12 +34,8 @@ interface PotentialMeeting {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { accountId, userId } = await requireAccountContext();
 
-    // Parse request body
     let source: SyncSource = "google";
     let days = 7;
     try {
@@ -55,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     const potentialMeetings: PotentialMeeting[] = [];
-    const user = await users.getUserByEmail(session.user.email);
+    const user = await users.getUserById(userId);
 
     if (source === "google") {
       // Get user for Google API access
@@ -70,7 +66,7 @@ export async function POST(request: NextRequest) {
 
       for (const event of googleMeetings) {
         // Check if already synced by external ID
-        const existingByExternalId = await meetings.getMeetingByExternalId(event.id);
+        const existingByExternalId = await meetings.getMeetingByExternalId(accountId, event.id);
         if (existingByExternalId) {
           potentialMeetings.push({
             externalId: event.id,
@@ -98,7 +94,7 @@ export async function POST(request: NextRequest) {
         let conflictingMeeting = undefined;
 
         if (event.start) {
-          const nearbyMeetings = await meetings.findMeetingsNearDate(event.start, 30);
+          const nearbyMeetings = await meetings.findMeetingsNearDate(accountId, event.start, 30);
           // Only flag as duplicate if same host email
           const matchingMeeting = nearbyMeetings.find((m) =>
             m.host_email &&
@@ -150,7 +146,7 @@ export async function POST(request: NextRequest) {
         const externalId = `hubspot_${hsMeeting.id}`;
 
         // Check if already synced by external ID
-        const existingByExternalId = await meetings.getMeetingByExternalId(externalId);
+        const existingByExternalId = await meetings.getMeetingByExternalId(accountId, externalId);
         if (existingByExternalId) {
           potentialMeetings.push({
             externalId,
@@ -168,7 +164,7 @@ export async function POST(request: NextRequest) {
         let conflictingMeeting = undefined;
 
         if (hsMeeting.startTime) {
-          const nearbyMeetings = await meetings.findMeetingsNearDate(hsMeeting.startTime, 30);
+          const nearbyMeetings = await meetings.findMeetingsNearDate(accountId, hsMeeting.startTime, 30);
           if (nearbyMeetings.length > 0) {
             hasTimeConflict = true;
             const conflict = nearbyMeetings[0];
@@ -211,7 +207,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const zoomMeetings = await getUserZoomMeetingsForSync(user.id, days);
+      const zoomMeetings = await getUserZoomMeetingsForSync(accountId, user.id, days);
 
       for (const zoomMeeting of zoomMeetings) {
         if (zoomMeeting.alreadySynced) {
@@ -247,7 +243,7 @@ export async function POST(request: NextRequest) {
         let hasTimeConflict = false;
         let conflictingMeeting = undefined;
 
-        const nearbyMeetings = await meetings.findMeetingsNearDate(zoomMeeting.startTime, 30);
+        const nearbyMeetings = await meetings.findMeetingsNearDate(accountId, zoomMeeting.startTime, 30);
         // Only flag as duplicate if same host email
         const matchingMeeting = nearbyMeetings.find((m) =>
           m.host_email &&
@@ -305,7 +301,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const teamsMeetings = await getTeamsMeetingsForSync(user.id, days);
+      const teamsMeetings = await getTeamsMeetingsForSync(accountId, user.id, days);
 
       for (const teamsMeeting of teamsMeetings) {
         if (teamsMeeting.alreadySynced) {
@@ -330,7 +326,7 @@ export async function POST(request: NextRequest) {
         let hasTimeConflict = false;
         let conflictingMeeting = undefined;
 
-        const nearbyMeetings = await meetings.findMeetingsNearDate(teamsMeeting.startTime, 30);
+        const nearbyMeetings = await meetings.findMeetingsNearDate(accountId, teamsMeeting.startTime, 30);
         // Only flag as duplicate if same host email
         const matchingMeeting = nearbyMeetings.find((m) =>
           m.host_email &&

@@ -1,11 +1,13 @@
 import { customers } from "@/lib/db";
+import { requireAccountId } from "@/lib/account-context";
 import { NewMeetingForm } from "./new-meeting-form";
 import { LogoMenu } from "@/components/logo-menu";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewMeetingPage() {
-  const customersList = await customers.getCustomers();
+  const accountId = await requireAccountId();
+  const customersList = await customers.getCustomers(accountId);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

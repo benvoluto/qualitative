@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountId } from "@/lib/account-context";
 import { meetings, extracts, customers, activitySummaries } from "@/lib/db";
 import { generateActivitySummary } from "@/lib/gemini/activity-summary";
 import { Customer, Meeting } from "@/lib/db/types";
@@ -15,11 +15,7 @@ interface SummaryResponse {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
 
     // Get period from query params (default to "week")
     const period = request.nextUrl.searchParams.get("period") || "week";
@@ -42,18 +38,16 @@ export async function GET(request: NextRequest) {
         break;
     }
 
-    const recentMeetings = await meetings.getMeetingsInDateRange(startDate, endDate);
+    const recentMeetings = await meetings.getMeetingsInDateRange(accountId, startDate, endDate);
 
     if (recentMeetings.length === 0) {
       return NextResponse.json({ summaries: [] });
     }
 
-    // Get all extracts for these meetings in a single batch query
     const meetingIds = recentMeetings.map((m) => m.id);
-    const extractsByMeetingId = await extracts.getExtractsByMeetingIds(meetingIds);
+    const extractsByMeetingId = await extracts.getExtractsByMeetingIds(accountId, meetingIds);
 
-    // Get all customers for lookup
-    const allCustomers = await customers.getCustomers();
+    const allCustomers = await customers.getCustomers(accountId);
     const customersById = new Map<string, Customer>(
       allCustomers.map((c) => [c.id, c])
     );
@@ -96,10 +90,8 @@ export async function GET(request: NextRequest) {
       const hashInput = extractIds.length > 0 ? extractIds : typeMeetings.map((m) => m.id);
       const hash = activitySummaries.generateExtractIdsHash(hashInput);
 
-      // Check for cached summary (skip if forcing regenerate)
       if (!forceRegenerate) {
-        // First try exact hash match (fresh within 3 hours)
-        const cached = await activitySummaries.getActivitySummaryByHash(type, hash);
+        const cached = await activitySummaries.getActivitySummaryByHash(accountId, type, hash);
         if (cached) {
           return {
             type,
@@ -108,9 +100,7 @@ export async function GET(request: NextRequest) {
           };
         }
 
-        // If no exact match, try any recent summary for this type (within 24 hours)
-        // This avoids regeneration when only minor changes occurred
-        const recentCached = await activitySummaries.getRecentActivitySummaryByType(type, 24);
+        const recentCached = await activitySummaries.getRecentActivitySummaryByType(accountId, type, 24);
         if (recentCached) {
           console.log(`Using recent cached summary for ${type} (hash mismatch but within 24h)`);
           return {
@@ -135,8 +125,7 @@ export async function GET(request: NextRequest) {
       }
 
       if (generated) {
-        // Cache the new summary
-        await activitySummaries.upsertActivitySummary({
+        await activitySummaries.upsertActivitySummary(accountId, {
           summary_type: type,
           extract_ids_hash: hash,
           summary_text: generated.summary,
@@ -145,9 +134,7 @@ export async function GET(request: NextRequest) {
         return generated;
       }
 
-      // Generation failed - try to use any existing cached summary as fallback
-      console.log(`Generation failed for ${type}, trying fallback cache...`);
-      const fallback = await activitySummaries.getLatestActivitySummaryByType(type);
+      const fallback = await activitySummaries.getLatestActivitySummaryByType(accountId, type);
       if (fallback) {
         console.log(`Using fallback cache for ${type} (from ${fallback.updated_at})`);
         return {

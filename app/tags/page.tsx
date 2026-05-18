@@ -1,4 +1,5 @@
 import { tags } from "@/lib/db";
+import { requireAccountId } from "@/lib/account-context";
 import { TagsList } from "./tags-list";
 import { AddTagForm } from "./add-tag-form";
 import { TAG_COLORS } from "@/lib/constants/colors";
@@ -7,9 +8,10 @@ import { LogoMenu } from "@/components/logo-menu";
 export const dynamic = "force-dynamic";
 
 export default async function TagsPage() {
+  const accountId = await requireAccountId();
   const [allTags, usedColors] = await Promise.all([
-    tags.getTags(),
-    tags.getUsedColors(),
+    tags.getTags(accountId),
+    tags.getUsedColors(accountId),
   ]);
 
   // Calculate available colors

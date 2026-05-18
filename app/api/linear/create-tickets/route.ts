@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAccountId } from "@/lib/account-context";
 import { meetings, extracts, customers } from "@/lib/db";
 import { generateCRMNotes, extractFeatureRequests, extractBugReports } from "@/lib/gemini";
 import {
@@ -9,6 +10,7 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
+    const accountId = await requireAccountId();
     if (!isLinearConfigured()) {
       return NextResponse.json(
         { error: "Linear is not configured. Set LINEAR_API_KEY environment variable." },
@@ -33,27 +35,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get meeting and extracts
-    const meeting = await meetings.getMeetingById(meetingId);
+    const meeting = await meetings.getMeetingById(accountId, meetingId);
     if (!meeting) {
-      return NextResponse.json(
-        { error: "Meeting not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
-    const meetingExtracts = await extracts.getExtractsWithTagsByMeetingId(meetingId);
+    const meetingExtracts = await extracts.getExtractsWithTagsByMeetingId(accountId, meetingId);
     if (meetingExtracts.length === 0) {
-      return NextResponse.json(
-        { error: "No extracts found for this meeting" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No extracts found for this meeting" }, { status: 400 });
     }
 
-    // Get customer if linked
     let customer = null;
     if (meeting.customer_id) {
-      customer = await customers.getCustomerById(meeting.customer_id);
+      customer = await customers.getCustomerById(accountId, meeting.customer_id);
     }
 
     // Generate CRM notes to extract feature requests and bugs

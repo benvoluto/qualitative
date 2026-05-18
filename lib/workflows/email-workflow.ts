@@ -23,6 +23,7 @@ export interface EmailWorkflowResult {
  * @param additionalInstructions - Optional additional instructions for generation
  */
 export async function runEmailWorkflow(
+  accountId: string,
   meetingId: string,
   draftTypes: EmailDraftType[] = ["follow_up"],
   userId?: string,
@@ -35,7 +36,6 @@ export async function runEmailWorkflow(
   };
 
   try {
-    // Fetch custom prompts if userId provided
     let customPrompts: CustomEmailPrompts | undefined;
     if (userId) {
       const templates = await users.getUserPromptTemplates(userId);
@@ -45,39 +45,29 @@ export async function runEmailWorkflow(
       };
     }
 
-    // Fetch meeting
-    const meeting = await meetings.getMeetingById(meetingId);
+    const meeting = await meetings.getMeetingById(accountId, meetingId);
     if (!meeting) {
       result.success = false;
       result.errors.push(`Meeting not found: ${meetingId}`);
       return result;
     }
 
-    // Fetch extracts for this meeting
-    const meetingExtracts = await extracts.getExtractsByMeetingId(meetingId);
+    const meetingExtracts = await extracts.getExtractsByMeetingId(accountId, meetingId);
 
-    // Fetch customer if associated
     let customer = null;
     if (meeting.customer_id) {
-      customer = await customers.getCustomerById(meeting.customer_id);
+      customer = await customers.getCustomerById(accountId, meeting.customer_id);
     }
 
-    // Determine recipients from multiple sources:
-    // 1. Meeting participants from database
-    // 2. Extracts with participant info
     const hostEmail = meeting.host_email?.toLowerCase();
 
-    // Collect unique participants (excluding host) with participation status
     const participants = new Map<string, { name: string; email: string; status: ParticipationStatus }>();
 
-    // 1. Get participants from meeting_participants table
-    const meetingParticipants = await meetings.getMeetingParticipantsWithDetails(meetingId);
+    const meetingParticipants = await meetings.getMeetingParticipantsWithDetails(accountId, meetingId);
     for (const participant of meetingParticipants) {
       if (participant.email) {
         const email = participant.email.toLowerCase();
-        if (hostEmail && email === hostEmail) {
-          continue;
-        }
+        if (hostEmail && email === hostEmail) continue;
         if (!participants.has(email)) {
           participants.set(email, {
             name: participant.name,
@@ -88,13 +78,10 @@ export async function runEmailWorkflow(
       }
     }
 
-    // 2. Also check extracts for participant info (mark as participated since they spoke)
     for (const extract of meetingExtracts) {
       if (extract.participant_email) {
         const email = extract.participant_email.toLowerCase();
-        if (hostEmail && email === hostEmail) {
-          continue;
-        }
+        if (hostEmail && email === hostEmail) continue;
         if (!participants.has(email)) {
           participants.set(email, {
             name: extract.participant_name || "Unknown",
@@ -105,17 +92,14 @@ export async function runEmailWorkflow(
       }
     }
 
-    // 3. If still no participants, try HubSpot fallback
     if (participants.size === 0) {
       try {
-        const hubspotEmails = await getParticipantsFromHubSpotFallback(meetingId);
+        const hubspotEmails = await getParticipantsFromHubSpotFallback(accountId, meetingId);
         for (const email of hubspotEmails) {
           const emailLower = email.toLowerCase();
-          if (hostEmail && emailLower === hostEmail) {
-            continue;
-          }
+          if (hostEmail && emailLower === hostEmail) continue;
           if (!participants.has(emailLower)) {
-            const personnelRecord = await personnel.getPersonnelByEmail(email);
+            const personnelRecord = await personnel.getPersonnelByEmail(accountId, email);
             participants.set(emailLower, {
               name: personnelRecord?.name || email.split("@")[0],
               email: email,
@@ -182,8 +166,7 @@ export async function runEmailWorkflow(
             continue;
         }
 
-        // Save the draft
-        const draft = await emailDrafts.createEmailDraft({
+        const draft = await emailDrafts.createEmailDraft(accountId, {
           meeting_id: meetingId,
           draft_type: draftType,
           subject: generatedEmail.subject,
@@ -218,43 +201,39 @@ export async function runEmailWorkflow(
  * Generate a specific type of email draft for a meeting
  */
 export async function generateEmailDraft(
+  accountId: string,
   meetingId: string,
   draftType: EmailDraftType,
   userId?: string,
   additionalInstructions?: string | null
 ): Promise<EmailDraft> {
-  const result = await runEmailWorkflow(meetingId, [draftType], userId, additionalInstructions);
+  const result = await runEmailWorkflow(accountId, meetingId, [draftType], userId, additionalInstructions);
   if (!result.success || result.drafts.length === 0) {
-    throw new Error(
-      result.errors.join(", ") || "Failed to generate email draft"
-    );
+    throw new Error(result.errors.join(", ") || "Failed to generate email draft");
   }
   return result.drafts[0];
 }
 
-/**
- * Regenerate an existing email draft
- */
 export async function regenerateEmailDraft(
+  accountId: string,
   draftId: string,
   userId?: string,
   additionalInstructions?: string | null
 ): Promise<EmailDraft> {
-  const existingDraft = await emailDrafts.getEmailDraftById(draftId);
+  const existingDraft = await emailDrafts.getEmailDraftById(accountId, draftId);
   if (!existingDraft) {
     throw new Error(`Draft not found: ${draftId}`);
   }
   const result = await runEmailWorkflow(
+    accountId,
     existingDraft.meeting_id,
     [existingDraft.draft_type],
     userId,
     additionalInstructions
   );
   if (!result.success || result.drafts.length === 0) {
-    throw new Error(
-      result.errors.join(", ") || "Failed to regenerate email draft"
-    );
+    throw new Error(result.errors.join(", ") || "Failed to regenerate email draft");
   }
-  await emailDrafts.deleteEmailDraft(draftId);
+  await emailDrafts.deleteEmailDraft(accountId, draftId);
   return result.drafts[0];
 }

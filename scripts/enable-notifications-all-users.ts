@@ -5,8 +5,8 @@
 import { config } from "dotenv";
 import { neon } from "@neondatabase/serverless";
 
-// Load environment variables from .env.development.local
-config({ path: ".env.development.local" });
+// Load environment variables from .env.local
+config({ path: ".env.local" });
 
 async function enableNotificationsForAllUsers(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;

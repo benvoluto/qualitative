@@ -1,4 +1,5 @@
 import { meetings, customers, extracts } from "@/lib/db";
+import { requireAccountId } from "@/lib/account-context";
 import { MeetingsList } from "./meetings-list";
 import { SyncButton } from "./sync-button";
 import { CustomersList } from "./customers-list";
@@ -8,10 +9,11 @@ import { LogoMenu } from "@/components/logo-menu";
 export const dynamic = "force-dynamic";
 
 export default async function MeetingsPage() {
+  const accountId = await requireAccountId();
   const [meetingsList, customersList, extractCounts] = await Promise.all([
-    meetings.getPastMeetings(),
-    customers.getCustomers(),
-    extracts.getExtractCountsByMeetingIds(),
+    meetings.getPastMeetings(accountId),
+    customers.getCustomers(accountId),
+    extracts.getExtractCountsByMeetingIds(accountId),
   ]);
 
   // Group meetings by status for stats

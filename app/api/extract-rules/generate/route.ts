@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountId } from "@/lib/account-context";
 import { generateExtractionRules, saveGeneratedRules } from "@/lib/gemini";
 
 // Extend timeout for Gemini processing (requires Vercel Pro)
@@ -7,10 +7,7 @@ export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
 
     const body = await request.json();
     const { transcript, notes } = body;
@@ -32,8 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save rules to database
-    const savedIds = await saveGeneratedRules(generatedRules);
+    const savedIds = await saveGeneratedRules(accountId, generatedRules);
 
     return NextResponse.json({
       success: true,

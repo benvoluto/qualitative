@@ -1,60 +1,48 @@
 import { getDb } from "./client";
 import { Company, CreateCompany, UpdateCompany } from "./types";
 
-/**
- * Get all companies ordered by name.
- */
-export async function getCompanies(): Promise<Company[]> {
+export async function getCompanies(accountId: string): Promise<Company[]> {
   const sql = getDb();
-  const result = await sql`SELECT * FROM companies ORDER BY name`;
+  const result = await sql`SELECT * FROM companies WHERE account_id = ${accountId} ORDER BY name`;
   return result as Company[];
 }
 
-/**
- * Get a company by ID.
- */
-export async function getCompanyById(id: string): Promise<Company | null> {
+export async function getCompanyById(accountId: string, id: string): Promise<Company | null> {
   const sql = getDb();
-  const result = await sql`SELECT * FROM companies WHERE id = ${id}`;
+  const result = await sql`SELECT * FROM companies WHERE id = ${id} AND account_id = ${accountId}`;
   return (result[0] as Company) || null;
 }
 
-/**
- * Get a company by HubSpot company ID.
- */
-export async function getCompanyByHubSpotId(hubspotId: string): Promise<Company | null> {
+export async function getCompanyByHubSpotId(accountId: string, hubspotId: string): Promise<Company | null> {
   const sql = getDb();
-  const result = await sql`SELECT * FROM companies WHERE hubspot_company_id = ${hubspotId}`;
-  return (result[0] as Company) || null;
-}
-
-/**
- * Get a company by domain (checks both primary domain and aliases).
- */
-export async function getCompanyByDomain(domain: string): Promise<Company | null> {
-  const sql = getDb();
-  const normalizedDomain = domain.toLowerCase().replace(/^www\./, "");
-  // Check both primary domain and domain_aliases
   const result = await sql`
-    SELECT * FROM companies
-    WHERE LOWER(REPLACE(domain, 'www.', '')) = ${normalizedDomain}
-       OR ${normalizedDomain} = ANY(SELECT LOWER(unnest(domain_aliases)))
+    SELECT * FROM companies WHERE hubspot_company_id = ${hubspotId} AND account_id = ${accountId}
   `;
   return (result[0] as Company) || null;
 }
 
-/**
- * Create a new company.
- */
-export async function createCompany(data: CreateCompany): Promise<Company> {
+export async function getCompanyByDomain(accountId: string, domain: string): Promise<Company | null> {
+  const sql = getDb();
+  const normalizedDomain = domain.toLowerCase().replace(/^www\./, "");
+  const result = await sql`
+    SELECT * FROM companies
+    WHERE account_id = ${accountId}
+      AND (LOWER(REPLACE(domain, 'www.', '')) = ${normalizedDomain}
+           OR ${normalizedDomain} = ANY(SELECT LOWER(unnest(domain_aliases))))
+  `;
+  return (result[0] as Company) || null;
+}
+
+export async function createCompany(accountId: string, data: CreateCompany): Promise<Company> {
   const sql = getDb();
   const result = await sql`
     INSERT INTO companies (
-      name, domain, address, city, state, zip, country,
+      account_id, name, domain, address, city, state, zip, country,
       hubspot_company_id, hubspot_synced_at,
       waitlist, waitlist_date, waitlist_followup, waitlist_source, deal_stage
     )
     VALUES (
+      ${accountId},
       ${data.name},
       ${data.domain ?? null},
       ${data.address ?? null},
@@ -75,12 +63,13 @@ export async function createCompany(data: CreateCompany): Promise<Company> {
   return result[0] as Company;
 }
 
-/**
- * Update an existing company.
- */
-export async function updateCompany(id: string, data: UpdateCompany): Promise<Company | null> {
+export async function updateCompany(
+  accountId: string,
+  id: string,
+  data: UpdateCompany
+): Promise<Company | null> {
   const sql = getDb();
-  const current = await getCompanyById(id);
+  const current = await getCompanyById(accountId, id);
   if (!current) return null;
 
   const result = await sql`
@@ -99,38 +88,30 @@ export async function updateCompany(id: string, data: UpdateCompany): Promise<Co
       waitlist_followup = ${data.waitlist_followup !== undefined ? data.waitlist_followup : current.waitlist_followup},
       waitlist_source = ${data.waitlist_source !== undefined ? data.waitlist_source : current.waitlist_source},
       deal_stage = ${data.deal_stage !== undefined ? data.deal_stage : current.deal_stage}
-    WHERE id = ${id}
+    WHERE id = ${id} AND account_id = ${accountId}
     RETURNING *
   `;
   return (result[0] as Company) || null;
 }
 
-/**
- * Delete a company.
- */
-export async function deleteCompany(id: string): Promise<boolean> {
+export async function deleteCompany(accountId: string, id: string): Promise<boolean> {
   const sql = getDb();
-  const result = await sql`DELETE FROM companies WHERE id = ${id} RETURNING id`;
+  const result = await sql`DELETE FROM companies WHERE id = ${id} AND account_id = ${accountId} RETURNING id`;
   return result.length > 0;
 }
 
-/**
- * Search companies by name.
- */
-export async function searchCompanies(query: string): Promise<Company[]> {
+export async function searchCompanies(accountId: string, query: string): Promise<Company[]> {
   const sql = getDb();
   const searchPattern = `%${query}%`;
   const result = await sql`
     SELECT * FROM companies
-    WHERE name ILIKE ${searchPattern} OR domain ILIKE ${searchPattern}
+    WHERE account_id = ${accountId}
+      AND (name ILIKE ${searchPattern} OR domain ILIKE ${searchPattern})
     ORDER BY name
   `;
   return result as Company[];
 }
 
-/**
- * Company with aggregated stats for display.
- */
 export interface CompanyWithStats extends Company {
   customer_count: number;
   deal_count: number;
@@ -139,10 +120,7 @@ export interface CompanyWithStats extends Company {
   pending_action_count: number;
 }
 
-/**
- * Get all companies with aggregated statistics.
- */
-export async function getCompaniesWithStats(): Promise<CompanyWithStats[]> {
+export async function getCompaniesWithStats(accountId: string): Promise<CompanyWithStats[]> {
   const sql = getDb();
   const result = await sql`
     SELECT
@@ -153,15 +131,16 @@ export async function getCompaniesWithStats(): Promise<CompanyWithStats[]> {
       COALESCE((SELECT COUNT(*) FROM extracts e WHERE e.company_id = co.id), 0)::int as extract_count,
       COALESCE((SELECT COUNT(*) FROM extracts e WHERE e.company_id = co.id AND e.is_action_item = true AND (e.action_item_status IS NULL OR e.action_item_status = 'pending')), 0)::int as pending_action_count
     FROM companies co
+    WHERE co.account_id = ${accountId}
     ORDER BY co.name
   `;
   return result as CompanyWithStats[];
 }
 
-/**
- * Get a single company with aggregated statistics.
- */
-export async function getCompanyWithStats(id: string): Promise<CompanyWithStats | null> {
+export async function getCompanyWithStats(
+  accountId: string,
+  id: string
+): Promise<CompanyWithStats | null> {
   const sql = getDb();
   const result = await sql`
     SELECT
@@ -172,56 +151,52 @@ export async function getCompanyWithStats(id: string): Promise<CompanyWithStats 
       COALESCE((SELECT COUNT(*) FROM extracts e WHERE e.company_id = co.id), 0)::int as extract_count,
       COALESCE((SELECT COUNT(*) FROM extracts e WHERE e.company_id = co.id AND e.is_action_item = true AND (e.action_item_status IS NULL OR e.action_item_status = 'pending')), 0)::int as pending_action_count
     FROM companies co
-    WHERE co.id = ${id}
+    WHERE co.id = ${id} AND co.account_id = ${accountId}
   `;
   return (result[0] as CompanyWithStats) || null;
 }
 
-/**
- * Get companies that need HubSpot sync (synced more than N hours ago or never).
- */
-export async function getCompaniesNeedingHubSpotSync(maxAgeHours: number = 1): Promise<Company[]> {
+export async function getCompaniesNeedingHubSpotSync(
+  accountId: string,
+  maxAgeHours: number = 1
+): Promise<Company[]> {
   const sql = getDb();
   const cutoffTime = new Date(Date.now() - maxAgeHours * 60 * 60 * 1000);
   const result = await sql`
     SELECT * FROM companies
-    WHERE hubspot_company_id IS NOT NULL
+    WHERE account_id = ${accountId}
+      AND hubspot_company_id IS NOT NULL
       AND (hubspot_synced_at IS NULL OR hubspot_synced_at < ${cutoffTime})
     ORDER BY hubspot_synced_at ASC NULLS FIRST
   `;
   return result as Company[];
 }
 
-/**
- * Get the most recent hubspot_synced_at timestamp from companies synced with HubSpot.
- */
-export async function getLastCompanySyncTime(): Promise<Date | null> {
+export async function getLastCompanySyncTime(accountId: string): Promise<Date | null> {
   const sql = getDb();
   const result = await sql`
     SELECT MAX(hubspot_synced_at) as last_sync
     FROM companies
-    WHERE hubspot_company_id IS NOT NULL
+    WHERE account_id = ${accountId} AND hubspot_company_id IS NOT NULL
   `;
   const lastSync = result[0]?.last_sync;
   return lastSync ? new Date(lastSync) : null;
 }
 
-/**
- * Upsert a company by HubSpot company ID.
- * Creates if not exists, updates if exists.
- */
 export async function upsertCompanyByHubSpotId(
+  accountId: string,
   hubspotId: string,
   data: Omit<CreateCompany, "hubspot_company_id">
 ): Promise<Company> {
   const sql = getDb();
   const result = await sql`
     INSERT INTO companies (
-      name, domain, address, city, state, zip, country,
+      account_id, name, domain, address, city, state, zip, country,
       hubspot_company_id, hubspot_synced_at,
       waitlist, waitlist_date, waitlist_followup, waitlist_source, deal_stage
     )
     VALUES (
+      ${accountId},
       ${data.name},
       ${data.domain ?? null},
       ${data.address ?? null},

@@ -5,7 +5,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 function loadEnv() {
-  const envPath = path.join(process.cwd(), ".env.development.local");
+  const envPath = path.join(process.cwd(), ".env.local");
   if (fs.existsSync(envPath)) {
     const content = fs.readFileSync(envPath, "utf-8");
     for (const line of content.split("\n")) {

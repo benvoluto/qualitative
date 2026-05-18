@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountId } from "@/lib/account-context";
 import { meetings, extracts, emailDrafts } from "@/lib/db";
 
 /**
@@ -9,10 +9,7 @@ import { meetings, extracts, emailDrafts } from "@/lib/db";
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
 
     let days = 30;
     try {
@@ -25,6 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await meetings.deduplicateMeetings(
+      accountId,
       days,
       extracts.transferExtractsToMeeting,
       emailDrafts.transferEmailDraftsToMeeting,

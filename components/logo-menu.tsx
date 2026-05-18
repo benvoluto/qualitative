@@ -51,6 +51,7 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
     { href: "/extracts", label: "Extracts", icon: DocumentIcon, count: counts?.extracts },
     { href: "/extracts?filter=action", label: "Action Items", icon: ChecklistIcon, count: counts?.actionItems },
     { href: "/extract-rules", label: "Extract Rules", icon: CogIcon, count: counts?.extractRules },
+    { href: "/billing", label: "Billing", icon: CreditCardIcon, count: undefined },
   ];
 
   const isActive = (path: string) => {
@@ -252,6 +253,19 @@ function CogIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
+  );
+}
+
+function CreditCardIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M3 10h18M5 6h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"
       />
     </svg>
   );

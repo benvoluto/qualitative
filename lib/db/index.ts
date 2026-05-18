@@ -5,6 +5,8 @@ export { getDb } from "./client";
 export * from "./types";
 
 // Repositories
+export * as accounts from "./accounts";
+export * as subscriptions from "./subscriptions";
 export * as companies from "./companies";
 export * as customers from "./customers";
 export * as personnel from "./personnel";

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountContext } from "@/lib/account-context";
 import { users } from "@/lib/db";
 import {
   getUserZoomMeetingsForSync,
@@ -14,14 +14,8 @@ export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Get user from database
-    const user = await users.getUserByEmail(session.user.email);
+    const { accountId, userId } = await requireAccountContext();
+    const user = await users.getUserById(userId);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -43,11 +37,9 @@ export async function POST(request: NextRequest) {
 
     const skipSet = new Set<string>(skipExternalIds);
 
-    // Ensure companies are synced with HubSpot deal stages (if not synced in past hour)
-    const companySyncResult = await ensureCompaniesAreSynced(1);
+    const companySyncResult = await ensureCompaniesAreSynced(accountId, 1);
 
-    // Get all Zoom meetings with recordings for this user
-    const zoomMeetings = await getUserZoomMeetingsForSync(user.id, days);
+    const zoomMeetings = await getUserZoomMeetingsForSync(accountId, user.id, days);
 
     // Filter out already synced and skipped meetings
     const toSync = zoomMeetings.filter(
@@ -93,7 +85,7 @@ export async function POST(request: NextRequest) {
         // Check if this is an internal meeting (for tracking and marking)
         const isInternal = isInternalMeeting(allEmails);
 
-        const syncResult = await syncUserZoomMeetingToDatabase(user.id, zoomMeeting);
+        const syncResult = await syncUserZoomMeetingToDatabase(accountId, user.id, zoomMeeting);
 
         // Track transcript download failures
         if (syncResult.transcriptFailed) {
@@ -101,11 +93,10 @@ export async function POST(request: NextRequest) {
           console.error(`[Zoom Sync] Transcript download failed for "${zoomMeeting.topic}" - had URL but download failed`);
         }
 
-        // Mark as internal if applicable
         if (isInternal && syncResult.isNew) {
           const { meetings } = await import("@/lib/db");
-          await meetings.updateMeeting(syncResult.meeting.id, { is_internal: true });
-          results.internalSkipped++; // Track as "internal synced" for the message
+          await meetings.updateMeeting(accountId, syncResult.meeting.id, { is_internal: true });
+          results.internalSkipped++;
         }
 
         results.synced.push({
@@ -170,14 +161,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    // Check authentication
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Get user from database
-    const user = await users.getUserByEmail(session.user.email);
+    const { accountId, userId } = await requireAccountContext();
+    const user = await users.getUserById(userId);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -191,8 +176,7 @@ export async function GET() {
       );
     }
 
-    // Return available meetings for preview (last 14 days for Zoom)
-    const meetings = await getUserZoomMeetingsForSync(user.id, 14);
+    const meetings = await getUserZoomMeetingsForSync(accountId, user.id, 14);
 
     return NextResponse.json({
       connected: true,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountId } from "@/lib/account-context";
 import { searchExtractsWithCursor, CursorSearchParams } from "@/lib/db/extracts";
 
 /**
@@ -8,10 +8,7 @@ import { searchExtractsWithCursor, CursorSearchParams } from "@/lib/db/extracts"
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
 
     const searchParams = request.nextUrl.searchParams;
     const params: CursorSearchParams = {
@@ -44,7 +41,7 @@ export async function GET(request: NextRequest) {
       params.filters!.type = type;
     }
 
-    const result = await searchExtractsWithCursor(params);
+    const result = await searchExtractsWithCursor(accountId, params);
 
     return NextResponse.json(result);
   } catch (error) {

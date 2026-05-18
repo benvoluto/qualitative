@@ -15,12 +15,18 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const session = await auth();
 
-  // Get counts for dashboard
-  const allMeetings = await meetings.getMeetings();
-  const allExtracts = await extracts.getExtracts();
-  const actionItems = await extracts.getPendingActionItems();
-  const allRules = await extractRules.getExtractRules();
-  const allCompanies = await customers.getCustomers();
+  // Resolve account before any tenant-scoped query
+  let accountId: string | null = null;
+  if (session?.user?.email) {
+    const user = await users.getUserByEmail(session.user.email);
+    accountId = user?.account_id ?? null;
+  }
+
+  const allMeetings = accountId ? await meetings.getMeetings(accountId) : [];
+  const allExtracts = accountId ? await extracts.getExtracts(accountId) : [];
+  const actionItems = accountId ? await extracts.getPendingActionItems(accountId) : [];
+  const allRules = accountId ? await extractRules.getExtractRules(accountId) : [];
+  const allCompanies = accountId ? await customers.getCustomers(accountId) : [];
 
   const menuCounts = {
     meetings: allMeetings.length,

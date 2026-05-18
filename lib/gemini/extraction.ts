@@ -167,12 +167,11 @@ export async function generateExtractionRules(
 }
 
 // Save generated rules to database
-export async function saveGeneratedRules(rules: GeneratedRule[]): Promise<string[]> {
+export async function saveGeneratedRules(accountId: string, rules: GeneratedRule[]): Promise<string[]> {
   const savedIds: string[] = [];
 
   for (const rule of rules) {
-    // Create the extract rule
-    const savedRule = await extractRules.createExtractRule({
+    const savedRule = await extractRules.createExtractRule(accountId, {
       name: rule.name,
       summary: rule.summary,
       quotes: rule.example_quotes,
@@ -180,10 +179,9 @@ export async function saveGeneratedRules(rules: GeneratedRule[]): Promise<string
       is_active: true,
     });
 
-    // Add tags
     for (const tagName of rule.tags) {
-      const tag = await tags.getOrCreateTag(tagName, "system");
-      await extractRules.addExtractRuleTag(savedRule.id, tag.id);
+      const tag = await tags.getOrCreateTag(accountId, tagName, "system");
+      await extractRules.addExtractRuleTag(accountId, savedRule.id, tag.id);
     }
 
     savedIds.push(savedRule.id);
@@ -199,22 +197,20 @@ export interface CompanyInfo {
 
 // Extract insights from a transcript using existing rules
 export async function extractInsightsFromTranscript(
+  accountId: string,
   transcript: string,
   companies: CompanyInfo[] = []
 ): Promise<GeneratedExtract[]> {
   const genAI = getGeminiClient();
   const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
 
-  // Get active extraction rules
-  const activeRules = await extractRules.getActiveExtractRules();
+  const activeRules = await extractRules.getActiveExtractRules(accountId);
 
   if (activeRules.length === 0) {
-    // Use default extraction if no rules exist
     return extractWithDefaultRules(transcript, companies);
   }
 
-  // Get available tags
-  const allTags = await tags.getTags();
+  const allTags = await tags.getTags(accountId);
   const tagNames = allTags.map((t) => t.name).join(", ");
 
   // Format rules for prompt

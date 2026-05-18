@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountId } from "@/lib/account-context";
 import { isHubSpotConfigured, getCompaniesWithRecentMeetings, getBestDealStageForCompany } from "@/lib/hubspot";
 import { customers, companies } from "@/lib/db";
 import { CustomerType } from "@/lib/db/types";
@@ -8,10 +8,7 @@ export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
 
     if (!isHubSpotConfigured()) {
       return NextResponse.json(
@@ -38,8 +35,7 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // Upsert to companies table with full address fields
-      const company = await companies.upsertCompanyByHubSpotId(hsCompany.id, {
+      const company = await companies.upsertCompanyByHubSpotId(accountId, hsCompany.id, {
         name: hsCompany.name,
         domain: hsCompany.domain,
         address: hsCompany.address,
@@ -60,18 +56,16 @@ export async function POST(request: NextRequest) {
         .filter(Boolean)
         .join(", ");
 
-      // Check if customer already exists by name (case-insensitive) or HubSpot company ID
-      let exactMatch = await customers.getCustomerByHubSpotCompanyId(hsCompany.id);
+      let exactMatch = await customers.getCustomerByHubSpotCompanyId(accountId, hsCompany.id);
       if (!exactMatch) {
-        const existingCustomers = await customers.searchCustomers(hsCompany.name);
+        const existingCustomers = await customers.searchCustomers(accountId, hsCompany.name);
         exactMatch = existingCustomers.find(
           (c) => c.name.toLowerCase() === hsCompany.name?.toLowerCase()
         ) || null;
       }
 
       if (exactMatch) {
-        // Update existing customer with HubSpot data and link to company
-        await customers.updateCustomer(exactMatch.id, {
+        await customers.updateCustomer(accountId, exactMatch.id, {
           address: addressString || exactMatch.address,
           domain: hsCompany.domain || exactMatch.domain,
           hubspot_company_id: hsCompany.id,
@@ -82,8 +76,7 @@ export async function POST(request: NextRequest) {
         });
         updated++;
       } else {
-        // Create new customer linked to company
-        await customers.createCustomer({
+        await customers.createCustomer(accountId, {
           name: hsCompany.name,
           address: addressString || null,
           domain: hsCompany.domain,
@@ -118,10 +111,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    await requireAccountId();
 
     return NextResponse.json({
       configured: isHubSpotConfigured(),

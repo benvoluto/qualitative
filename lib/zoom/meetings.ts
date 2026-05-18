@@ -171,18 +171,19 @@ function getZoomExternalId(meeting: ZoomMeetingWithRecordings): string {
  * Check if a Zoom meeting already exists in the database
  */
 export async function zoomMeetingExists(
+  accountId: string,
   meeting: ZoomMeetingWithRecordings
 ): Promise<boolean> {
   const externalId = getZoomExternalId(meeting);
-  const existing = await getMeetingByExternalId(externalId);
+  const existing = await getMeetingByExternalId(accountId, externalId);
   return !!existing;
 }
 
 /**
  * Sync a Zoom meeting to the database (Server-to-Server OAuth)
- * Creates a new meeting record with recording URL, transcript, and participants
  */
 export async function syncZoomMeetingToDatabase(
+  accountId: string,
   meeting: ZoomMeetingWithRecordings,
   options: { includeTranscript?: boolean } = {}
 ): Promise<Meeting> {
@@ -190,11 +191,8 @@ export async function syncZoomMeetingToDatabase(
 
   const externalId = getZoomExternalId(meeting);
 
-  // Check if already exists
-  const existing = await getMeetingByExternalId(externalId);
-  if (existing) {
-    return existing;
-  }
+  const existing = await getMeetingByExternalId(accountId, externalId);
+  if (existing) return existing;
 
   // Get transcript if available
   let transcript: string | null = null;
@@ -227,8 +225,7 @@ export async function syncZoomMeetingToDatabase(
     }
   }
 
-  // Create the meeting with host information
-  const newMeeting = await createMeeting({
+  const newMeeting = await createMeeting(accountId, {
     external_id: externalId,
     name: meeting.topic,
     meeting_date: meeting.startTime,
@@ -242,44 +239,30 @@ export async function syncZoomMeetingToDatabase(
     recording_passcode: meeting.password,
   });
 
-  // Add participants to meeting_participants table (excluding the host)
   const participantEmails: string[] = [];
   for (const participant of participants) {
-    // Skip if no email
-    if (!participant.user_email) {
-      continue;
-    }
-
-    // Skip the host (they're stored separately as host_email/host_name)
-    if (meeting.hostEmail && participant.user_email.toLowerCase() === meeting.hostEmail.toLowerCase()) {
-      continue;
-    }
+    if (!participant.user_email) continue;
+    if (meeting.hostEmail && participant.user_email.toLowerCase() === meeting.hostEmail.toLowerCase()) continue;
 
     participantEmails.push(participant.user_email);
 
     try {
-      // Find or create personnel record
-      let personnelRecord = await getPersonnelByEmail(participant.user_email);
+      let personnelRecord = await getPersonnelByEmail(accountId, participant.user_email);
       if (!personnelRecord) {
         const name = participant.name || participant.user_email.split("@")[0];
-        personnelRecord = await createPersonnel({
+        personnelRecord = await createPersonnel(accountId, {
           name,
           email: participant.user_email,
         });
       }
-
-      // Add as meeting participant
-      await addMeetingParticipant(newMeeting.id, personnelRecord.id);
+      await addMeetingParticipant(accountId, newMeeting.id, personnelRecord.id);
     } catch (error) {
       console.error(`[Zoom S2S Sync] Failed to add participant ${participant.user_email}:`, error);
     }
   }
 
-  console.log(`[Zoom S2S Sync] Added ${participantEmails.length} participants to meeting "${meeting.topic}"`);
-
-  // Match to company by participant email domains
   if (participantEmails.length > 0) {
-    await matchMeetingToCompanyByEmails(newMeeting.id, participantEmails);
+    await matchMeetingToCompanyByEmails(accountId, newMeeting.id, participantEmails);
   }
 
   return newMeeting;
@@ -291,16 +274,14 @@ export async function syncZoomMeetingToDatabase(
  * Otherwise returns null (caller should use Gemini)
  */
 export async function processZoomMeetingTranscript(
+  accountId: string,
   meetingId: string
 ): Promise<{ transcript: string | null; source: "zoom" | "pending_gemini" }> {
   const { getMeetingById, updateMeeting } = await import("../db/meetings");
 
-  const meeting = await getMeetingById(meetingId);
-  if (!meeting) {
-    throw new Error(`Meeting not found: ${meetingId}`);
-  }
+  const meeting = await getMeetingById(accountId, meetingId);
+  if (!meeting) throw new Error(`Meeting not found: ${meetingId}`);
 
-  // If already has transcript, return it
   if (meeting.transcript) {
     return {
       transcript: meeting.transcript,
@@ -308,19 +289,17 @@ export async function processZoomMeetingTranscript(
     };
   }
 
-  // If meeting has external_id, try to fetch from Zoom
   if (meeting.external_id?.startsWith("zoom_")) {
     const uuid = meeting.external_id.replace("zoom_", "");
 
     try {
-      // Fetch the specific recording
       const recordings = await fetchZoomRecordings(90);
       const zoomMeeting = recordings.find((r) => r.uuid === uuid);
 
       if (zoomMeeting?.transcriptUrl) {
         const transcript = await getZoomTranscript(zoomMeeting);
         if (transcript) {
-          await updateMeeting(meetingId, {
+          await updateMeeting(accountId, meetingId, {
             transcript,
             transcript_source: "zoom",
           });
@@ -332,15 +311,11 @@ export async function processZoomMeetingTranscript(
     }
   }
 
-  // No transcript available - will need Gemini processing
   return { transcript: null, source: "pending_gemini" };
 }
 
-/**
- * Get Zoom meetings that can be synced
- * Returns meetings with their sync status
- */
 export async function getZoomMeetingsForSync(
+  accountId: string,
   days: number = 30
 ): Promise<
   Array<ZoomMeetingWithRecordings & { alreadySynced: boolean; externalId: string }>
@@ -350,7 +325,7 @@ export async function getZoomMeetingsForSync(
   const results = await Promise.all(
     recordings.map(async (meeting) => {
       const externalId = getZoomExternalId(meeting);
-      const alreadySynced = await zoomMeetingExists(meeting);
+      const alreadySynced = await zoomMeetingExists(accountId, meeting);
       return { ...meeting, alreadySynced, externalId };
     })
   );
@@ -708,6 +683,7 @@ interface ZoomSyncResult {
  * Now properly adds participants to meeting_participants table
  */
 export async function syncUserZoomMeetingToDatabase(
+  accountId: string,
   userId: string,
   meeting: ZoomMeetingWithRecordings,
   options: { includeTranscript?: boolean } = {}
@@ -716,8 +692,7 @@ export async function syncUserZoomMeetingToDatabase(
 
   const externalId = getZoomExternalId(meeting);
 
-  // Check if already exists
-  const existing = await getMeetingByExternalId(externalId);
+  const existing = await getMeetingByExternalId(accountId, externalId);
   if (existing) {
     return { meeting: existing, isNew: false, unmatchedDomains: [] };
   }
@@ -769,8 +744,7 @@ export async function syncUserZoomMeetingToDatabase(
     }
   }
 
-  // Create the meeting with host information
-  const newMeeting = await createMeeting({
+  const newMeeting = await createMeeting(accountId, {
     external_id: externalId,
     name: meeting.topic,
     meeting_date: meeting.startTime,
@@ -784,45 +758,31 @@ export async function syncUserZoomMeetingToDatabase(
     recording_passcode: meeting.password,
   });
 
-  // Add participants to meeting_participants table (excluding the host)
   const participantEmails: string[] = [];
   for (const participant of participants) {
-    // Skip if no email
-    if (!participant.user_email) {
-      continue;
-    }
-
-    // Skip the host (they're stored separately as host_email/host_name)
-    if (meeting.hostEmail && participant.user_email.toLowerCase() === meeting.hostEmail.toLowerCase()) {
-      continue;
-    }
+    if (!participant.user_email) continue;
+    if (meeting.hostEmail && participant.user_email.toLowerCase() === meeting.hostEmail.toLowerCase()) continue;
 
     participantEmails.push(participant.user_email);
 
     try {
-      // Find or create personnel record
-      let personnelRecord = await getPersonnelByEmail(participant.user_email);
+      let personnelRecord = await getPersonnelByEmail(accountId, participant.user_email);
       if (!personnelRecord) {
         const name = participant.name || participant.user_email.split("@")[0];
-        personnelRecord = await createPersonnel({
+        personnelRecord = await createPersonnel(accountId, {
           name,
           email: participant.user_email,
         });
       }
-
-      // Add as meeting participant
-      await addMeetingParticipant(newMeeting.id, personnelRecord.id);
+      await addMeetingParticipant(accountId, newMeeting.id, personnelRecord.id);
     } catch (error) {
       console.error(`[Zoom Sync] Failed to add participant ${participant.user_email}:`, error);
     }
   }
 
-  console.log(`[Zoom Sync] Added ${participantEmails.length} participants to meeting "${meeting.topic}"`);
-
-  // Match to company by participant email domains
   let unmatchedDomains: string[] = [];
   if (participantEmails.length > 0) {
-    const matchResult = await matchMeetingToCompanyByEmails(newMeeting.id, participantEmails);
+    const matchResult = await matchMeetingToCompanyByEmails(accountId, newMeeting.id, participantEmails);
     if (!matchResult.customerId) {
       unmatchedDomains = matchResult.unmatchedDomains;
     }
@@ -836,6 +796,7 @@ export async function syncUserZoomMeetingToDatabase(
  * Uses the user's OAuth 2.0 tokens
  */
 export async function getUserZoomMeetingsForSync(
+  accountId: string,
   userId: string,
   days: number = 30
 ): Promise<
@@ -846,7 +807,7 @@ export async function getUserZoomMeetingsForSync(
   const results = await Promise.all(
     recordings.map(async (meeting) => {
       const externalId = getZoomExternalId(meeting);
-      const alreadySynced = await zoomMeetingExists(meeting);
+      const alreadySynced = await zoomMeetingExists(accountId, meeting);
       return { ...meeting, alreadySynced, externalId };
     })
   );

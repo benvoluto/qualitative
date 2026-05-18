@@ -1,4 +1,5 @@
 import { companies, customers, meetings, extracts } from "@/lib/db";
+import { requireAccountId } from "@/lib/account-context";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CustomerTypeBadge } from "../../customer-type-badge";
@@ -11,17 +12,17 @@ interface CompanyDetailPageProps {
 }
 
 export default async function CompanyDetailPage({ params }: CompanyDetailPageProps) {
+  const accountId = await requireAccountId();
   const { id } = await params;
-  const company = await companies.getCompanyWithStats(id);
+  const company = await companies.getCompanyWithStats(accountId, id);
 
   if (!company) {
     notFound();
   }
 
-  // Get associated customers/deals, meetings, and extracts
-  const linkedCustomers = await customers.getCustomersByCompanyId(id);
-  const companyMeetings = await meetings.getMeetingsByCompanyId(id);
-  const companyExtracts = await extracts.getExtractsByCompanyId(id);
+  const linkedCustomers = await customers.getCustomersByCompanyId(accountId, id);
+  const companyMeetings = await meetings.getMeetingsByCompanyId(accountId, id);
+  const companyExtracts = await extracts.getExtractsByCompanyId(accountId, id);
   const actionItems = companyExtracts.filter((e) => e.is_action_item);
   const pendingActions = actionItems.filter((e) => e.action_item_status === "pending");
 

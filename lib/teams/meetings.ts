@@ -240,16 +240,14 @@ function getTeamsExternalId(meeting: TeamsMeeting): string {
 /**
  * Check if a Teams meeting already exists in the database
  */
-export async function teamsMeetingExists(meeting: TeamsMeeting): Promise<boolean> {
+export async function teamsMeetingExists(accountId: string, meeting: TeamsMeeting): Promise<boolean> {
   const externalId = getTeamsExternalId(meeting);
-  const existing = await getMeetingByExternalId(externalId);
+  const existing = await getMeetingByExternalId(accountId, externalId);
   return !!existing;
 }
 
-/**
- * Sync a Teams meeting to the database
- */
 export async function syncTeamsMeetingToDatabase(
+  accountId: string,
   userId: string,
   meeting: TeamsMeeting,
   options: { includeTranscript?: boolean } = {}
@@ -258,30 +256,23 @@ export async function syncTeamsMeetingToDatabase(
 
   const externalId = getTeamsExternalId(meeting);
 
-  // Check if already exists
-  const existing = await getMeetingByExternalId(externalId);
-  if (existing) {
-    return existing;
-  }
+  const existing = await getMeetingByExternalId(accountId, externalId);
+  if (existing) return existing;
 
-  // Get transcript if available
   let transcript: string | null = null;
   let transcriptSource: "teams" | null = null;
 
   if (includeTranscript && meeting.joinUrl) {
     transcript = await getTeamsMeetingTranscript(userId, meeting.joinUrl);
-    if (transcript) {
-      transcriptSource = "teams";
-    }
+    if (transcript) transcriptSource = "teams";
   }
 
-  // Create the meeting with host information
-  const newMeeting = await createMeeting({
+  const newMeeting = await createMeeting(accountId, {
     external_id: externalId,
     name: meeting.subject,
     meeting_date: meeting.startTime,
     source: "teams",
-    recording_url: meeting.joinUrl, // Store join URL as reference
+    recording_url: meeting.joinUrl,
     meeting_url: meeting.joinUrl,
     transcript: transcript,
     transcript_source: transcriptSource,
@@ -290,30 +281,20 @@ export async function syncTeamsMeetingToDatabase(
     host_email: meeting.organizerEmail,
   });
 
-  // Teams doesn't provide participant info, so try HubSpot fallback
   try {
     const { findHubSpotMeetingParticipants } = await import("../hubspot/meetings");
     const { matchMeetingToCompanyByEmails } = await import("../meetings");
 
     const participantEmails: string[] = [];
+    if (meeting.organizerEmail) participantEmails.push(meeting.organizerEmail);
 
-    // Include organizer email if available
-    if (meeting.organizerEmail) {
-      participantEmails.push(meeting.organizerEmail);
-    }
-
-    // Try HubSpot for participant information
     const hubspotEmails = await findHubSpotMeetingParticipants(meeting.startTime, 5);
-    if (hubspotEmails.length > 0) {
-      for (const email of hubspotEmails) {
-        if (!participantEmails.includes(email)) {
-          participantEmails.push(email);
-        }
-      }
+    for (const email of hubspotEmails) {
+      if (!participantEmails.includes(email)) participantEmails.push(email);
     }
 
     if (participantEmails.length > 0) {
-      await matchMeetingToCompanyByEmails(newMeeting.id, participantEmails);
+      await matchMeetingToCompanyByEmails(accountId, newMeeting.id, participantEmails);
     }
   } catch (error) {
     console.error(`Failed to get participants for Teams meeting ${meeting.id}:`, error);
@@ -322,21 +303,16 @@ export async function syncTeamsMeetingToDatabase(
   return newMeeting;
 }
 
-/**
- * Process a Teams meeting to get its transcript
- */
 export async function processTeamsMeetingTranscript(
+  accountId: string,
   userId: string,
   meetingId: string
 ): Promise<{ transcript: string | null; source: "teams" | "pending_gemini" }> {
   const { getMeetingById, updateMeeting } = await import("../db/meetings");
 
-  const meeting = await getMeetingById(meetingId);
-  if (!meeting) {
-    throw new Error(`Meeting not found: ${meetingId}`);
-  }
+  const meeting = await getMeetingById(accountId, meetingId);
+  if (!meeting) throw new Error(`Meeting not found: ${meetingId}`);
 
-  // If already has transcript, return it
   if (meeting.transcript) {
     return {
       transcript: meeting.transcript,
@@ -344,11 +320,10 @@ export async function processTeamsMeetingTranscript(
     };
   }
 
-  // Try to get transcript from Teams
   if (meeting.recording_url) {
     const transcript = await getTeamsMeetingTranscript(userId, meeting.recording_url);
     if (transcript) {
-      await updateMeeting(meetingId, {
+      await updateMeeting(accountId, meetingId, {
         transcript,
         transcript_source: "teams",
       });
@@ -356,23 +331,20 @@ export async function processTeamsMeetingTranscript(
     }
   }
 
-  // No transcript available - will need Gemini processing
   return { transcript: null, source: "pending_gemini" };
 }
 
-/**
- * Get Teams meetings that can be synced
- */
 export async function getTeamsMeetingsForSync(
+  accountId: string,
   userId: string,
   days: number = 30
 ): Promise<Array<TeamsMeeting & { alreadySynced: boolean; externalId: string }>> {
-  const meetings = await fetchTeamsMeetings(userId, days);
+  const meetingsList = await fetchTeamsMeetings(userId, days);
 
   const results = await Promise.all(
-    meetings.map(async (meeting) => {
+    meetingsList.map(async (meeting) => {
       const externalId = getTeamsExternalId(meeting);
-      const alreadySynced = await teamsMeetingExists(meeting);
+      const alreadySynced = await teamsMeetingExists(accountId, meeting);
       return { ...meeting, alreadySynced, externalId };
     })
   );

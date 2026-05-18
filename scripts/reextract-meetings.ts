@@ -1,5 +1,5 @@
 import * as dotenv from "dotenv";
-dotenv.config({ path: ".env.development.local" });
+dotenv.config({ path: ".env.local" });
 import { neon } from "@neondatabase/serverless";
 import { extractInsightsFromTranscript } from "../lib/gemini/extraction";
 

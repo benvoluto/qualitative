@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Qualitative - Meeting Insights",
-  description: "Meeting insights platform for Marker Learning",
+  description: "Meeting insights from your customer conversations",
 };
 
 export default function RootLayout({

@@ -1,4 +1,5 @@
 import { meetings, extracts, customers, emailDrafts } from "@/lib/db";
+import { requireAccountId } from "@/lib/account-context";
 import { notFound } from "next/navigation";
 import { ProcessButton } from "./process-button";
 import { ExtractButton } from "./extract-button";
@@ -20,23 +21,23 @@ export default async function MeetingDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const accountId = await requireAccountId();
   const { id } = await params;
 
   const [meeting, meetingExtracts, allCustomers, meetingDrafts, meetingParticipants] = await Promise.all([
-    meetings.getMeetingById(id),
-    extracts.getExtractsWithTagsByMeetingId(id),
-    customers.getCustomers(),
-    emailDrafts.getEmailDraftsByMeetingId(id),
-    meetings.getMeetingParticipantsWithDetails(id),
+    meetings.getMeetingById(accountId, id),
+    extracts.getExtractsWithTagsByMeetingId(accountId, id),
+    customers.getCustomers(accountId),
+    emailDrafts.getEmailDraftsByMeetingId(accountId, id),
+    meetings.getMeetingParticipantsWithDetails(accountId, id),
   ]);
 
   if (!meeting) {
     notFound();
   }
 
-  // Get customer details if linked
   const linkedCustomer = meeting.customer_id
-    ? await customers.getCustomerById(meeting.customer_id)
+    ? await customers.getCustomerById(accountId, meeting.customer_id)
     : null;
 
   // Check if extracts contain potential feature requests or bugs

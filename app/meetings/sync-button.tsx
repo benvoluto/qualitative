@@ -402,7 +402,7 @@ export function SyncButton() {
               Review Meetings to Sync
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Review the meetings below. Internal meetings (all participants from markerlearning.com) and possible duplicates require manual selection.
+              Review the meetings below. Internal meetings (all participants from your organization) and possible duplicates require manual selection.
             </p>
 
             {/* Select All / Deselect All */}

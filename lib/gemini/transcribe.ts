@@ -97,15 +97,15 @@ export async function transcribeWithGemini(geminiFileName: string): Promise<stri
 
 // Full pipeline: Get recording from Drive, upload to Gemini, transcribe
 export async function transcribeMeetingRecording(
+  accountId: string,
   userId: string,
   meetingId: string
 ): Promise<{ success: boolean; transcript?: string; error?: string }> {
-  const meeting = await meetings.getMeetingById(meetingId);
+  const meeting = await meetings.getMeetingById(accountId, meetingId);
   if (!meeting) {
     return { success: false, error: "Meeting not found" };
   }
 
-  // Check if recording URL exists and is a Drive file
   if (!meeting.recording_url || !meeting.recording_url.startsWith("drive:")) {
     return { success: false, error: "No recording available for this meeting" };
   }
@@ -113,10 +113,8 @@ export async function transcribeMeetingRecording(
   const driveFileId = meeting.recording_url.replace("drive:", "");
 
   try {
-    // Update status to processing
-    await meetings.updateMeetingStatus(meetingId, "processing");
+    await meetings.updateMeetingStatus(accountId, meetingId, "processing");
 
-    // Get file info from Drive to determine mime type
     const drive = await getDriveClient(userId);
     const fileInfo = await drive.files.get({
       fileId: driveFileId,
@@ -125,31 +123,23 @@ export async function transcribeMeetingRecording(
 
     const mimeType = fileInfo.data.mimeType || "video/mp4";
 
-    // Upload to Gemini
-    console.log(`Uploading recording ${driveFileId} to Gemini...`);
     const geminiFileName = await uploadDriveFileToGemini(userId, driveFileId, mimeType);
-
-    // Transcribe
-    console.log(`Transcribing with Gemini: ${geminiFileName}`);
     const transcript = await transcribeWithGemini(geminiFileName);
 
-    // Save transcript
-    await meetings.updateMeetingTranscript(meetingId, transcript, "gemini");
-    await meetings.updateMeetingStatus(meetingId, "completed");
+    await meetings.updateMeetingTranscript(accountId, meetingId, transcript, "gemini");
+    await meetings.updateMeetingStatus(accountId, meetingId, "completed");
 
-    // Clean up: delete file from Gemini
     try {
       const fileManager = getFileManager();
       await fileManager.deleteFile(geminiFileName);
     } catch (cleanupError) {
       console.error("Failed to delete Gemini file:", cleanupError);
-      // Non-fatal error, continue
     }
 
     return { success: true, transcript };
   } catch (error) {
     console.error("Transcription error:", error);
-    await meetings.updateMeetingStatus(meetingId, "failed");
+    await meetings.updateMeetingStatus(accountId, meetingId, "failed");
     const message = error instanceof Error ? error.message : "Unknown error";
     return { success: false, error: message };
   }

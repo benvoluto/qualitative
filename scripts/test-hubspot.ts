@@ -1,5 +1,5 @@
 import * as dotenv from "dotenv";
-dotenv.config({ path: ".env.development.local" });
+dotenv.config({ path: ".env.local" });
 
 import { isHubSpotConfigured, hubspotRequest } from "../lib/hubspot/client";
 import { fetchHubSpotMeetingsLastDays } from "../lib/hubspot/meetings";

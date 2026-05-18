@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountId } from "@/lib/account-context";
 import { meetings, extracts, customers } from "@/lib/db";
 import { generateTicketText, formatTicketsAsText } from "@/lib/gemini";
 
@@ -11,21 +11,15 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    const accountId = await requireAccountId();
     const { id: meetingId } = await params;
 
-    // Fetch meeting
-    const meeting = await meetings.getMeetingById(meetingId);
+    const meeting = await meetings.getMeetingById(accountId, meetingId);
     if (!meeting) {
       return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
     }
 
-    // Fetch extracts with tags for this meeting
-    const meetingExtracts = await extracts.getExtractsWithTagsByMeetingId(meetingId);
+    const meetingExtracts = await extracts.getExtractsWithTagsByMeetingId(accountId, meetingId);
 
     if (meetingExtracts.length === 0) {
       return NextResponse.json(
@@ -34,14 +28,12 @@ export async function POST(
       );
     }
 
-    // Fetch customer if associated
     let customer = null;
     if (meeting.customer_id) {
-      customer = await customers.getCustomerById(meeting.customer_id);
+      customer = await customers.getCustomerById(accountId, meeting.customer_id);
     }
 
-    // Fetch meeting participants from database
-    const meetingParticipants = await meetings.getMeetingParticipantsWithDetails(meetingId);
+    const meetingParticipants = await meetings.getMeetingParticipantsWithDetails(accountId, meetingId);
 
     // Generate ticket text using Gemini with participant info
     const tickets = await generateTicketText(

@@ -1,5 +1,31 @@
 // Database entity types
 
+export interface Account {
+  id: string;
+  name: string;
+  internal_domain: string | null;
+  internal_domain_aliases: string[];
+  deal_email_prompt_template: string | null;
+  customer_email_prompt_template: string | null;
+  notes_prompt_template: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export type SubscriptionPlan = "free" | "pro";
+export type SubscriptionStatus = "active" | "trialing" | "past_due" | "canceled" | "unpaid" | "incomplete";
+
+export interface Subscription {
+  account_id: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  current_period_end: Date | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export type CustomerType = "deal" | "customer";
 
 export interface Company {
@@ -177,6 +203,7 @@ export interface WorkflowStep {
 
 export interface User {
   id: string;
+  account_id: string;
   email: string;
   name: string | null;
   image: string | null;
@@ -192,12 +219,10 @@ export interface User {
   zoom_user_id: string | null;
   sync_days_preference: number;
   meeting_autosync_enabled: boolean;
-  deal_email_prompt_template: string | null;
-  customer_email_prompt_template: string | null;
-  notes_prompt_template: string | null;
   notification_email: string | null;
   notify_on_draft_created: boolean;
   notify_on_notes_created: boolean;
+  onboarded_at: Date | null;
   created_at: Date;
   updated_at: Date;
 }

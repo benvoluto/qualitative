@@ -399,35 +399,29 @@ export async function findHubSpotMeetingParticipants(
  * @param meetingId - The meeting ID in our database
  */
 export async function getParticipantsFromHubSpotFallback(
+  accountId: string,
   meetingId: string
 ): Promise<string[]> {
-  if (!isHubSpotConfigured()) {
-    return [];
-  }
+  if (!isHubSpotConfigured()) return [];
 
   try {
-    // Import meeting functions
     const { getMeetingById } = await import("../db/meetings");
     const { getCustomerById } = await import("../db/customers");
 
-    const meeting = await getMeetingById(meetingId);
-    if (!meeting || !meeting.meeting_date) {
-      return [];
-    }
+    const meeting = await getMeetingById(accountId, meetingId);
+    if (!meeting || !meeting.meeting_date) return [];
 
-    // Get HubSpot company ID if we have a linked customer
     let hubspotCompanyId: string | null = null;
     if (meeting.customer_id) {
-      const customer = await getCustomerById(meeting.customer_id);
+      const customer = await getCustomerById(accountId, meeting.customer_id);
       if (customer?.hubspot_company_id) {
         hubspotCompanyId = customer.hubspot_company_id;
       }
     }
 
-    // Search HubSpot for matching meetings
     return findHubSpotMeetingParticipants(
       meeting.meeting_date,
-      5, // 5 hour window
+      5,
       hubspotCompanyId
     );
   } catch (error) {

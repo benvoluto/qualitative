@@ -138,12 +138,12 @@ function formatParticipantsList(
 }
 
 // Detailed prompt for deal follow-up emails based on project plan template
-const DEAL_EMAIL_PROMPT = `You are drafting a warm and friendly follow-up email after a sales meeting with a prospective district customer.
+const DEAL_EMAIL_PROMPT = `You are drafting a warm and friendly follow-up email after a sales meeting with a prospective customer.
 
 ## Meeting Information:
 Meeting Name: {meeting_name}
 Meeting Date: {meeting_date}
-District/Prospect Name: {customer_name}
+Prospect Name: {customer_name}
 Meeting Owner: {meeting_owner}
 
 ## Key Insights from the Meeting:
@@ -162,36 +162,26 @@ Note: Participation status indicates whether each person actively spoke during t
 
 ---
 
-Generate a follow-up email using this exact structure:
+Generate a follow-up email using this structure:
 
-1. **Subject Line**: Keep brief, reference the meeting or partnership (e.g., "Great connecting - Marker Learning recap and next steps")
+1. **Subject Line**: Keep brief, reference the meeting or next step (e.g., "Great connecting - recap and next steps")
 
-2. **Greeting**: Use first names (e.g., "Hi [names]!")
+2. **Greeting**: Use first names ("Hi [names]!")
 
 3. **Opening**:
-   - Reference when you spoke ("It was so great speaking to you today/yesterday")
+   - Reference when you spoke ("It was great speaking to you today/yesterday")
    - Add a personalized detail from the conversation if mentioned
-   - Express excitement about supporting the district
 
-4. **Transition**: "As promised, I have provided a recap below and next steps"
+4. **Recap Section** (bullet points): Summarize the key topics, pain points, and value points discussed.
 
-5. **Recap Section** (bullet points):
-   - Value proposition: "Our goal is to save [staff types] 50%+ of report writing time, which reduces burnout and the need for contract support"
-   - Partnership options: Mention pilot program details if discussed (typically $10,000 for 10-15 staff)
-   - Costs include: onboarding, training, support, unlimited reports
-   - Onboarding: creating district templates and virtual training
-   - ROI calculation if specific numbers were discussed
+5. **Next Steps Section** (bullet points):
+   - What you (the meeting owner) will do next
+   - What the prospect will do next — always include at least one prospect action item to maintain momentum
 
-6. **Next Steps Section** (bullet points):
-   - Meeting owner to share presentation (linked here)
-   - Meeting owner to send calendar invite for next meeting
-   - Contract attachment if requested
-   - CRITICAL: At least one action item for the prospect to maintain momentum
-
-7. **Closing**:
+6. **Closing**:
    - "Please let me know if you have any questions"
-   - "Looking forward to connecting again [timeframe]!"
-   - First name signature only
+   - "Looking forward to connecting again [timeframe]"
+   - First-name signature
 
 ## Output Format:
 Return a JSON object:
@@ -201,7 +191,7 @@ Return a JSON object:
 }
 
 Guidelines:
-- Tone should be warm, enthusiastic, professional but not overly formal
+- Warm, enthusiastic, professional, but not overly formal
 - Reference specific details from the meeting to show you were listening
 - Keep it concise and scannable
 - Always include at least one prospect action item
@@ -209,12 +199,12 @@ Guidelines:
 Return only valid JSON.`;
 
 // Detailed prompt for customer follow-up emails based on project plan template
-const CUSTOMER_EMAIL_PROMPT = `You are drafting a warm and friendly follow-up email after a customer success meeting with an existing customer.
+const CUSTOMER_EMAIL_PROMPT = `You are drafting a warm and friendly follow-up email after a meeting with an existing customer.
 
 ## Meeting Information:
 Meeting Name: {meeting_name}
 Meeting Date: {meeting_date}
-Customer/District Name: {customer_name}
+Customer Name: {customer_name}
 Meeting Owner: {meeting_owner}
 
 ## Key Insights from the Meeting:
@@ -231,42 +221,30 @@ Note: Participation status indicates whether each person actively spoke during t
 - "invited" = Was on the invite but did not speak
 - "n/a" = Status not determined
 
-## Meeting Type Context:
-This could be an alignment call, partnership check-in, team connect session, or individual meeting.
-
 ---
 
 Generate a follow-up email using this structure:
 
-1. **Subject Line**: Reference the district and meeting type (e.g., "Great connecting - [District] check-in recap")
+1. **Subject Line**: Reference the meeting type (e.g., "Great connecting - check-in recap")
 
-2. **Greeting**: Use first names (e.g., "Hi [names]!")
+2. **Greeting**: Use first names ("Hi [names]!")
 
-3. **Opening**:
-   - Reference when you connected
-   - Add a personalized detail if any was shared (family, hobbies, weekend plans, etc.)
+3. **Opening**: Reference when you connected and add a personalized detail if any was shared.
 
 4. **Summary Section**:
    - "I wanted to recap what we discussed and outline next steps:"
    - Brief summary of key discussion points
 
-5. **Feedback Acknowledgment** (if applicable):
-   - "Thank you for sharing the team's feedback on [topics]. I've logged the following items with our product team:"
-   - Bulleted list of specific issues/requests acknowledged
+5. **Feedback Acknowledgment** (if applicable): Acknowledge specific feedback and what you'll do with it.
 
 6. **Action Items Section**:
-   - What Marker team will do (header: "Marker Team:")
-   - What customer team will do (header: "[Customer] Team:")
+   - What your team will do
+   - What the customer team will do
 
-7. **Resources** (if applicable):
-   - Recording link
-   - Help articles
-   - Any other resources discussed
-
-8. **Closing**:
-   - "Looking forward to our next check-in on [date]!"
-   - "Please don't hesitate to reach out if anything comes up before then."
-   - First name signature
+7. **Closing**:
+   - "Looking forward to our next check-in"
+   - "Please don't hesitate to reach out if anything comes up"
+   - First-name signature
 
 ## Output Format:
 Return a JSON object:
@@ -277,8 +255,8 @@ Return a JSON object:
 
 Guidelines:
 - Thank them for their continued partnership
-- Acknowledge both positive and negative feedback professionally
-- Be specific about what you're escalating to the product team
+- Acknowledge feedback professionally
+- Be specific about commitments and ownership
 - Reinforce the relationship and availability
 
 Return only valid JSON.`;

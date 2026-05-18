@@ -1,4 +1,5 @@
 import { customers, meetings, extracts, companies } from "@/lib/db";
+import { requireAccountId } from "@/lib/account-context";
 import { SyncCustomersButton } from "./sync-button";
 import { CompaniesPageClient } from "./companies-page-client";
 import { LogoMenu } from "@/components/logo-menu";
@@ -6,17 +7,14 @@ import { LogoMenu } from "@/components/logo-menu";
 export const dynamic = "force-dynamic";
 
 export default async function CompaniesPage() {
-  // Fetch companies from the new companies table with stats
-  const companiesList = await companies.getCompaniesWithStats();
+  const accountId = await requireAccountId();
+  const companiesList = await companies.getCompaniesWithStats(accountId);
+  const customersList = await customers.getCustomers(accountId);
 
-  // Fetch customers/deals from the customers table
-  const customersList = await customers.getCustomers();
-
-  // Get meeting and extract counts for each customer
   const customersWithStats = await Promise.all(
     customersList.map(async (customer) => {
-      const customerMeetings = await meetings.getMeetingsByCustomerId(customer.id);
-      const customerExtracts = await extracts.getExtractsByCustomerId(customer.id);
+      const customerMeetings = await meetings.getMeetingsByCustomerId(accountId, customer.id);
+      const customerExtracts = await extracts.getExtractsByCustomerId(accountId, customer.id);
       const actionItems = customerExtracts.filter((e) => e.is_action_item);
       const pendingActions = actionItems.filter((e) => e.action_item_status === "pending");
 

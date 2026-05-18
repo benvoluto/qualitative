@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountId } from "@/lib/account-context";
 import { extracts } from "@/lib/db";
 import { ActionItemStatus, RequestStatus } from "@/lib/db/types";
 
@@ -12,11 +12,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    const accountId = await requireAccountId();
     const { id } = await params;
     const body = await request.json();
 
@@ -50,18 +46,16 @@ export async function PATCH(
       }
     }
 
-    // Check if extract exists
-    const extract = await extracts.getExtractById(id);
+    const extract = await extracts.getExtractById(accountId, id);
     if (!extract) {
       return NextResponse.json({ error: "Extract not found" }, { status: 404 });
     }
 
-    // Update the appropriate status field
     let updatedExtract;
     if (statusType === "action") {
-      updatedExtract = await extracts.updateActionItemStatus(id, status as ActionItemStatus);
+      updatedExtract = await extracts.updateActionItemStatus(accountId, id, status as ActionItemStatus);
     } else {
-      updatedExtract = await extracts.updateRequestStatus(id, status as RequestStatus);
+      updatedExtract = await extracts.updateRequestStatus(accountId, id, status as RequestStatus);
     }
 
     return NextResponse.json({

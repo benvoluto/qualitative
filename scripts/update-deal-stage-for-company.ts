@@ -7,7 +7,7 @@
  */
 
 import * as dotenv from "dotenv";
-dotenv.config({ path: ".env.development.local" });
+dotenv.config({ path: ".env.local" });
 
 import { getDb } from "../lib/db/client";
 import { customers } from "../lib/db";

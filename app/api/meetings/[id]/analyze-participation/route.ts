@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAccountId } from "@/lib/account-context";
 import { reanalyzeParticipation } from "@/lib/extraction/process";
 
 export const maxDuration = 60;
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const accountId = await requireAccountId();
     const { id: meetingId } = await params;
-    const result = await reanalyzeParticipation(meetingId);
+    const result = await reanalyzeParticipation(accountId, meetingId);
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }

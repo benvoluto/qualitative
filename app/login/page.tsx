@@ -34,7 +34,7 @@ export default async function LoginPage({
             <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <p className="text-sm text-red-600 dark:text-red-400">
                 {params.error === "AccessDenied"
-                  ? "Access denied. Please use a @markerlearning.com email."
+                  ? "Access denied. Please contact your administrator."
                   : "An error occurred during sign in. Please try again."}
               </p>
             </div>
@@ -59,9 +59,6 @@ export default async function LoginPage({
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            Only @markerlearning.com accounts are allowed
-          </p>
         </div>
       </div>
     </div>
