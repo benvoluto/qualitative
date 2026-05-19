@@ -68,7 +68,7 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
           aria-label="Home"
           className="flex items-center p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
-          <Logo width={64} height={64} className="rounded-md" />
+          <Logo width={48} height={48} className="rounded-md" />
         </Link>
         <button
           onClick={() => setIsOpen(!isOpen)}
