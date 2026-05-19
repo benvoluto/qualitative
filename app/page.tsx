@@ -44,12 +44,11 @@ export default async function LandingPage() {
         {/* Hero */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 text-center">
           <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-gray-900 dark:text-white">
-            Insights from every customer conversation
+            Better, inexpensive qualitative insights for your user research
           </h1>
           <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-600 dark:text-gray-400">
-            Qualitative reads your meeting transcripts, pulls out the feature requests,
-            bug reports, and action items that matter, and drafts the follow-up emails — so
-            you can stop taking notes and start listening.
+            Built by a user researcher for user researchers, Qualitative reads your meeting transcripts, pulls out the feature requests,
+            bug reports, and action items, drafts the follow-up notes, and lets you export everything for use in your own workflows.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
@@ -69,10 +68,8 @@ export default async function LandingPage() {
             Free for your first {PLANS.free.meetingsPerMonth} meetings each month. No card required.
           </p>
         </section>
-
-        {/* Founder quote */}
-        <section className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+        <section className="">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-0">
             <figure className="relative">
               <div className="relative rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-6 sm:p-8 shadow-sm">
                 <svg
@@ -102,11 +99,7 @@ export default async function LandingPage() {
                   </p>
                 </blockquote>
               </div>
-              {/* Speech-bubble tail */}
-              <div
-                aria-hidden
-                className="absolute -bottom-3 left-12 w-6 h-6 bg-blue-50 dark:bg-blue-900/20 border-r border-b border-blue-100 dark:border-blue-800 rotate-45"
-              />
+
               <figcaption className="mt-6 ml-12 text-sm text-gray-600 dark:text-gray-400">
                 — Ben Clemens
               </figcaption>
@@ -124,7 +117,7 @@ export default async function LandingPage() {
               <Feature
                 step="1"
                 title="Connect"
-                body="Sign in with Google. We pull meetings + transcripts from your Calendar and Drive."
+                body="Connect Google Meet and/or Zoom. We sync and extract meetings + transcripts."
               />
               <Feature
                 step="2"
@@ -134,7 +127,7 @@ export default async function LandingPage() {
               <Feature
                 step="3"
                 title="Read the receipts"
-                body="Every meeting gets a structured summary, tagged extracts, action items, and a draft follow-up email. Search across everything."
+                body="Every meeting gets a structured summary, tagged extracts, action items, and a draft follow-up email. Search across everything. Export the extracts for use in your own workflows."
               />
             </div>
           </div>
