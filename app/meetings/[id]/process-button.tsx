@@ -148,7 +148,7 @@ export function ProcessButton({ meetingId, hasExtracts = false }: ProcessButtonP
       activeRunRef.current = runId;
       setRunIdInUrl(runId);
       setStatus("queued");
-      setToast({ type: "info", message: "Processing in the background. You can leave this page." });
+      setToast({ type: "info", message: "Processing meeting..." });
 
       void pollOnce(runId);
       pollRef.current = window.setInterval(() => pollOnce(runId), POLL_INTERVAL_MS);
