@@ -18,6 +18,9 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
             <Link href="/dpa" className="hover:text-gray-900 dark:hover:text-white">
               DPA
             </Link>
+            <Link href="/security" className="hover:text-gray-900 dark:hover:text-white">
+              Security
+            </Link>
             <Link href="/login" className="hover:text-gray-900 dark:hover:text-white">
               Sign in
             </Link>

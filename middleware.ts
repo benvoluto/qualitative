@@ -6,8 +6,8 @@ import { getDb } from "@/lib/db/client";
  * Routes that don't require authentication. The root path "/" is matched
  * exactly (not via prefix) because every URL starts with "/".
  */
-const publicExactRoutes = new Set(["/", "/login", "/privacy", "/terms", "/dpa"]);
-const publicPrefixRoutes = ["/api/auth", "/api/billing/webhook", "/api/webhooks"];
+const publicExactRoutes = new Set(["/", "/login", "/privacy", "/terms", "/dpa", "/security"]);
+const publicPrefixRoutes = ["/api/auth", "/api/billing/webhook", "/api/webhooks", "/assets"];
 
 // Routes an authenticated-but-not-yet-onboarded user can reach.
 const preOnboardingRoutes = ["/onboarding", "/api/onboarding", "/api/auth", "/login", "/api/billing"];

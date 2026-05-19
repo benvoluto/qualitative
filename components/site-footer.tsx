@@ -30,6 +30,9 @@ export async function SiteFooter() {
           <Link href="/dpa" className="hover:text-gray-900 dark:hover:text-white">
             DPA
           </Link>
+          <Link href="/security" className="hover:text-gray-900 dark:hover:text-white">
+            Security
+          </Link>
           {isAuthed ? (
             <>
               <Link href="/billing" className="hover:text-gray-900 dark:hover:text-white">

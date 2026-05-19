@@ -1,0 +1,345 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1700" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
+  <style>
+    .title { font-size: 28px; font-weight: 700; fill: #0f172a; }
+    .subtitle { font-size: 14px; fill: #475569; }
+    .section-title { font-size: 18px; font-weight: 700; fill: #0f172a; }
+    .box-title { font-size: 15px; font-weight: 700; fill: #0f172a; }
+    .box-sub { font-size: 11px; fill: #475569; }
+    .box-list { font-size: 11px; fill: #1e293b; }
+    .label { font-size: 11px; font-weight: 600; fill: #1e40af; }
+    .label-zoom { font-size: 11px; font-weight: 600; fill: #2563eb; }
+    .step { font-size: 11px; fill: #0f172a; }
+    .step-num { font-size: 11px; font-weight: 700; fill: #ffffff; }
+    .annotation { font-size: 10px; fill: #64748b; font-style: italic; }
+    .footnote { font-size: 11px; fill: #475569; }
+    .flow-title { font-size: 15px; font-weight: 700; fill: #0f172a; }
+    .actor { font-size: 12px; font-weight: 700; fill: #0f172a; }
+    .seq-msg { font-size: 11px; fill: #1e293b; }
+  </style>
+
+  <!-- Page background -->
+  <rect width="1400" height="1700" fill="#ffffff"/>
+
+  <!-- ===== Header ===== -->
+  <text x="60" y="50" class="title">Qualitative — Zoom Integration Architecture</text>
+  <text x="60" y="74" class="subtitle">User-managed OAuth app. Every customer connects their own Zoom account.</text>
+  <text x="60" y="92" class="subtitle">All traffic is HTTPS. OAuth tokens are encrypted at rest with AES-256-GCM in Neon Postgres.</text>
+
+  <line x1="60" y1="110" x2="1340" y2="110" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- ===== Section: Architectural overview ===== -->
+  <text x="60" y="148" class="section-title">1. Architectural overview</text>
+
+  <!-- User browser -->
+  <rect x="60" y="170" width="220" height="120" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+  <text x="170" y="200" text-anchor="middle" class="box-title">End User (Browser)</text>
+  <text x="170" y="222" text-anchor="middle" class="box-sub">Customer / researcher</text>
+  <text x="80" y="248" class="box-list">• Signs in via Google</text>
+  <text x="80" y="265" class="box-list">• Connects own Zoom acct</text>
+  <text x="80" y="282" class="box-list">• Triggers sync / processing</text>
+
+  <!-- Qualitative on Vercel (large container) -->
+  <rect x="380" y="170" width="500" height="380" rx="12" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="630" y="198" text-anchor="middle" class="box-title">Qualitative — Vercel (Next.js 15)</text>
+  <text x="630" y="216" text-anchor="middle" class="box-sub">app.qualitative.one  ·  hosted on Vercel Fluid Compute (us-east)</text>
+
+  <!-- Sub-component: Next.js frontend -->
+  <rect x="400" y="232" width="220" height="80" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="510" y="254" text-anchor="middle" class="box-title">Next.js Frontend</text>
+  <text x="510" y="272" text-anchor="middle" class="box-sub">React server components</text>
+  <text x="510" y="290" text-anchor="middle" class="box-sub">Dashboard, settings, billing</text>
+
+  <!-- Sub-component: API routes -->
+  <rect x="640" y="232" width="220" height="80" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="750" y="254" text-anchor="middle" class="box-title">API routes</text>
+  <text x="750" y="272" text-anchor="middle" class="box-sub">/api/auth/zoom (start + callback)</text>
+  <text x="750" y="290" text-anchor="middle" class="box-sub">/api/meetings/sync-zoom, /webhooks/zoom</text>
+
+  <!-- Sub-component: Workflow runtime -->
+  <rect x="400" y="324" width="460" height="80" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="630" y="346" text-anchor="middle" class="box-title">Vercel Workflow runtime (durable jobs)</text>
+  <text x="630" y="364" text-anchor="middle" class="box-sub">Two-step pipeline: transcribe ➝ extract</text>
+  <text x="630" y="382" text-anchor="middle" class="box-sub">Crash-safe, retries on transient error, no Zoom calls (works on cached transcript)</text>
+
+  <!-- Sub-component: NextAuth -->
+  <rect x="400" y="416" width="220" height="80" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="510" y="438" text-anchor="middle" class="box-title">NextAuth (Auth.js v5)</text>
+  <text x="510" y="456" text-anchor="middle" class="box-sub">App-level Google sign-in</text>
+  <text x="510" y="474" text-anchor="middle" class="box-sub">(separate from Zoom OAuth)</text>
+
+  <!-- Sub-component: Token encryption helper -->
+  <rect x="640" y="416" width="220" height="80" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="750" y="438" text-anchor="middle" class="box-title">Token encryption</text>
+  <text x="750" y="456" text-anchor="middle" class="box-sub">AES-256-GCM (Node crypto)</text>
+  <text x="750" y="474" text-anchor="middle" class="box-sub">Key in env, never in DB</text>
+
+  <text x="630" y="528" text-anchor="middle" class="annotation">All Zoom tokens are encrypted before insert; decrypted only at the data-access boundary.</text>
+
+  <!-- Zoom Cloud (right) -->
+  <rect x="980" y="170" width="360" height="380" rx="12" fill="#eff6ff" stroke="#2D8CFF" stroke-width="2"/>
+  <text x="1160" y="198" text-anchor="middle" class="box-title">Zoom Cloud</text>
+  <text x="1160" y="216" text-anchor="middle" class="box-sub">Operated by Zoom Video Communications</text>
+
+  <rect x="1000" y="232" width="320" height="68" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="1160" y="254" text-anchor="middle" class="box-title">Zoom OAuth 2.0</text>
+  <text x="1160" y="272" text-anchor="middle" class="box-sub">zoom.us/oauth/authorize</text>
+  <text x="1160" y="288" text-anchor="middle" class="box-sub">zoom.us/oauth/token  ·  /revoke</text>
+
+  <rect x="1000" y="312" width="320" height="100" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="1160" y="334" text-anchor="middle" class="box-title">Zoom REST API</text>
+  <text x="1160" y="352" text-anchor="middle" class="box-sub">api.zoom.us/v2</text>
+  <text x="1014" y="372" class="box-list">• GET /users/me</text>
+  <text x="1014" y="389" class="box-list">• GET /users/me/recordings</text>
+  <text x="1014" y="406" class="box-list">• GET /past_meetings/{uuid}/participants</text>
+
+  <rect x="1000" y="424" width="320" height="100" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="1160" y="446" text-anchor="middle" class="box-title">Zoom Event Subscriptions</text>
+  <text x="1014" y="466" class="box-list">• Subscribed: recording.transcript_completed</text>
+  <text x="1014" y="483" class="box-list">• Optionally: recording.completed</text>
+  <text x="1014" y="502" class="box-sub">Signs each delivery with HMAC-SHA256 over body</text>
+  <text x="1014" y="516" class="box-sub">using our app's Secret Token.</text>
+
+  <!-- Storage row -->
+  <rect x="60" y="590" width="400" height="160" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="260" y="618" text-anchor="middle" class="box-title">Neon Postgres (managed by Neon, AWS us-east)</text>
+  <text x="260" y="636" text-anchor="middle" class="box-sub">TLS in transit, AES-256 at rest (Neon-managed disk)</text>
+  <text x="76" y="660" class="box-list">• users (Zoom access/refresh tokens — encrypted column-level)</text>
+  <text x="76" y="678" class="box-list">• meetings (title, date, transcript, recording URL)</text>
+  <text x="76" y="696" class="box-list">• extracts (AI-generated insights tied to a meeting)</text>
+  <text x="76" y="714" class="box-list">• accounts, subscriptions, audit metadata</text>
+  <text x="76" y="734" class="annotation">Strict tenant isolation: every query carries account_id at the type level.</text>
+
+  <rect x="500" y="590" width="380" height="160" rx="10" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5"/>
+  <text x="690" y="618" text-anchor="middle" class="box-title">Google Gemini  (AI processing)</text>
+  <text x="690" y="636" text-anchor="middle" class="box-sub">generativelanguage.googleapis.com</text>
+  <text x="516" y="660" class="box-list">• Receives transcript text only</text>
+  <text x="516" y="678" class="box-list">• Returns structured extracts + summaries</text>
+  <text x="516" y="696" class="box-list">• Commercial terms — does not train on customer data</text>
+  <text x="516" y="716" class="annotation">No Zoom credentials ever leave Qualitative. Gemini sees plain</text>
+  <text x="516" y="730" class="annotation">transcript text and no Zoom IDs/URLs/tokens.</text>
+
+  <rect x="920" y="590" width="420" height="160" rx="10" fill="#faf5ff" stroke="#9333ea" stroke-width="1.5"/>
+  <text x="1130" y="618" text-anchor="middle" class="box-title">Peripheral integrations (no Zoom data)</text>
+  <text x="938" y="640" class="box-list">• Stripe — billing only; receives subscription email, no Zoom data</text>
+  <text x="938" y="658" class="box-list">• Mailjet — outbound transactional email (notifications)</text>
+  <text x="938" y="676" class="box-list">• Vercel Analytics — anonymous pageviews / product events</text>
+  <text x="938" y="694" class="box-list">• Google OAuth — app sign-in (separate flow from Zoom OAuth)</text>
+  <text x="938" y="716" class="annotation">These never receive Zoom user data, tokens, or recording content.</text>
+
+  <!-- ===== Arrows between top boxes ===== -->
+  <!-- User browser -> Qualitative -->
+  <line x1="280" y1="230" x2="380" y2="230" stroke="#1e293b" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="330" y="220" text-anchor="middle" class="label">HTTPS</text>
+
+  <!-- Qualitative -> Zoom OAuth -->
+  <line x1="880" y1="266" x2="1000" y2="266" stroke="#2563eb" stroke-width="2" marker-end="url(#arrowhead-blue)"/>
+  <text x="940" y="258" text-anchor="middle" class="label-zoom">OAuth + token refresh</text>
+
+  <!-- Qualitative -> Zoom REST -->
+  <line x1="880" y1="362" x2="1000" y2="362" stroke="#2563eb" stroke-width="2" marker-end="url(#arrowhead-blue)"/>
+  <text x="940" y="354" text-anchor="middle" class="label-zoom">Bearer-auth REST</text>
+
+  <!-- Zoom webhook -> Qualitative -->
+  <line x1="1000" y1="474" x2="880" y2="474" stroke="#2563eb" stroke-width="2" marker-end="url(#arrowhead-blue)"/>
+  <text x="940" y="466" text-anchor="middle" class="label-zoom">Webhook (HMAC-signed)</text>
+
+  <!-- Qualitative -> Neon -->
+  <line x1="500" y1="550" x2="260" y2="590" stroke="#16a34a" stroke-width="2" marker-end="url(#arrowhead-green)"/>
+  <text x="350" y="555" text-anchor="middle" class="label" fill="#16a34a">TLS + encrypted tokens</text>
+
+  <!-- Qualitative -> Gemini -->
+  <line x1="630" y1="550" x2="690" y2="590" stroke="#ca8a04" stroke-width="2" marker-end="url(#arrowhead-yellow)"/>
+
+  <line x1="60" y1="780" x2="1340" y2="780" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- ===== Section 2: OAuth sequence ===== -->
+  <text x="60" y="818" class="section-title">2. User OAuth connection flow (one time per user)</text>
+
+  <!-- Actors -->
+  <text x="115" y="858" text-anchor="middle" class="actor">User Browser</text>
+  <text x="370" y="858" text-anchor="middle" class="actor">Qualitative API</text>
+  <text x="640" y="858" text-anchor="middle" class="actor">Zoom OAuth</text>
+  <text x="910" y="858" text-anchor="middle" class="actor">Zoom API</text>
+  <text x="1180" y="858" text-anchor="middle" class="actor">Neon Postgres</text>
+
+  <!-- Lifelines -->
+  <line x1="115" y1="868" x2="115" y2="1130" stroke="#94a3b8" stroke-dasharray="4 4"/>
+  <line x1="370" y1="868" x2="370" y2="1130" stroke="#94a3b8" stroke-dasharray="4 4"/>
+  <line x1="640" y1="868" x2="640" y2="1130" stroke="#94a3b8" stroke-dasharray="4 4"/>
+  <line x1="910" y1="868" x2="910" y2="1130" stroke="#94a3b8" stroke-dasharray="4 4"/>
+  <line x1="1180" y1="868" x2="1180" y2="1130" stroke="#94a3b8" stroke-dasharray="4 4"/>
+
+  <!-- Step 1 -->
+  <line x1="115" y1="890" x2="370" y2="890" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrowhead-sm)"/>
+  <circle cx="80" cy="890" r="11" fill="#1e293b"/>
+  <text x="80" y="894" text-anchor="middle" class="step-num">1</text>
+  <text x="245" y="884" text-anchor="middle" class="seq-msg">Click &ldquo;Connect Zoom&rdquo;  →  GET /api/auth/zoom</text>
+
+  <!-- Step 2 -->
+  <line x1="370" y1="920" x2="115" y2="920" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrowhead-sm)"/>
+  <circle cx="405" cy="920" r="11" fill="#1e293b"/>
+  <text x="405" y="924" text-anchor="middle" class="step-num">2</text>
+  <text x="245" y="914" text-anchor="middle" class="seq-msg">302 to zoom.us/oauth/authorize?scope=...&amp;state=...</text>
+
+  <!-- Step 3 -->
+  <line x1="115" y1="950" x2="640" y2="950" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrowhead-sm-blue)"/>
+  <circle cx="80" cy="950" r="11" fill="#2563eb"/>
+  <text x="80" y="954" text-anchor="middle" class="step-num">3</text>
+  <text x="380" y="944" text-anchor="middle" class="seq-msg">User approves the 6 scopes on Zoom&rsquo;s page</text>
+
+  <!-- Step 4 -->
+  <line x1="640" y1="980" x2="115" y2="980" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrowhead-sm-blue)"/>
+  <circle cx="675" cy="980" r="11" fill="#2563eb"/>
+  <text x="675" y="984" text-anchor="middle" class="step-num">4</text>
+  <text x="380" y="974" text-anchor="middle" class="seq-msg">Zoom 302 to /api/auth/zoom/callback?code=...&amp;state=...</text>
+
+  <!-- Step 5 -->
+  <line x1="115" y1="1010" x2="370" y2="1010" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrowhead-sm)"/>
+  <circle cx="80" cy="1010" r="11" fill="#1e293b"/>
+  <text x="80" y="1014" text-anchor="middle" class="step-num">5</text>
+  <text x="245" y="1004" text-anchor="middle" class="seq-msg">GET /api/auth/zoom/callback  (state CSRF cookie validated)</text>
+
+  <!-- Step 6 -->
+  <line x1="370" y1="1040" x2="640" y2="1040" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrowhead-sm-blue)"/>
+  <circle cx="335" cy="1040" r="11" fill="#2563eb"/>
+  <text x="335" y="1044" text-anchor="middle" class="step-num">6</text>
+  <text x="505" y="1034" text-anchor="middle" class="seq-msg">POST /oauth/token  (code + client_id + client_secret)</text>
+
+  <!-- Step 7 -->
+  <line x1="640" y1="1070" x2="370" y2="1070" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrowhead-sm-blue)"/>
+  <circle cx="675" cy="1070" r="11" fill="#2563eb"/>
+  <text x="675" y="1074" text-anchor="middle" class="step-num">7</text>
+  <text x="505" y="1064" text-anchor="middle" class="seq-msg">{ access_token, refresh_token, expires_in }</text>
+
+  <!-- Step 8: optional /users/me -->
+  <line x1="370" y1="1100" x2="910" y2="1100" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrowhead-sm-blue)"/>
+  <circle cx="335" cy="1100" r="11" fill="#2563eb"/>
+  <text x="335" y="1104" text-anchor="middle" class="step-num">8</text>
+  <text x="640" y="1094" text-anchor="middle" class="seq-msg">GET /users/me  (display Zoom email; nice-to-have)</text>
+
+  <!-- Step 9 -->
+  <line x1="370" y1="1130" x2="1180" y2="1130" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrowhead-sm-green)"/>
+  <circle cx="335" cy="1130" r="11" fill="#16a34a"/>
+  <text x="335" y="1134" text-anchor="middle" class="step-num">9</text>
+  <text x="780" y="1124" text-anchor="middle" class="seq-msg">UPDATE users  SET zoom_access_token=AES-GCM(token), refresh=AES-GCM(token)</text>
+
+  <line x1="60" y1="1158" x2="1340" y2="1158" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- ===== Section 3: Sync flow + Webhook ===== -->
+  <text x="60" y="1196" class="section-title">3. Meeting sync (user-initiated) and webhook (Zoom-initiated)</text>
+
+  <!-- Two sub-headers -->
+  <text x="60" y="1232" class="flow-title">A) Sync — user clicks &ldquo;Sync Zoom&rdquo;</text>
+  <text x="720" y="1232" class="flow-title">B) Webhook — Zoom fires recording.transcript_completed</text>
+
+  <!-- Sync flow -->
+  <rect x="60" y="1250" width="630" height="380" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+
+  <circle cx="90" cy="1280" r="11" fill="#1e293b"/>
+  <text x="90" y="1284" text-anchor="middle" class="step-num">1</text>
+  <text x="115" y="1284" class="step">User clicks Sync Zoom on /meetings.</text>
+
+  <circle cx="90" cy="1314" r="11" fill="#1e293b"/>
+  <text x="90" y="1318" text-anchor="middle" class="step-num">2</text>
+  <text x="115" y="1318" class="step">POST /api/meetings/sync-zoom.</text>
+
+  <circle cx="90" cy="1348" r="11" fill="#16a34a"/>
+  <text x="90" y="1352" text-anchor="middle" class="step-num">3</text>
+  <text x="115" y="1352" class="step">Server reads encrypted tokens from Neon &amp; decrypts in memory.</text>
+
+  <circle cx="90" cy="1382" r="11" fill="#2563eb"/>
+  <text x="90" y="1386" text-anchor="middle" class="step-num">4</text>
+  <text x="115" y="1386" class="step">If access token expired: POST zoom.us/oauth/token → new pair, re-encrypt &amp; store.</text>
+
+  <circle cx="90" cy="1416" r="11" fill="#2563eb"/>
+  <text x="90" y="1420" text-anchor="middle" class="step-num">5</text>
+  <text x="115" y="1420" class="step">GET api.zoom.us/v2/users/me/recordings (last N days).</text>
+
+  <circle cx="90" cy="1450" r="11" fill="#2563eb"/>
+  <text x="90" y="1454" text-anchor="middle" class="step-num">6</text>
+  <text x="115" y="1454" class="step">For each meeting: download VTT transcript from the file&rsquo;s download URL.</text>
+
+  <circle cx="90" cy="1484" r="11" fill="#2563eb"/>
+  <text x="90" y="1488" text-anchor="middle" class="step-num">7</text>
+  <text x="115" y="1488" class="step">GET /past_meetings/{uuid}/participants for attendee list.</text>
+
+  <circle cx="90" cy="1518" r="11" fill="#16a34a"/>
+  <text x="90" y="1522" text-anchor="middle" class="step-num">8</text>
+  <text x="115" y="1522" class="step">Persist meeting + transcript + attendees to Neon (account-scoped).</text>
+
+  <circle cx="90" cy="1552" r="11" fill="#1e293b"/>
+  <text x="90" y="1556" text-anchor="middle" class="step-num">9</text>
+  <text x="115" y="1556" class="step">UI refreshes; user may click &ldquo;Process &amp; Extract&rdquo; (no further Zoom calls).</text>
+
+  <text x="78" y="1597" class="annotation">All Zoom requests use Authorization: Bearer &lt;decrypted access token&gt;.</text>
+  <text x="78" y="1613" class="annotation">Tokens are never logged. Decrypted plaintext exists only in request memory.</text>
+
+  <!-- Webhook flow -->
+  <rect x="720" y="1250" width="620" height="380" rx="8" fill="#f8fafc" stroke="#cbd5e1"/>
+
+  <circle cx="750" cy="1280" r="11" fill="#2563eb"/>
+  <text x="750" y="1284" text-anchor="middle" class="step-num">1</text>
+  <text x="775" y="1284" class="step">Zoom POSTs to https://YOUR_DOMAIN/api/webhooks/zoom.</text>
+
+  <circle cx="750" cy="1314" r="11" fill="#2563eb"/>
+  <text x="750" y="1318" text-anchor="middle" class="step-num">2</text>
+  <text x="775" y="1318" class="step">URL validation (first-time only): respond with HMAC(plainToken, secret).</text>
+
+  <circle cx="750" cy="1348" r="11" fill="#1e293b"/>
+  <text x="750" y="1352" text-anchor="middle" class="step-num">3</text>
+  <text x="775" y="1352" class="step">Verify x-zm-signature = v0:&lt;HMAC-SHA256(secret, ts + body)&gt;.</text>
+
+  <circle cx="750" cy="1382" r="11" fill="#1e293b"/>
+  <text x="750" y="1386" text-anchor="middle" class="step-num">4</text>
+  <text x="775" y="1386" class="step">Reject if timestamp older than 5 min (replay defense).</text>
+
+  <circle cx="750" cy="1416" r="11" fill="#16a34a"/>
+  <text x="750" y="1420" text-anchor="middle" class="step-num">5</text>
+  <text x="775" y="1420" class="step">Look up local user by payload.object.host_email (case-insensitive).</text>
+
+  <circle cx="750" cy="1450" r="11" fill="#2563eb"/>
+  <text x="750" y="1454" text-anchor="middle" class="step-num">6</text>
+  <text x="775" y="1454" class="step">Re-fetch that user&rsquo;s recent recordings (transcript URL is most reliable from API).</text>
+
+  <circle cx="750" cy="1484" r="11" fill="#16a34a"/>
+  <text x="750" y="1488" text-anchor="middle" class="step-num">7</text>
+  <text x="775" y="1488" class="step">Sync the meeting + transcript into Neon (idempotent on external_id).</text>
+
+  <circle cx="750" cy="1518" r="11" fill="#1e293b"/>
+  <text x="750" y="1522" text-anchor="middle" class="step-num">8</text>
+  <text x="775" y="1522" class="step">200 OK to Zoom (always, even on internal error — avoids retry storms).</text>
+
+  <text x="738" y="1564" class="annotation">Endpoint is public (Zoom doesn&rsquo;t authenticate as a user). Signature check is the only auth.</text>
+  <text x="738" y="1580" class="annotation">Subscribed events: recording.transcript_completed  (optionally recording.completed).</text>
+  <text x="738" y="1596" class="annotation">Disconnected users: tokens cleared and webhook event silently dropped.</text>
+
+  <!-- ===== Footer ===== -->
+  <line x1="60" y1="1652" x2="1340" y2="1652" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="60" y="1675" class="footnote">Privacy policy: https://qualitative.one/privacy  ·  Terms: https://qualitative.one/terms  ·  DPA: https://qualitative.one/dpa</text>
+  <text x="60" y="1691" class="footnote">Contact: support@qualitative.one  ·  Updated: 2026-05-19</text>
+
+  <!-- ===== Marker definitions ===== -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#1e293b"/>
+    </marker>
+    <marker id="arrowhead-blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowhead-green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#16a34a"/>
+    </marker>
+    <marker id="arrowhead-yellow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#ca8a04"/>
+    </marker>
+    <marker id="arrowhead-sm" markerWidth="8" markerHeight="8" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#1e293b"/>
+    </marker>
+    <marker id="arrowhead-sm-blue" markerWidth="8" markerHeight="8" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowhead-sm-green" markerWidth="8" markerHeight="8" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#16a34a"/>
+    </marker>
+  </defs>
+</svg>
