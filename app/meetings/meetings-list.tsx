@@ -267,21 +267,21 @@ export function MeetingsList({ meetings, customers = [], extractCounts = {} }: M
           onClick={() => handleFilterChange("customer")}
           count={counts.customer}
         >
-          Customers
+          Primary
         </TabButton>
         <TabButton
           active={filter === "deal"}
           onClick={() => handleFilterChange("deal")}
           count={counts.deal}
         >
-          Deals
+          Secondary
         </TabButton>
         <TabButton
           active={filter === "internal"}
           onClick={() => handleFilterChange("internal")}
           count={counts.internal}
         >
-          Internal
+          Other
         </TabButton>
       </div>
 
@@ -383,7 +383,7 @@ export function MeetingsList({ meetings, customers = [], extractCounts = {} }: M
                         ) : null}
                         {meeting.is_internal && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-                            Internal
+                            Other
                           </span>
                         )}
                       </div>
@@ -431,7 +431,7 @@ export function MeetingsList({ meetings, customers = [], extractCounts = {} }: M
                                 : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                             }`}
                           >
-                            {customer.customer_type === "deal" ? "Deal" : "Customer"}
+                            {customer.customer_type === "deal" ? "Secondary" : "Primary"}
                           </span>
                         </div>
                       ) : (

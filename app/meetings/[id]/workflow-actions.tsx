@@ -215,7 +215,7 @@ export function WorkflowActions({
               </svg>
             }
             title="Generate Follow-up Email"
-            description={customerType === "deal" ? "Create sales follow-up with next steps" : "Create customer recap email"}
+            description={customerType === "deal" ? "Create Secondary follow-up with next steps" : "Create Primary recap email"}
           />
         )}
 
@@ -256,7 +256,7 @@ export function WorkflowActions({
               </svg>
             }
             title="Write Notes to HubSpot"
-            description={canWriteToHubSpot ? "Generate CRM notes and sync to HubSpot" : "Link a HubSpot company or deal first"}
+            description={canWriteToHubSpot ? "Generate CRM notes and sync to HubSpot" : "Link a HubSpot organization first"}
           />
         )}
       </div>

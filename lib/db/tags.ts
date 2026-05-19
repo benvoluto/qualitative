@@ -1,5 +1,6 @@
 import { getDb } from "./client";
 import { Tag, CreateTag, UpdateTag } from "./types";
+import { TAG_COLORS } from "@/lib/constants/colors";
 
 export async function getTags(accountId: string): Promise<Tag[]> {
   const sql = getDb();
@@ -57,7 +58,21 @@ export async function deleteTag(accountId: string, id: string): Promise<boolean>
 export async function getOrCreateTag(accountId: string, name: string, type?: string): Promise<Tag> {
   const existing = await getTagByName(accountId, name);
   if (existing) return existing;
-  return createTag(accountId, { name, type });
+  const color = await pickNextAvailableColor(accountId);
+  return createTag(accountId, { name, type, color });
+}
+
+/**
+ * Returns the first color from TAG_COLORS not yet used by any tag on the
+ * account. Falls back to the first color when the palette is exhausted so
+ * we never block tag creation — the user can recolor later.
+ */
+async function pickNextAvailableColor(accountId: string): Promise<string> {
+  const used = new Set(await getUsedColors(accountId));
+  for (const color of TAG_COLORS) {
+    if (!used.has(color)) return color;
+  }
+  return TAG_COLORS[0];
 }
 
 export async function getUsedColors(accountId: string): Promise<string[]> {

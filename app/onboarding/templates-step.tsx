@@ -15,16 +15,16 @@ interface TemplatesStepProps {
 }
 
 const TEMPLATE_LABELS: Record<TemplateType, string> = {
-  deal_email: "Deal follow-up email",
-  customer_email: "Customer follow-up email",
+  deal_email: "Secondary follow-up email",
+  customer_email: "Primary follow-up email",
   notes: "Meeting notes summary",
 };
 
 const TEMPLATE_DESCRIPTIONS: Record<TemplateType, string> = {
   deal_email:
-    "Used when generating follow-up emails for prospect meetings (customers in 'deal' stage).",
+    "Used when generating follow-up emails for meetings with a Secondary organization.",
   customer_email:
-    "Used when generating follow-up emails for existing customer meetings.",
+    "Used when generating follow-up emails for meetings with a Primary organization.",
   notes: "Used when generating the meeting notes summary attached to each meeting.",
 };
 

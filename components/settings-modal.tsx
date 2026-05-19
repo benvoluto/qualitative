@@ -436,8 +436,8 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
   };
 
   const templateLabels: Record<TemplateType, string> = {
-    deal_email: "Deal Email Template",
-    customer_email: "Customer Email Template",
+    deal_email: "Secondary Email Template",
+    customer_email: "Primary Email Template",
     notes: "Meeting Notes Template",
   };
 

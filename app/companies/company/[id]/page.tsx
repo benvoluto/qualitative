@@ -61,8 +61,8 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          <StatCard label="Customers" value={company.customer_count} color="green" />
-          <StatCard label="Deals" value={company.deal_count} color="blue" />
+          <StatCard label="Primary" value={company.customer_count} color="green" />
+          <StatCard label="Secondary" value={company.deal_count} color="blue" />
           <StatCard label="Meetings" value={company.meeting_count} color="gray" />
           <StatCard label="Extracts" value={company.extract_count} color="gray" />
           <StatCard label="Pending Actions" value={company.pending_action_count} color="orange" />
@@ -122,7 +122,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
           {/* Linked Customers/Deals */}
           <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Linked Customers & Deals
+              Linked Primary & Secondary
             </h2>
             {linkedCustomers.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400 text-sm">

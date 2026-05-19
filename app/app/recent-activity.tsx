@@ -318,8 +318,8 @@ export function RecentActivity() {
 
   const typeLabels: Record<TypeFilter, string> = {
     all: "All",
-    deals: "Deals",
-    customers: "Customers",
+    deals: "Secondary",
+    customers: "Primary",
     internal: "Other",
   };
 

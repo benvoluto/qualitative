@@ -418,7 +418,7 @@ export function EditableMeetingDetails({
                                   : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                               }`}
                             >
-                              {customer.customer_type === "deal" ? "Deal" : "Customer"}
+                              {customer.customer_type === "deal" ? "Secondary" : "Primary"}
                             </span>
                           </div>
                           {customer.domain && (
@@ -455,8 +455,8 @@ export function EditableMeetingDetails({
                 }
                 className="w-full px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
               >
-                <option value="customer">Customer</option>
-                <option value="deal">Deal</option>
+                <option value="customer">Primary</option>
+                <option value="deal">Secondary</option>
               </select>
             ) : linkedCustomer ? (
               <MeetingTypeBadge customerType={linkedCustomer.customer_type} />
@@ -685,7 +685,7 @@ function MeetingTypeBadge({
           : "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
       }`}
     >
-      {customerType === "deal" ? "Deal" : "Customer"}
+      {customerType === "deal" ? "Secondary" : "Primary"}
     </span>
   );
 }

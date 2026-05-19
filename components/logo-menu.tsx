@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "./logo";
-import { features } from "@/lib/features";
 
 interface LogoMenuProps {
   counts?: {
@@ -22,7 +21,7 @@ interface LogoMenuProps {
   };
 }
 
-export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
+export function LogoMenu({ counts }: LogoMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -36,16 +35,42 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
 
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen]);
 
   const dropdownItems = [
-    { href: "/companies", label: "Organizations", icon: BuildingIcon, count: counts?.companies },
-    { href: "/extracts", label: "Extracts", icon: DocumentIcon, count: counts?.extracts },
-    { href: "/extracts?filter=action", label: "Action Items", icon: ChecklistIcon, count: counts?.actionItems },
-    { href: "/extract-rules", label: "Extract Rules", icon: CogIcon, count: counts?.extractRules },
-    { href: "/billing", label: "Billing", icon: CreditCardIcon, count: undefined },
+    {
+      href: "/companies",
+      label: "Organizations",
+      icon: BuildingIcon,
+      count: counts?.companies,
+    },
+    {
+      href: "/extracts",
+      label: "Extracts",
+      icon: DocumentIcon,
+      count: counts?.extracts,
+    },
+    {
+      href: "/extracts?filter=action",
+      label: "Action Items",
+      icon: ChecklistIcon,
+      count: counts?.actionItems,
+    },
+    {
+      href: "/extract-rules",
+      label: "Extract Rules",
+      icon: CogIcon,
+      count: counts?.extractRules,
+    },
+    {
+      href: "/billing",
+      label: "Billing",
+      icon: CreditCardIcon,
+      count: undefined,
+    },
   ];
 
   const isActive = (path: string) => {
@@ -76,7 +101,12 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </button>
 
@@ -151,26 +181,6 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
             </span>
           )}
         </Link>
-
-        {integrationStatus && (
-          <div className="flex items-center gap-0.5 ml-2" aria-label="Integration status">
-            {[
-              { connected: integrationStatus.googleMeet, color: "#4285F4", enabled: true, name: "Google Meet" },
-              { connected: integrationStatus.zoom, color: "#2D8CFF", enabled: features.zoom, name: "Zoom" },
-              { connected: integrationStatus.teams, color: "#6264A7", enabled: features.teams, name: "Teams" },
-              { connected: integrationStatus.hubspot, color: "#FF7A59", enabled: features.hubspot, name: "HubSpot" },
-            ]
-              .filter((i) => i.enabled)
-              .map((integration) => (
-                <div
-                  key={integration.name}
-                  className={`w-2 h-2 rounded-full ${integration.connected ? "" : "opacity-30"}`}
-                  style={{ backgroundColor: integration.color }}
-                  title={`${integration.name}: ${integration.connected ? "Connected" : "Not connected"}`}
-                />
-              ))}
-          </div>
-        )}
       </nav>
     </div>
   );
@@ -178,7 +188,12 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
 
 function HomeIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -191,7 +206,12 @@ function HomeIcon({ className }: { className?: string }) {
 
 function ExtractsIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -204,7 +224,12 @@ function ExtractsIcon({ className }: { className?: string }) {
 
 function CalendarIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -217,7 +242,12 @@ function CalendarIcon({ className }: { className?: string }) {
 
 function BuildingIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -230,7 +260,12 @@ function BuildingIcon({ className }: { className?: string }) {
 
 function DocumentIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -243,7 +278,12 @@ function DocumentIcon({ className }: { className?: string }) {
 
 function ChecklistIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -256,7 +296,12 @@ function ChecklistIcon({ className }: { className?: string }) {
 
 function CogIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -275,7 +320,12 @@ function CogIcon({ className }: { className?: string }) {
 
 function CreditCardIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -285,4 +335,3 @@ function CreditCardIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-

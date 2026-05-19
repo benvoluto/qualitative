@@ -131,7 +131,7 @@ export function AddOrganizationButton() {
                         : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
                     }`}
                   >
-                    Customer
+                    Primary
                   </button>
                   <button
                     type="button"
@@ -142,7 +142,7 @@ export function AddOrganizationButton() {
                         : "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
                     }`}
                   >
-                    Deal
+                    Secondary
                   </button>
                 </div>
               </div>

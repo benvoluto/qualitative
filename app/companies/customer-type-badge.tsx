@@ -13,7 +13,7 @@ export function CustomerTypeBadge({ type, className = "" }: CustomerTypeBadgePro
       <span
         className={`${baseClasses} bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 ${className}`}
       >
-        Deal
+        Secondary
       </span>
     );
   }
@@ -22,7 +22,7 @@ export function CustomerTypeBadge({ type, className = "" }: CustomerTypeBadgePro
     <span
       className={`${baseClasses} bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 ${className}`}
     >
-      Customer
+      Primary
     </span>
   );
 }

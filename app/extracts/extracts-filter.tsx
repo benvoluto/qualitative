@@ -7,86 +7,41 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { Tag, ExtractRule, Meeting, Customer } from "@/lib/db/types";
 import { TagBadge } from "@/components/tag-badge";
 
-// Fuzzy match helper - returns a score (0-1) for how well the text matches the query
-function fuzzyMatch(text: string, query: string): number {
-  if (!query.trim()) return 1;
-  if (!text) return 0;
-
+// Returns true if every whitespace-separated word in the query appears as a
+// case-insensitive substring of the text. Whole-word, all-AND semantics —
+// what most users intuitively expect from a search box.
+function allWordsMatch(text: string, queryWords: string[]): boolean {
+  if (queryWords.length === 0) return true;
+  if (!text) return false;
   const textLower = text.toLowerCase();
-  const queryLower = query.toLowerCase();
-  const queryWords = queryLower.split(/\s+/).filter((w) => w.length > 0);
-
-  if (queryWords.length === 0) return 1;
-
-  let totalScore = 0;
-
-  for (const word of queryWords) {
-    // Exact word match (highest score)
-    if (textLower.includes(word)) {
-      totalScore += 1;
-      continue;
-    }
-
-    // Fuzzy match - check if word characters appear in order
-    let wordScore = 0;
-    let textIdx = 0;
-    let matchedChars = 0;
-
-    for (const char of word) {
-      const foundIdx = textLower.indexOf(char, textIdx);
-      if (foundIdx !== -1) {
-        matchedChars++;
-        textIdx = foundIdx + 1;
-      }
-    }
-
-    // Score based on percentage of characters matched
-    wordScore = matchedChars / word.length;
-
-    // Bonus for consecutive matches (word appears as substring)
-    for (let i = 0; i < textLower.length; i++) {
-      let matchLen = 0;
-      for (let j = 0; j < word.length && i + j < textLower.length; j++) {
-        if (textLower[i + j] === word[j]) {
-          matchLen++;
-        } else {
-          break;
-        }
-      }
-      if (matchLen >= 3 && matchLen >= word.length * 0.6) {
-        wordScore = Math.max(wordScore, matchLen / word.length);
-      }
-    }
-
-    totalScore += wordScore;
-  }
-
-  return totalScore / queryWords.length;
+  return queryWords.every((w) => textLower.includes(w));
 }
 
-// Calculate match score for an extract
+// Calculate match score for an extract. Score is used both to filter (>= 0.5
+// means "match") and to rank — extracts that match in the summary or quotes
+// rank higher than those that only match via tags / customer name.
 function getExtractMatchScore(
   extract: { summary: string | null; quotes: string[]; rule_name: string | null; tags: { name: string }[]; customer_name: string | null },
   query: string
 ): number {
-  if (!query.trim()) return 1;
+  const trimmed = query.trim();
+  if (!trimmed) return 1;
+  const words = trimmed.toLowerCase().split(/\s+/).filter((w) => w.length > 0);
+  if (words.length === 0) return 1;
 
-  const summaryScore = fuzzyMatch(extract.summary || "", query);
-  const quotesText = extract.quotes.join(" ");
-  const quotesScore = fuzzyMatch(quotesText, query);
-  const ruleScore = fuzzyMatch(extract.rule_name || "", query);
-  const tagsText = extract.tags.map((t) => t.name).join(" ");
-  const tagsScore = fuzzyMatch(tagsText, query);
-  const customerScore = fuzzyMatch(extract.customer_name || "", query);
+  const fields: { text: string; weight: number }[] = [
+    { text: extract.summary || "", weight: 1.0 },
+    { text: extract.quotes.join(" "), weight: 0.9 },
+    { text: extract.customer_name || "", weight: 0.8 },
+    { text: extract.rule_name || "", weight: 0.7 },
+    { text: extract.tags.map((t) => t.name).join(" "), weight: 0.6 },
+  ];
 
-  // Weight: summary most important, then quotes, then customer/rule/tags
-  return Math.max(
-    summaryScore * 1.0,
-    quotesScore * 0.9,
-    customerScore * 0.8,
-    ruleScore * 0.7,
-    tagsScore * 0.6
-  );
+  let best = 0;
+  for (const { text, weight } of fields) {
+    if (allWordsMatch(text, words) && weight > best) best = weight;
+  }
+  return best;
 }
 
 type TypeFilter = "all" | "customer" | "deal" | "internal";
@@ -369,7 +324,7 @@ export function ExtractsFilter({
           </div>
           {searchQuery.trim() && (
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Fuzzy matching enabled
+              Searches summary, quotes, customer, rule, and tags
             </p>
           )}
         </div>
@@ -539,7 +494,7 @@ export function ExtractsFilter({
         {/* Customers filter */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-            Filter by Customer
+            Filter by Organization
           </h3>
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {customersWithExtracts.length > 0 ? (
@@ -662,21 +617,21 @@ export function ExtractsFilter({
               onClick={() => setTypeFilter("customer")}
               count={typeCounts.customer}
             >
-              Customers
+              Primary
             </TypeTabButton>
             <TypeTabButton
               active={typeFilter === "deal"}
               onClick={() => setTypeFilter("deal")}
               count={typeCounts.deal}
             >
-              Deals
+              Secondary
             </TypeTabButton>
             <TypeTabButton
               active={typeFilter === "internal"}
               onClick={() => setTypeFilter("internal")}
               count={typeCounts.internal}
             >
-              Internal
+              Other
             </TypeTabButton>
           </div>
         </div>
@@ -948,7 +903,7 @@ function ExtractCard({ extract, selectedTags, toggleTag, onRefresh }: ExtractCar
       <div className="flex items-center gap-3 mb-3 text-xs text-gray-500 dark:text-gray-400">
         {extract.is_internal && (
           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
-            Internal
+            Other
           </span>
         )}
         {extract.customer_name && (

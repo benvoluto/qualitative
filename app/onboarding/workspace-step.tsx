@@ -21,7 +21,7 @@ export function WorkspaceStep({ initialName, initialDomain, initialAliases }: Wo
       </h2>
       <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
         Confirm the name, then tell us which email domain belongs to your organization.
-        Meetings where every participant is from one of these domains will be marked internal
+        Meetings where every participant is from one of these domains will be marked Other
         and skipped during sync.
       </p>
 
@@ -53,13 +53,13 @@ export function WorkspaceStep({ initialName, initialDomain, initialAliases }: Wo
             className="mt-1 block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            No leading @. Leave blank to disable internal-meeting filtering.
+            No leading @. Leave blank to disable Other-meeting filtering.
           </p>
         </div>
 
         <div>
           <label htmlFor="aliases" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Additional internal domains (optional)
+            Additional domains for Other meetings (optional)
           </label>
           <textarea
             id="aliases"

@@ -424,7 +424,7 @@ export function SyncButton() {
               Review Meetings to Sync
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Review the meetings below. Internal meetings (all participants from your organization) and possible duplicates require manual selection.
+              Review the meetings below. Other meetings (all participants from your organization) and possible duplicates require manual selection.
             </p>
 
             {/* Select All / Deselect All */}
@@ -474,7 +474,7 @@ export function SyncButton() {
                         )}
                         {meeting.isInternal && (
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
-                            Internal Meeting
+                            Other Meeting
                           </span>
                         )}
                         {meeting.hasTimeConflict && (

@@ -73,7 +73,7 @@ export function CompaniesPageClient({
           onClick={() => setView("customers")}
           count={customerStats.totalCustomers}
         >
-          Customers & Deals
+          Primary & Secondary
         </ViewButton>
       </div>
 
@@ -240,7 +240,7 @@ function CustomersView({
         <StatCard
           label="Total"
           value={stats.totalCustomers}
-          subtitle={`${stats.customerTypeCount} customers, ${stats.dealTypeCount} deals`}
+          subtitle={`${stats.customerTypeCount} primary, ${stats.dealTypeCount} secondary`}
         />
         <StatCard label="Total Meetings" value={stats.totalMeetings} color="blue" />
         <StatCard label="Total Extracts" value={stats.totalExtracts} color="green" />
@@ -261,21 +261,21 @@ function CustomersView({
           onClick={() => onFilterChange("customer")}
           count={stats.customerTypeCount}
         >
-          Customers
+          Primary
         </TabButton>
         <TabButton
           active={filter === "deal"}
           onClick={() => onFilterChange("deal")}
           count={stats.dealTypeCount}
         >
-          Deals
+          Secondary
         </TabButton>
       </div>
 
       {/* Customers List */}
       {customers.length === 0 ? (
         <EmptyState
-          message={filter === "all" ? "No customers yet" : filter === "customer" ? "No customers yet" : "No deals yet"}
+          message={filter === "deal" ? "No secondary organizations yet" : "No primary organizations yet"}
           description="Add an organization to get started."
         />
       ) : (

@@ -66,7 +66,7 @@ export function CompanySyncCheck({ hasHubSpot }: CompanySyncCheckProps) {
         }
         if (!dealsResponse.ok) {
           const data = await dealsResponse.json().catch(() => ({}));
-          errors.push(data.error || "Deals sync failed");
+          errors.push(data.error || "Secondary sync failed");
         }
         setToast({ message: errors.join(". "), type: "error" });
         return;

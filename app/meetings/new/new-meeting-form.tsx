@@ -170,7 +170,7 @@ export function NewMeetingForm({ customers }: NewMeetingFormProps) {
           <option value="">Select an organization (optional)</option>
           {customers.map((customer) => (
             <option key={customer.id} value={customer.id}>
-              {customer.name} {customer.customer_type === "deal" ? "(Deal)" : ""}
+              {customer.name} {customer.customer_type === "deal" ? "(Secondary)" : ""}
             </option>
           ))}
         </select>

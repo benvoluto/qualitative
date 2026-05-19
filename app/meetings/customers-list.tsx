@@ -199,7 +199,7 @@ export function CustomersList({ customers }: CustomersListProps) {
                           : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                       }`}
                     >
-                      {customer.customer_type === "deal" ? "Deal" : "Customer"}
+                      {customer.customer_type === "deal" ? "Secondary" : "Primary"}
                     </span>
                   </div>
                   {customer.address && (
@@ -312,8 +312,8 @@ function AddCompanyForm({ onClose, onCreated }: AddCompanyFormProps) {
           onChange={(e) => setCustomerType(e.target.value as CustomerType)}
           className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500"
         >
-          <option value="customer">Customer</option>
-          <option value="deal">Deal</option>
+          <option value="customer">Primary</option>
+          <option value="deal">Secondary</option>
         </select>
       </div>
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
