@@ -1,17 +1,12 @@
 import { meetings, extracts, customers, emailDrafts } from "@/lib/db";
 import { requireAccountId } from "@/lib/account-context";
 import { notFound } from "next/navigation";
-import { ProcessButton } from "./process-button";
-import { ExtractButton } from "./extract-button";
-import { MeetingActions } from "./meeting-actions";
 import { EmailDraftPanel } from "./email-draft-panel";
-import { TicketsPanel } from "./tickets-panel";
 import { WorkflowActions } from "./workflow-actions";
 import { CollapsibleTranscript } from "./collapsible-transcript";
 import { EditableNotes } from "./editable-notes";
 import { MeetingExtracts } from "./meeting-extracts";
 import { EditableMeetingDetails } from "./editable-meeting-details";
-import { hasTicketableContent } from "@/lib/gemini";
 import { LogoMenu } from "@/components/logo-menu";
 
 export const dynamic = "force-dynamic";
@@ -40,10 +35,6 @@ export default async function MeetingDetailPage({
     ? await customers.getCustomerById(accountId, meeting.customer_id)
     : null;
 
-  // Check if extracts contain potential feature requests or bugs
-  const ticketableContent = hasTicketableContent(meetingExtracts);
-  const hasPotentialTickets = ticketableContent.hasFeatureRequests || ticketableContent.hasBugs;
-
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
@@ -62,26 +53,6 @@ export default async function MeetingDetailPage({
             </div>
             <div className="flex items-center gap-4">
               <StatusBadge status={meeting.workflow_status} />
-              {/* Unified Process & Extract runs the durable workflow. Shown until extracts exist. */}
-              {(!meeting.transcript || meetingExtracts.length === 0) &&
-                meeting.workflow_status !== "processing" && (
-                  <ProcessButton meetingId={id} hasExtracts={meetingExtracts.length > 0} />
-                )}
-              {/* Reprocess button uses the legacy synchronous /extract endpoint with reprocess=true. */}
-              {meetingExtracts.length > 0 && (
-                <ExtractButton
-                  meetingId={id}
-                  hasTranscript={!!meeting.transcript}
-                  hasExtracts={meetingExtracts.length > 0}
-                  extractCount={meetingExtracts.length}
-                />
-              )}
-              <MeetingActions
-                meeting={meeting}
-                customers={allCustomers}
-                extractCount={meetingExtracts.length}
-                linkedCustomer={linkedCustomer}
-              />
             </div>
           </div>
         </div>
@@ -98,6 +69,7 @@ export default async function MeetingDetailPage({
               linkedCustomer={linkedCustomer}
               participants={meetingParticipants}
               allCustomers={allCustomers}
+              extractCount={meetingExtracts.length}
             />
 
             {/* Extracts - Moved to main column */}
@@ -105,6 +77,7 @@ export default async function MeetingDetailPage({
               extracts={meetingExtracts}
               hasTranscript={!!meeting.transcript}
               meetingId={id}
+              meetingStatus={meeting.workflow_status}
             />
 
             {/* Transcript - Collapsible, below extracts */}
@@ -115,16 +88,17 @@ export default async function MeetingDetailPage({
             />
 
             {/* User Notes - Editable */}
-            <EditableNotes meetingId={id} notes={meeting.user_notes} />
+            <EditableNotes
+              meetingId={id}
+              notes={meeting.user_notes}
+              meetingStatus={meeting.workflow_status}
+            />
 
             {/* Email Drafts */}
-            <EmailDraftPanel drafts={meetingDrafts} meetingId={id} />
-
-            {/* Tickets */}
-            <TicketsPanel
+            <EmailDraftPanel
+              drafts={meetingDrafts}
               meetingId={id}
-              hasExtracts={meetingExtracts.length > 0}
-              hasPotentialTickets={hasPotentialTickets}
+              meetingStatus={meeting.workflow_status}
             />
           </div>
 
@@ -136,6 +110,9 @@ export default async function MeetingDetailPage({
               hasExtracts={meetingExtracts.length > 0}
               hasNotes={!!meeting.user_notes && meeting.user_notes.trim().length > 0}
               hasDraft={meetingDrafts.length > 0}
+              hasTranscript={!!meeting.transcript}
+              workflowStatus={meeting.workflow_status}
+              extractCount={meetingExtracts.length}
               customerType={linkedCustomer?.customer_type || null}
               hubspotCompanyId={linkedCustomer?.hubspot_company_id || null}
               hubspotDealId={linkedCustomer?.hubspot_deal_id || null}

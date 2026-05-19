@@ -1,21 +1,109 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { EmailDraft } from "@/lib/db/types";
 import { SettingsModal } from "@/components/settings-modal";
 
+type MeetingWorkflowStatus =
+  | "pending"
+  | "processing"
+  | "transcribed"
+  | "completed"
+  | "failed";
+
 interface EmailDraftPanelProps {
   drafts: EmailDraft[];
   meetingId: string;
+  meetingStatus: MeetingWorkflowStatus;
 }
 
-export function EmailDraftPanel({ drafts }: EmailDraftPanelProps) {
+const LIVE_POLL_INTERVAL_MS = 3000;
+
+export function EmailDraftPanel({
+  drafts: initialDrafts,
+  meetingId,
+  meetingStatus: initialMeetingStatus,
+}: EmailDraftPanelProps) {
+  const [drafts, setDrafts] = useState<EmailDraft[]>(initialDrafts);
+  const [meetingStatus, setMeetingStatus] =
+    useState<MeetingWorkflowStatus>(initialMeetingStatus);
   const [showSettings, setShowSettings] = useState(false);
+  const searchParams = useSearchParams();
+  const pollRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setDrafts(initialDrafts);
+  }, [initialDrafts]);
+  useEffect(() => {
+    setMeetingStatus(initialMeetingStatus);
+  }, [initialMeetingStatus]);
+
+  const hasRunId = searchParams.get("runId") !== null;
+  const isInFlight =
+    meetingStatus === "processing" || meetingStatus === "transcribed";
+  const shouldPoll = hasRunId || (isInFlight && drafts.length === 0);
+
+  useEffect(() => {
+    if (!shouldPoll) return;
+    let cancelled = false;
+    async function poll(): Promise<void> {
+      try {
+        const res = await fetch(`/api/meetings/${meetingId}/drafts`);
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as {
+          drafts: EmailDraft[];
+          meetingStatus: MeetingWorkflowStatus;
+        };
+        if (cancelled) return;
+        setMeetingStatus(data.meetingStatus);
+        if (data.drafts.length !== drafts.length) {
+          setDrafts(data.drafts);
+        }
+      } catch {
+        // Transient failures retry on next tick.
+      }
+    }
+    void poll();
+    pollRef.current = window.setInterval(poll, LIVE_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      if (pollRef.current !== null) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [meetingId, shouldPoll, drafts.length]);
 
   if (drafts.length === 0) {
-    return null;
+    if (!shouldPoll) return null;
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+          <svg
+            className="animate-spin h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+          Generating email draft…
+        </div>
+      </div>
+    );
   }
 
   return (

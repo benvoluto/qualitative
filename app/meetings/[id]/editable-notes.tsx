@@ -1,18 +1,35 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { SettingsModal } from "@/components/settings-modal";
+
+type MeetingWorkflowStatus =
+  | "pending"
+  | "processing"
+  | "transcribed"
+  | "completed"
+  | "failed";
 
 interface EditableNotesProps {
   meetingId: string;
   notes: string | null;
+  meetingStatus: MeetingWorkflowStatus;
 }
 
-export function EditableNotes({ meetingId, notes }: EditableNotesProps) {
+const LIVE_POLL_INTERVAL_MS = 3000;
+
+export function EditableNotes({
+  meetingId,
+  notes: initialNotes,
+  meetingStatus: initialMeetingStatus,
+}: EditableNotesProps) {
+  const [notes, setNotes] = useState<string | null>(initialNotes);
+  const [meetingStatus, setMeetingStatus] =
+    useState<MeetingWorkflowStatus>(initialMeetingStatus);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedNotes, setEditedNotes] = useState(notes || "");
+  const [editedNotes, setEditedNotes] = useState(initialNotes || "");
   const [isSaving, setIsSaving] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -20,6 +37,55 @@ export function EditableNotes({ meetingId, notes }: EditableNotesProps) {
   const [showRegeneratePrompt, setShowRegeneratePrompt] = useState(false);
   const [regenerateInstructions, setRegenerateInstructions] = useState("");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pollRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setNotes(initialNotes);
+  }, [initialNotes]);
+  useEffect(() => {
+    setMeetingStatus(initialMeetingStatus);
+  }, [initialMeetingStatus]);
+
+  // Live polling while the workflow is generating notes in the background.
+  // Don't clobber the textarea while the user is actively editing.
+  useEffect(() => {
+    if (isEditing) return;
+    const hasRunId = searchParams.get("runId") !== null;
+    const isInFlight =
+      meetingStatus === "processing" || meetingStatus === "transcribed";
+    const shouldPoll = hasRunId || (isInFlight && !notes);
+    if (!shouldPoll) return;
+
+    let cancelled = false;
+    async function poll(): Promise<void> {
+      try {
+        const res = await fetch(`/api/meetings/${meetingId}/notes`);
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as {
+          notes: string | null;
+          meetingStatus: MeetingWorkflowStatus;
+        };
+        if (cancelled) return;
+        setMeetingStatus(data.meetingStatus);
+        if (data.notes !== notes) {
+          setNotes(data.notes);
+        }
+      } catch {
+        // Transient failures retry on the next tick.
+      }
+    }
+
+    void poll();
+    pollRef.current = window.setInterval(poll, LIVE_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      if (pollRef.current !== null) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [meetingId, meetingStatus, notes, isEditing, searchParams]);
 
   async function handleSave() {
     setIsSaving(true);
@@ -75,7 +141,7 @@ export function EditableNotes({ meetingId, notes }: EditableNotesProps) {
   }
 
   function handleCancel() {
-    setEditedNotes(notes || "");
+    setEditedNotes(notes ?? "");
     setIsEditing(false);
   }
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface ExtractTag {
   id: string;
@@ -26,20 +26,90 @@ interface ExtractWithTags {
   tags: ExtractTag[];
 }
 
+type MeetingWorkflowStatus =
+  | "pending"
+  | "processing"
+  | "transcribed"
+  | "completed"
+  | "failed";
+
 interface MeetingExtractsProps {
   extracts: ExtractWithTags[];
   hasTranscript: boolean;
   meetingId: string;
+  meetingStatus: MeetingWorkflowStatus;
 }
 
+const LIVE_POLL_INTERVAL_MS = 3000;
+
 export function MeetingExtracts({
-  extracts,
+  extracts: initialExtracts,
   hasTranscript,
   meetingId,
+  meetingStatus: initialMeetingStatus,
 }: MeetingExtractsProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [extracts, setExtracts] = useState<ExtractWithTags[]>(initialExtracts);
+  const [meetingStatus, setMeetingStatus] =
+    useState<MeetingWorkflowStatus>(initialMeetingStatus);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const pollRef = useRef<number | null>(null);
+  const hasAutoExpandedRef = useRef(false);
+
+  // Server-provided values take precedence whenever the page is re-fetched
+  // (e.g. via router.refresh after a button completes).
+  useEffect(() => {
+    setExtracts(initialExtracts);
+  }, [initialExtracts]);
+  useEffect(() => {
+    setMeetingStatus(initialMeetingStatus);
+  }, [initialMeetingStatus]);
+
+  // Live polling: while the workflow is in flight (runId present in the URL,
+  // or meeting still in a non-terminal status with no extracts yet), refetch
+  // every few seconds so extracts appear without a manual refresh.
+  useEffect(() => {
+    const hasRunId = searchParams.get("runId") !== null;
+    const isInFlight =
+      meetingStatus === "processing" || meetingStatus === "transcribed";
+    const shouldPoll = hasRunId || (isInFlight && extracts.length === 0);
+    if (!shouldPoll) return;
+
+    let cancelled = false;
+    async function poll(): Promise<void> {
+      try {
+        const res = await fetch(`/api/meetings/${meetingId}/extracts`);
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as {
+          extracts: ExtractWithTags[];
+          meetingStatus: MeetingWorkflowStatus;
+        };
+        if (cancelled) return;
+        setMeetingStatus(data.meetingStatus);
+        if (data.extracts.length !== extracts.length) {
+          setExtracts(data.extracts);
+          if (data.extracts.length > 0 && !hasAutoExpandedRef.current) {
+            hasAutoExpandedRef.current = true;
+            setIsExpanded(true);
+          }
+        }
+      } catch {
+        // Transient network failures are fine — next tick will retry.
+      }
+    }
+
+    void poll();
+    pollRef.current = window.setInterval(poll, LIVE_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      if (pollRef.current !== null) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [meetingId, meetingStatus, extracts.length, searchParams]);
 
   async function handleStatusUpdate(
     extractId: string,

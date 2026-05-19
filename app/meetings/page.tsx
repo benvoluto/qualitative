@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function MeetingsPage() {
   const accountId = await requireAccountId();
   const [meetingsList, customersList, extractCounts] = await Promise.all([
-    meetings.getPastMeetings(accountId),
+    meetings.getMeetingsForList(accountId),
     customers.getCustomers(accountId),
     extracts.getExtractCountsByMeetingIds(accountId),
   ]);

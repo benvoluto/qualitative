@@ -3,12 +3,24 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { features } from "@/lib/features";
+import { ProcessButton } from "./process-button";
+import { ExtractButton } from "./extract-button";
+
+type MeetingWorkflowStatus =
+  | "pending"
+  | "processing"
+  | "transcribed"
+  | "completed"
+  | "failed";
 
 interface WorkflowActionsProps {
   meetingId: string;
   hasExtracts: boolean;
   hasNotes: boolean;
   hasDraft: boolean;
+  hasTranscript: boolean;
+  workflowStatus: MeetingWorkflowStatus;
+  extractCount: number;
   customerType: "deal" | "customer" | null;
   hubspotCompanyId: string | null;
   hubspotDealId: string | null;
@@ -19,6 +31,9 @@ export function WorkflowActions({
   hasExtracts,
   hasNotes,
   hasDraft,
+  hasTranscript,
+  workflowStatus,
+  extractCount,
   customerType,
   hubspotCompanyId,
   hubspotDealId,
@@ -140,15 +155,31 @@ export function WorkflowActions({
     }
   }
 
-  if (!hasExtracts) {
-    return null;
-  }
+  const showProcessButton =
+    (!hasTranscript || !hasExtracts) && workflowStatus !== "processing";
+  const showReprocessButton = hasExtracts;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
       <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-        Workflow Actions
+        Actions
       </h2>
+
+      {(showProcessButton || showReprocessButton) && (
+        <div className="flex flex-col gap-2 mb-4">
+          {showProcessButton && (
+            <ProcessButton meetingId={meetingId} hasExtracts={hasExtracts} />
+          )}
+          {showReprocessButton && (
+            <ExtractButton
+              meetingId={meetingId}
+              hasTranscript={hasTranscript}
+              hasExtracts={hasExtracts}
+              extractCount={extractCount}
+            />
+          )}
+        </div>
+      )}
 
       {message && (
         <div
@@ -162,6 +193,7 @@ export function WorkflowActions({
         </div>
       )}
 
+      {!hasExtracts ? null : (
       <div className="space-y-3">
         {/* Generate Email Button */}
         {hasDraft ? (
@@ -228,6 +260,7 @@ export function WorkflowActions({
           />
         )}
       </div>
+      )}
     </div>
   );
 }

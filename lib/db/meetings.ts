@@ -8,16 +8,16 @@ export async function getMeetings(accountId: string): Promise<Meeting[]> {
 }
 
 /**
- * Gets all meetings that occurred in the past (meeting_date <= now).
- * Meetings without a date are excluded.
+ * Returns every meeting on the account, ordered by effective date.
+ * Manual uploads without a meeting_date fall back to created_at so they still
+ * sort sensibly alongside dated meetings.
  */
-export async function getPastMeetings(accountId: string): Promise<Meeting[]> {
+export async function getMeetingsForList(accountId: string): Promise<Meeting[]> {
   const sql = getDb();
   const result = await sql`
     SELECT * FROM meetings
     WHERE account_id = ${accountId}
-      AND meeting_date IS NOT NULL AND meeting_date <= NOW()
-    ORDER BY meeting_date DESC
+    ORDER BY COALESCE(meeting_date, created_at) DESC
   `;
   return result as Meeting[];
 }
@@ -66,6 +66,11 @@ export async function getMeetingsByStatus(accountId: string, status: WorkflowSta
   return result as Meeting[];
 }
 
+/**
+ * Returns meetings whose effective date falls within the range. Manual
+ * uploads without a meeting_date fall back to created_at — so they show up in
+ * the activity summary in the period they were uploaded.
+ */
 export async function getMeetingsInDateRange(
   accountId: string,
   startDate: Date,
@@ -75,8 +80,9 @@ export async function getMeetingsInDateRange(
   const result = await sql`
     SELECT * FROM meetings
     WHERE account_id = ${accountId}
-      AND meeting_date >= ${startDate} AND meeting_date <= ${endDate}
-    ORDER BY meeting_date DESC
+      AND COALESCE(meeting_date, created_at) >= ${startDate}
+      AND COALESCE(meeting_date, created_at) <= ${endDate}
+    ORDER BY COALESCE(meeting_date, created_at) DESC
   `;
   return result as Meeting[];
 }

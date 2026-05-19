@@ -17,6 +17,7 @@ interface EditableMeetingDetailsProps {
   linkedCustomer: Customer | null;
   participants: ParticipantData[];
   allCustomers: Customer[];
+  extractCount: number;
 }
 
 interface HubSpotContact {
@@ -33,11 +34,31 @@ export function EditableMeetingDetails({
   linkedCustomer,
   participants: initialParticipants,
   allCustomers,
+  extractCount,
 }: EditableMeetingDetailsProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [participants, setParticipants] = useState<ParticipantData[]>(initialParticipants);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
+
+  async function handleDelete(): Promise<void> {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/meetings/${meeting.id}`, { method: "DELETE" });
+      if (response.ok) {
+        router.push("/meetings");
+        return;
+      }
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error("Failed to delete meeting:", error);
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   // Form state
   const [formData, setFormData] = useState({
@@ -238,12 +259,20 @@ export function EditableMeetingDetails({
           Meeting Details
         </h2>
         {!isEditing ? (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
-          >
-            Edit
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsEditing(true)}
+              className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+            >
+              Delete
+            </button>
+          </div>
         ) : (
           <div className="flex gap-2">
             <button
@@ -583,6 +612,38 @@ export function EditableMeetingDetails({
           <p className="text-sm text-gray-500 dark:text-gray-400">No participants added</p>
         )}
       </div>
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              Delete Meeting?
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              This will permanently delete this meeting
+              {extractCount > 0 &&
+                ` and ${extractCount} associated extract${extractCount !== 1 ? "s" : ""}`}
+              . This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : "Delete Meeting"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
