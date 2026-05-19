@@ -43,10 +43,10 @@ export default async function LandingPage() {
       <main className="flex-grow">
         {/* Hero */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 text-center">
-          <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-gray-900 dark:text-white">
+          <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-gray-900 dark:text-white max-w-[70%] mx-auto">
             Better, inexpensive qualitative insights for your user research
           </h1>
-          <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-600 dark:text-gray-400">
+          <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-600 dark:text-gray-400 max-w-[70%] mx-auto">
             Built by a user researcher for user researchers, Qualitative reads your meeting transcripts, pulls out the feature requests,
             bug reports, and action items, drafts the follow-up notes, and lets you export everything for use in your own workflows.
           </p>
