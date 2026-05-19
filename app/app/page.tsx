@@ -103,8 +103,8 @@ export default async function Dashboard() {
               href="/meetings"
             />
             <DashboardCard
-              title="Companies"
-              description="Browse companies and deals"
+              title="Organizations"
+              description="Browse Organizations (customers and deals)"
               count={allCompanies.length}
               href="/companies"
             />

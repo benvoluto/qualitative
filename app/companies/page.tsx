@@ -54,7 +54,7 @@ export default async function CompaniesPage() {
             <div className="flex items-center gap-4">
               <LogoMenu />
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Companies
+                Organizations
               </h1>
             </div>
             <div className="flex items-center gap-3">

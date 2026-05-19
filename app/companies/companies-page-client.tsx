@@ -66,7 +66,7 @@ export function CompaniesPageClient({
           onClick={() => setView("companies")}
           count={companyStats.totalCompanies}
         >
-          Companies
+          Organizations
         </ViewButton>
         <ViewButton
           active={view === "customers"}
@@ -111,7 +111,7 @@ function CompaniesView({
 
       {/* Companies List */}
       {companies.length === 0 ? (
-        <EmptyState message="No companies yet" description="Sync companies from HubSpot to get started." />
+        <EmptyState message="No companies yet" description="Add organizations to get started." />
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
