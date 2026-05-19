@@ -104,6 +104,7 @@ export default async function MeetingDetailPage({
             <MeetingExtracts
               extracts={meetingExtracts}
               hasTranscript={!!meeting.transcript}
+              meetingId={id}
             />
 
             {/* Transcript - Collapsible, below extracts */}

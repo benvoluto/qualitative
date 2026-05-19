@@ -29,9 +29,10 @@ interface ExtractWithTags {
 interface MeetingExtractsProps {
   extracts: ExtractWithTags[];
   hasTranscript: boolean;
+  meetingId: string;
 }
 
-export function MeetingExtracts({ extracts, hasTranscript }: MeetingExtractsProps) {
+export function MeetingExtracts({ extracts, hasTranscript, meetingId }: MeetingExtractsProps) {
   const router = useRouter();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -80,6 +81,25 @@ export function MeetingExtracts({ extracts, hasTranscript }: MeetingExtractsProp
             </span>
           )}
         </div>
+        <div className="flex items-center gap-3">
+          {extracts.length > 0 && (
+            <a
+              href={`/api/meetings/${meetingId}/extracts/export`}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              title="Download extracts as CSV"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
+                />
+              </svg>
+              Export CSV
+            </a>
+          )}
         <svg
           className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${
             isExpanded ? "rotate-180" : ""
@@ -95,6 +115,7 @@ export function MeetingExtracts({ extracts, hasTranscript }: MeetingExtractsProp
             d="M19 9l-7 7-7-7"
           />
         </svg>
+        </div>
       </div>
       {isExpanded && extracts.length > 0 && (
         <div className="px-6 pb-6 border-t border-gray-200 dark:border-gray-700 pt-4">

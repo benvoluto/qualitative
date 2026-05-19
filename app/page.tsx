@@ -44,7 +44,7 @@ export default async function LandingPage() {
 
       <main className="flex-grow">
         {/* Hero */}
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 text-center">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 sm:pt-32 sm:pb-20 text-center">
           <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-gray-900 dark:text-white max-w-[70%] mx-auto">
             Better & inexpensive qualitative insights from your user research interviews.
           </h1>
@@ -102,7 +102,7 @@ export default async function LandingPage() {
                 </blockquote>
               </div>
 
-              <figcaption className="mt-6 ml-12 text-sm text-gray-600 dark:text-gray-400">
+              <figcaption className="mt-6 ml-12 text-sm text-gray-600 dark:text-gray-400 pb-20">
                 — Ben Clemens
               </figcaption>
             </figure>
