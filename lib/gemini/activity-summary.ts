@@ -35,20 +35,20 @@ const ACTIVITY_SUMMARY_WITH_ITEMS_PROMPT = `You are generating a concise activit
 Generate TWO parts:
 
 **PART 1 - Summary Paragraph (2-4 sentences):**
-1. Mentions ALL companies/organizations met with
+1. Mentions ALL companies met with — OR, for meetings without a linked company, refer to the meeting by its topic/name
 2. Highlights key positive findings or wins
 3. Notes any concerns, issues, or lowlights
 
 **PART 2 - Action Items & Feature Requests:**
 List ALL action items and feature requests extracted from the meetings.
-- IMPORTANT: Start each line with the COMPANY NAME followed by the item description
+- IMPORTANT: Start each line with the COMPANY NAME (or meeting topic if no company is linked) followed by the item description
 - Prefix each item with [ACTION] or [REQUEST] to indicate the type
 - SORT items in REVERSE CHRONOLOGICAL ORDER (most recent meeting date first)
 - Each item should be concise (one line) and linked to its source meeting
 
-IMPORTANT for Summary Paragraph: For each company name mentioned, wrap it in double brackets like this: [[Company Name|meeting_id]]
+IMPORTANT for Summary Paragraph: For each company name (or topic) mentioned, wrap it in double brackets like this: [[Company Name|meeting_id]] or [[Meeting Topic|meeting_id]]
 
-IMPORTANT for Action Items/Requests: Include BOTH the meeting_id AND the extract_id using this format: [[Company Name|meeting_id|extract_id]]
+IMPORTANT for Action Items/Requests: Include BOTH the meeting_id AND the extract_id using this format: [[Company Name|meeting_id|extract_id]] (or [[Meeting Topic|meeting_id|extract_id]] when no company is linked)
 This allows us to link to the meeting AND update the status of the specific extract. Use the exact IDs provided in the data.
 
 Format your response EXACTLY like this (include the "---" separator):
@@ -149,10 +149,15 @@ ${extractsText}`;
     .join("\n\n");
 
   const meetingTypeLabel =
-    type === "deals" ? "Deal Meetings" : type === "customers" ? "Customer Meetings" : "Internal Meetings";
+    type === "deals"
+      ? "Deal Meetings"
+      : type === "customers"
+        ? "Customer Meetings"
+        : "Other Meetings (no linked company — may be internal team meetings, research interviews, or unassigned uploads)";
 
-  // Use the prompt with action items for deals and customers, simple prompt for internal
-  const basePrompt = type === "internal" ? ACTIVITY_SUMMARY_PROMPT : ACTIVITY_SUMMARY_WITH_ITEMS_PROMPT;
+  // All three buckets use the action-items prompt so requests / action items
+  // surface uniformly. Meetings without a company name are described by topic.
+  const basePrompt = ACTIVITY_SUMMARY_WITH_ITEMS_PROMPT;
 
   const prompt = basePrompt
     .replace("{meeting_type}", meetingTypeLabel)

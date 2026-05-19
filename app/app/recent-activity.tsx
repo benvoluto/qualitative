@@ -320,7 +320,7 @@ export function RecentActivity() {
     all: "All",
     deals: "Deals",
     customers: "Customers",
-    internal: "Internal",
+    internal: "Other",
   };
 
   const typeColors = {

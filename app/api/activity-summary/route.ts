@@ -52,7 +52,9 @@ export async function GET(request: NextRequest) {
       allCustomers.map((c) => [c.id, c])
     );
 
-    // Separate meetings by type
+    // Separate meetings by type. Meetings without a customer link (and not
+    // flagged internal) fall through to the "internal" bucket so they aren't
+    // silently dropped from the summary.
     const dealMeetings: Meeting[] = [];
     const customerMeetings: Meeting[] = [];
     const internalMeetings: Meeting[] = [];
@@ -60,13 +62,19 @@ export async function GET(request: NextRequest) {
     for (const meeting of recentMeetings) {
       if (meeting.is_internal) {
         internalMeetings.push(meeting);
-      } else if (meeting.customer_id) {
-        const customer = customersById.get(meeting.customer_id);
-        if (customer?.customer_type === "deal") {
-          dealMeetings.push(meeting);
-        } else if (customer?.customer_type === "customer") {
-          customerMeetings.push(meeting);
-        }
+        continue;
+      }
+      if (!meeting.customer_id) {
+        internalMeetings.push(meeting);
+        continue;
+      }
+      const customer = customersById.get(meeting.customer_id);
+      if (customer?.customer_type === "deal") {
+        dealMeetings.push(meeting);
+      } else if (customer?.customer_type === "customer") {
+        customerMeetings.push(meeting);
+      } else {
+        internalMeetings.push(meeting);
       }
     }
 
