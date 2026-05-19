@@ -20,11 +20,7 @@ export default async function LoginPage({
       <div className="w-full max-w-md p-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
           <div className="flex flex-col items-center mb-8">
-            <Logo
-              width={80}
-              height={64}
-              className="text-gray-900 dark:text-white"
-            />
+            <Logo width={80} height={80} className="rounded-xl" />
             <p className="mt-4 text-gray-600 dark:text-gray-400">
               Meeting Insights Platform
             </p>

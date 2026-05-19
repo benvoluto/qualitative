@@ -68,11 +68,7 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
           className="flex items-center p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           aria-label="Navigation menu"
         >
-          <Logo
-            width={40}
-            height={32}
-            className="text-gray-900 dark:text-white"
-          />
+          <Logo width={44} height={44} className="rounded-md" />
           <svg
             className={`w-4 h-4 ml-1 text-gray-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
             fill="none"

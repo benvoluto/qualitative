@@ -134,18 +134,6 @@ export default async function LandingPage() {
           </div>
         </section>
       </main>
-
-      <footer className="border-t border-gray-200 dark:border-gray-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
-          <p>© {new Date().getFullYear()} Qualitative.</p>
-          <nav className="flex items-center gap-6">
-            <Link href="/privacy" className="hover:text-gray-900 dark:hover:text-white">Privacy</Link>
-            <Link href="/terms" className="hover:text-gray-900 dark:hover:text-white">Terms</Link>
-            <Link href="/dpa" className="hover:text-gray-900 dark:hover:text-white">DPA</Link>
-            <Link href="/login" className="hover:text-gray-900 dark:hover:text-white">Sign in</Link>
-          </nav>
-        </div>
-      </footer>
     </div>
   );
 }

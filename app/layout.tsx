@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poltawski_Nowy } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "@/components/providers";
+import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
 const poltawski = Poltawski_Nowy({
@@ -24,8 +25,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={poltawski.variable}>
-      <body className="antialiased">
-        <Providers>{children}</Providers>
+      <body className="antialiased min-h-screen flex flex-col">
+        <Providers>
+          <div className="flex-grow">{children}</div>
+          <SiteFooter />
+        </Providers>
         <Analytics />
       </body>
     </html>
