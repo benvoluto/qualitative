@@ -45,6 +45,7 @@ export default async function LandingPage() {
       <main className="flex-grow">
         {/* Hero */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 sm:pt-32 sm:pb-20 text-center">
+          <Logo width={130} height={130} className="mx-auto" />
           <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-gray-900 dark:text-white max-w-[70%] mx-auto">
             Better & inexpensive qualitative insights from your user research interviews.
           </h1>
