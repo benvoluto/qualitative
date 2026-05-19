@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Customer } from "@/lib/db/types";
+import { Customer, CustomerType } from "@/lib/db/types";
+import { features } from "@/lib/features";
 
 interface CustomersListProps {
   customers: Customer[];
@@ -12,6 +13,7 @@ interface CustomersListProps {
 export function CustomersList({ customers }: CustomersListProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const router = useRouter();
 
@@ -94,40 +96,56 @@ export function CustomersList({ customers }: CustomersListProps) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleSync();
+              setIsExpanded(true);
+              setShowAddForm(true);
             }}
-            disabled={isLoading}
-            className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 disabled:opacity-50 p-1"
-            title="Sync from HubSpot"
+            className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1"
+            title="Add a company manually"
+            aria-label="Add company"
           >
-            {isLoading ? (
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                  fill="none"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            )}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
           </button>
+          {features.hubspot && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSync();
+              }}
+              disabled={isLoading}
+              className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 disabled:opacity-50 p-1"
+              title="Sync from HubSpot"
+            >
+              {isLoading ? (
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              )}
+            </button>
+          )}
           <Link
             href="/companies"
             onClick={(e) => e.stopPropagation()}
@@ -151,6 +169,17 @@ export function CustomersList({ customers }: CustomersListProps) {
             >
               {message.text}
             </div>
+          )}
+
+          {showAddForm && (
+            <AddCompanyForm
+              onClose={() => setShowAddForm(false)}
+              onCreated={() => {
+                setShowAddForm(false);
+                setMessage({ type: "success", text: "Company added" });
+                router.refresh();
+              }}
+            />
           )}
 
           {customers.length > 0 ? (
@@ -182,21 +211,129 @@ export function CustomersList({ customers }: CustomersListProps) {
               ))}
             </div>
           ) : (
-            <div className="text-center py-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                No companies yet
-              </p>
-              <button
-                onClick={handleSync}
-                disabled={isLoading}
-                className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 disabled:opacity-50"
-              >
-                Sync from HubSpot
-              </button>
-            </div>
+            !showAddForm && (
+              <div className="text-center py-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                  No companies yet
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => setShowAddForm(true)}
+                    className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                  >
+                    Add a company
+                  </button>
+                  {features.hubspot && (
+                    <>
+                      <span className="text-sm text-gray-400 dark:text-gray-600">·</span>
+                      <button
+                        onClick={handleSync}
+                        disabled={isLoading}
+                        className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 disabled:opacity-50"
+                      >
+                        Sync from HubSpot
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )
           )}
         </div>
       )}
     </div>
+  );
+}
+
+interface AddCompanyFormProps {
+  onClose: () => void;
+  onCreated: () => void;
+}
+
+function AddCompanyForm({ onClose, onCreated }: AddCompanyFormProps) {
+  const [name, setName] = useState("");
+  const [domain, setDomain] = useState("");
+  const [customerType, setCustomerType] = useState<CustomerType>("customer");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent): Promise<void> {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          domain: domain.trim() || null,
+          customer_type: customerType,
+        }),
+      });
+      if (response.ok) {
+        onCreated();
+        return;
+      }
+      const data = await response.json();
+      setError(data.error || "Failed to add company");
+    } catch {
+      setError("Failed to add company");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="mb-3 p-3 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 space-y-2"
+    >
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          autoFocus
+          required
+          placeholder="Company name"
+          className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500"
+        />
+        <input
+          type="text"
+          value={domain}
+          onChange={(e) => setDomain(e.target.value)}
+          placeholder="Domain (optional)"
+          className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500"
+        />
+        <select
+          value={customerType}
+          onChange={(e) => setCustomerType(e.target.value as CustomerType)}
+          className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="customer">Customer</option>
+          <option value="deal">Deal</option>
+        </select>
+      </div>
+      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={isSubmitting}
+          className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 px-2 py-1"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={isSubmitting || !name.trim()}
+          className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-3 py-1 rounded"
+        >
+          {isSubmitting ? "Adding…" : "Add company"}
+        </button>
+      </div>
+    </form>
   );
 }

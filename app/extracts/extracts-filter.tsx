@@ -759,7 +759,7 @@ function VirtualizedExtractList({ extracts, selectedTags, toggleTag, onRefresh }
   return (
     <div
       ref={parentRef}
-      className="h-full overflow-auto"
+      className="h-[calc(100vh-60px)] overflow-auto"
       style={{ contain: "strict" }}
     >
       <div
