@@ -437,7 +437,7 @@ export function RecentActivity() {
         ) : filteredSummaries.length === 0 ? (
           <div className="p-6 text-center text-gray-500 dark:text-gray-400">
             {summaries.length === 0
-              ? `No meetings in the ${periodLabels[period].toLowerCase()}. Connect an integration to get started.`
+              ? `No meetings with dates in the ${periodLabels[period].toLowerCase()}.`
               : `No ${typeFilter} activity in the ${periodLabels[period].toLowerCase()}.`}
           </div>
         ) : (
