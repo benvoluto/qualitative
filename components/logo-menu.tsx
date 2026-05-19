@@ -61,16 +61,23 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
 
   return (
     <div className="flex items-center gap-1">
-      {/* Logo with dropdown for other items */}
-      <div className="relative" ref={menuRef}>
+      {/* Logo (links home) with dropdown chevron for other items */}
+      <div className="relative flex items-center" ref={menuRef}>
+        <Link
+          href="/app"
+          aria-label="Home"
+          className="flex items-center p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <Logo width={64} height={64} className="rounded-md" />
+        </Link>
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           aria-label="Navigation menu"
+          aria-expanded={isOpen}
         >
-          <Logo width={44} height={44} className="rounded-md" />
           <svg
-            className={`w-4 h-4 ml-1 text-gray-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -114,7 +121,7 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
           }`}
         >
           <HomeIcon className="w-4 h-4" />
-          <span>Activity</span>
+          <span>Home</span>
         </Link>
 
         <Link
@@ -130,6 +137,23 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
           {counts?.meetings !== undefined && counts.meetings > 0 && (
             <span className="ml-1 text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
               {counts.meetings}
+            </span>
+          )}
+        </Link>
+
+        <Link
+          href="/extracts"
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            isActive("/extracts")
+              ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
+              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50"
+          }`}
+        >
+          <ExtractsIcon className="w-4 h-4" />
+          <span>Extracts</span>
+          {counts?.extracts !== undefined && counts.extracts > 0 && (
+            <span className="ml-1 text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+              {counts.extracts}
             </span>
           )}
         </Link>
@@ -177,7 +201,20 @@ function HomeIcon({ className }: { className?: string }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth={2}
-        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+      />
+    </svg>
+  );
+}
+
+function ExtractsIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M7 8h10M7 12h10M7 16h6M5 4h11l4 4v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"
       />
     </svg>
   );
