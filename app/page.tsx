@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { PLANS } from "@/lib/billing/plans";
 import { isStripeConfigured } from "@/lib/billing/stripe";
+import { Logo } from "@/components/logo";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,8 @@ export default async function LandingPage() {
     <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900">
       <header className="border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/" className="text-lg font-semibold text-gray-900 dark:text-white">
+          <Link href="/" className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+            <Logo width={32} height={32} className="rounded-md" />
             Qualitative
           </Link>
           <Link
