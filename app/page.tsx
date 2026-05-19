@@ -70,6 +70,50 @@ export default async function LandingPage() {
           </p>
         </section>
 
+        {/* Founder quote */}
+        <section className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+            <figure className="relative">
+              <div className="relative rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-6 sm:p-8 shadow-sm">
+                <svg
+                  aria-hidden
+                  className="absolute -top-2 -left-2 w-8 h-8 text-blue-300 dark:text-blue-700"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M7.17 17q-1.66 0-2.92-1.26T3 12.83V9q0-1.66 1.17-2.83T7 5h1v3H7q-.42 0-.71.29T6 9v3.83q0 .35.07.67.36-.5.94-.83T8.33 12q1.66 0 2.83 1.17T12.33 16t-1.17 2.83T8.33 20q-.49 0-.91-.07T7.17 19.83Zm9 0q-1.66 0-2.92-1.26T12 12.83V9q0-1.66 1.17-2.83T16 5h1v3h-1q-.42 0-.71.29T15 9v3.83q0 .35.07.67.36-.5.94-.83T17.33 12q1.66 0 2.83 1.17T21.33 16t-1.17 2.83T17.33 20q-.49 0-.91-.07t-.25-.1Z" transform="translate(-3 -2)" />
+                </svg>
+                <blockquote className="text-base sm:text-lg leading-relaxed text-gray-800 dark:text-gray-100 space-y-4">
+                  <p>
+                    Qualitative is better than using AI by itself to extract insights from your
+                    research interviews. It uses a proprietary method of rules and extracts to do a
+                    better job of pulling out the important parts of your interviews and saving
+                    them in a way that you can use more easily.
+                  </p>
+                  <p>
+                    I built this for myself, and I much prefer it to any other method, including
+                    apps that cost a lot of money. I am offering it to the user research community
+                    at cost because I want to give back, and I believe that the value of these
+                    tools should be available to anyone.
+                  </p>
+                  <p>
+                    I&apos;m very curious about your feedback on how well it works and would love
+                    to hear from you!
+                  </p>
+                </blockquote>
+              </div>
+              {/* Speech-bubble tail */}
+              <div
+                aria-hidden
+                className="absolute -bottom-3 left-12 w-6 h-6 bg-blue-50 dark:bg-blue-900/20 border-r border-b border-blue-100 dark:border-blue-800 rotate-45"
+              />
+              <figcaption className="mt-6 ml-12 text-sm text-gray-600 dark:text-gray-400">
+                — Ben Clemens
+              </figcaption>
+            </figure>
+          </div>
+        </section>
+
         {/* Features */}
         <section id="features" className="border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">

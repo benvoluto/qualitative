@@ -50,7 +50,9 @@ export function SyncButton() {
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  // Fetch Zoom connection status and user preferences on mount
+  // Fetch Zoom connection status and user preferences. The status endpoint
+  // actively probes Zoom, so this also catches the case where the refresh token
+  // expired between page loads.
   const fetchUserData = useCallback(async () => {
     try {
       const [zoomResponse, prefsResponse] = await Promise.all([
@@ -78,6 +80,14 @@ export function SyncButton() {
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
+
+  // Re-check Zoom connection whenever the dropdown opens, so a connection that
+  // expired between page loads doesn't show as enabled.
+  useEffect(() => {
+    if (isMenuOpen) {
+      fetchUserData();
+    }
+  }, [isMenuOpen, fetchUserData]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -110,6 +120,10 @@ export function SyncButton() {
       const checkData = await checkResponse.json();
 
       if (!checkResponse.ok) {
+        // Zoom check returns needsAuth: true when the connection has expired.
+        if (source === "zoom" && (checkData.needsAuth || checkData.requiresReauth)) {
+          setZoomConnected(false);
+        }
         setMessage({ type: "error", text: checkData.error || `Failed to check ${source} meetings` });
         setIsLoading(false);
         setLoadingSource(null);
@@ -180,7 +194,15 @@ export function SyncButton() {
           setShowUnmatchedModal(true);
         }
       } else {
-        setMessage({ type: "error", text: data.error || `Failed to sync from ${source}` });
+        // Server signaled the Zoom connection is no longer valid — auto-disconnect
+        // in local state so the button is correctly greyed out until reconnect.
+        if (source === "zoom" && data.requiresReauth) {
+          setZoomConnected(false);
+        }
+        setMessage({
+          type: "error",
+          text: data.error || `Failed to sync from ${source}`,
+        });
       }
     } catch {
       setMessage({ type: "error", text: `Failed to sync from ${source}` });

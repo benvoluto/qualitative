@@ -219,6 +219,8 @@ export interface User {
   zoom_refresh_token: string | null;
   zoom_token_expires_at: Date | null;
   zoom_user_id: string | null;
+  /** Last time the Zoom connection was confirmed healthy. Drives the status cache. */
+  zoom_validated_at: Date | null;
   sync_days_preference: number;
   meeting_autosync_enabled: boolean;
   notification_email: string | null;

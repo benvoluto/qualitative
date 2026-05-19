@@ -86,6 +86,9 @@ export async function GET(request: NextRequest) {
       expiresAt,
       zoomUserId
     );
+    // Connection is known-healthy right now — seed the status cache so the
+    // first /api/user/zoom-status after redirect doesn't immediately re-probe.
+    await users.touchUserZoomValidatedAt(user.id);
 
     // Redirect back to meetings page with success message
     const successUrl = new URL("/meetings?zoom_connected=true", process.env.NEXTAUTH_URL || "http://localhost:3000");

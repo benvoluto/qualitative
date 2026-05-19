@@ -1,23 +1,41 @@
 import { getDb } from "./client";
 import { User, CreateUser, UpdateUser, PromptTemplateType } from "./types";
 import { ensureSubscription } from "./subscriptions";
+import { encryptToken, decryptToken } from "@/lib/crypto/token-encryption";
+
+/**
+ * Decrypt the six OAuth-token columns on a user row before it leaves this module.
+ * Pass-through for legacy plaintext (so the app keeps working until the
+ * backfill script has run). Safe to call on any plain User-shaped object.
+ */
+function applyDecryption<T extends Partial<User> | null>(user: T): T {
+  if (!user) return user;
+  const u = user as Partial<User>;
+  if ("google_access_token" in u) u.google_access_token = decryptToken(u.google_access_token);
+  if ("google_refresh_token" in u) u.google_refresh_token = decryptToken(u.google_refresh_token);
+  if ("ms_access_token" in u) u.ms_access_token = decryptToken(u.ms_access_token);
+  if ("ms_refresh_token" in u) u.ms_refresh_token = decryptToken(u.ms_refresh_token);
+  if ("zoom_access_token" in u) u.zoom_access_token = decryptToken(u.zoom_access_token);
+  if ("zoom_refresh_token" in u) u.zoom_refresh_token = decryptToken(u.zoom_refresh_token);
+  return user;
+}
 
 export async function getUsers(): Promise<User[]> {
   const sql = getDb();
   const result = await sql`SELECT * FROM users ORDER BY name`;
-  return result as User[];
+  return (result as User[]).map((u) => applyDecryption(u));
 }
 
 export async function getUserById(id: string): Promise<User | null> {
   const sql = getDb();
   const result = await sql`SELECT * FROM users WHERE id = ${id}`;
-  return (result[0] as User) || null;
+  return applyDecryption((result[0] as User) || null);
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   const sql = getDb();
   const result = await sql`SELECT * FROM users WHERE email = ${email}`;
-  return (result[0] as User) || null;
+  return applyDecryption((result[0] as User) || null);
 }
 
 export async function createUser(data: CreateUser & { account_id: string }): Promise<User> {
@@ -31,13 +49,13 @@ export async function createUser(data: CreateUser & { account_id: string }): Pro
       ${data.email},
       ${data.name ?? null},
       ${data.image ?? null},
-      ${data.google_access_token ?? null},
-      ${data.google_refresh_token ?? null},
+      ${encryptToken(data.google_access_token)},
+      ${encryptToken(data.google_refresh_token)},
       ${data.google_token_expires_at ?? null}
     )
     RETURNING *
   `;
-  return result[0] as User;
+  return applyDecryption(result[0] as User);
 }
 
 export async function updateUser(id: string, data: UpdateUser): Promise<User | null> {
@@ -46,13 +64,13 @@ export async function updateUser(id: string, data: UpdateUser): Promise<User | n
     UPDATE users SET
       name = COALESCE(${data.name ?? null}, name),
       image = COALESCE(${data.image ?? null}, image),
-      google_access_token = COALESCE(${data.google_access_token ?? null}, google_access_token),
-      google_refresh_token = COALESCE(${data.google_refresh_token ?? null}, google_refresh_token),
+      google_access_token = COALESCE(${encryptToken(data.google_access_token)}, google_access_token),
+      google_refresh_token = COALESCE(${encryptToken(data.google_refresh_token)}, google_refresh_token),
       google_token_expires_at = COALESCE(${data.google_token_expires_at ?? null}, google_token_expires_at)
     WHERE id = ${id}
     RETURNING *
   `;
-  return (result[0] as User) || null;
+  return applyDecryption((result[0] as User) || null);
 }
 
 /**
@@ -89,8 +107,8 @@ export async function upsertUser(data: CreateUser): Promise<User> {
       ${data.email},
       ${data.name ?? null},
       ${data.image ?? null},
-      ${data.google_access_token ?? null},
-      ${data.google_refresh_token ?? null},
+      ${encryptToken(data.google_access_token)},
+      ${encryptToken(data.google_refresh_token)},
       ${data.google_token_expires_at ?? null}
     )
     ON CONFLICT (email) DO UPDATE SET
@@ -102,7 +120,7 @@ export async function upsertUser(data: CreateUser): Promise<User> {
     RETURNING *
   `;
   await ensureSubscription(accountId);
-  return result[0] as User;
+  return applyDecryption(result[0] as User);
 }
 
 export async function updateUserGoogleTokens(
@@ -114,13 +132,13 @@ export async function updateUserGoogleTokens(
   const sql = getDb();
   const result = await sql`
     UPDATE users SET
-      google_access_token = ${accessToken},
-      google_refresh_token = COALESCE(${refreshToken}, google_refresh_token),
+      google_access_token = ${encryptToken(accessToken)},
+      google_refresh_token = COALESCE(${encryptToken(refreshToken)}, google_refresh_token),
       google_token_expires_at = ${expiresAt}
     WHERE id = ${id}
     RETURNING *
   `;
-  return (result[0] as User) || null;
+  return applyDecryption((result[0] as User) || null);
 }
 
 export async function markUserOnboarded(id: string): Promise<void> {
@@ -169,8 +187,8 @@ export async function upsertUserMicrosoftTokens(data: {
       ${data.email},
       ${data.name ?? null},
       ${data.image ?? null},
-      ${data.ms_access_token ?? null},
-      ${data.ms_refresh_token ?? null},
+      ${encryptToken(data.ms_access_token)},
+      ${encryptToken(data.ms_refresh_token)},
       ${data.ms_token_expires_at ?? null}
     )
     ON CONFLICT (email) DO UPDATE SET
@@ -182,7 +200,7 @@ export async function upsertUserMicrosoftTokens(data: {
     RETURNING *
   `;
   await ensureSubscription(accountId);
-  return result[0] as User;
+  return applyDecryption(result[0] as User);
 }
 
 export async function updateUserMicrosoftTokens(
@@ -194,13 +212,13 @@ export async function updateUserMicrosoftTokens(
   const sql = getDb();
   const result = await sql`
     UPDATE users SET
-      ms_access_token = ${accessToken},
-      ms_refresh_token = COALESCE(${refreshToken}, ms_refresh_token),
+      ms_access_token = ${encryptToken(accessToken)},
+      ms_refresh_token = COALESCE(${encryptToken(refreshToken)}, ms_refresh_token),
       ms_token_expires_at = ${expiresAt}
     WHERE id = ${userId}
     RETURNING *
   `;
-  return (result[0] as User) || null;
+  return applyDecryption((result[0] as User) || null);
 }
 
 // Zoom OAuth token management
@@ -228,9 +246,12 @@ export async function getUserZoomTokens(userId: string): Promise<{
   if (!user || !user.zoom_access_token || !user.zoom_refresh_token) {
     return null;
   }
+  const accessToken = decryptToken(user.zoom_access_token);
+  const refreshToken = decryptToken(user.zoom_refresh_token);
+  if (!accessToken || !refreshToken) return null;
   return {
-    accessToken: user.zoom_access_token,
-    refreshToken: user.zoom_refresh_token,
+    accessToken,
+    refreshToken,
     expiresAt: user.zoom_token_expires_at ? new Date(user.zoom_token_expires_at) : new Date(),
     zoomUserId: user.zoom_user_id || "",
   };
@@ -246,14 +267,14 @@ export async function updateUserZoomTokens(
   const sql = getDb();
   const result = await sql`
     UPDATE users SET
-      zoom_access_token = ${accessToken},
-      zoom_refresh_token = COALESCE(${refreshToken}, zoom_refresh_token),
+      zoom_access_token = ${encryptToken(accessToken)},
+      zoom_refresh_token = COALESCE(${encryptToken(refreshToken)}, zoom_refresh_token),
       zoom_token_expires_at = ${expiresAt},
       zoom_user_id = ${zoomUserId}
     WHERE id = ${userId}
     RETURNING *
   `;
-  return (result[0] as User) || null;
+  return applyDecryption((result[0] as User) || null);
 }
 
 export async function disconnectUserZoom(userId: string): Promise<void> {
@@ -263,9 +284,20 @@ export async function disconnectUserZoom(userId: string): Promise<void> {
       zoom_access_token = NULL,
       zoom_refresh_token = NULL,
       zoom_token_expires_at = NULL,
-      zoom_user_id = NULL
+      zoom_user_id = NULL,
+      zoom_validated_at = NULL
     WHERE id = ${userId}
   `;
+}
+
+/**
+ * Record that the user's Zoom connection was successfully validated against
+ * Zoom's API just now. The Zoom status endpoint reads this to skip the per-
+ * hour refresh roundtrip when we've recently confirmed the connection works.
+ */
+export async function touchUserZoomValidatedAt(userId: string): Promise<void> {
+  const sql = getDb();
+  await sql`UPDATE users SET zoom_validated_at = NOW() WHERE id = ${userId}`;
 }
 
 // User preferences
