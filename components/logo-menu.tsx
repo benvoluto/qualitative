@@ -66,18 +66,18 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
         <Link
           href="/app"
           aria-label="Home"
-          className="flex items-center p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="inline-flex shrink-0 rounded-md hover:opacity-80 transition-opacity"
         >
-          <Logo width={48} height={48} className="rounded-md" />
+          <Logo width={40} height={40} className="rounded-md block" />
         </Link>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="inline-flex items-center justify-center w-6 h-8 ml-0.5 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           aria-label="Navigation menu"
           aria-expanded={isOpen}
         >
           <svg
-            className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -87,7 +87,7 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
         </button>
 
         {isOpen && (
-          <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 py-1">
+          <div className="absolute left-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 py-1">
             {dropdownItems.map((item) => (
               <Link
                 key={item.href}
