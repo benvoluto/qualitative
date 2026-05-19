@@ -62,7 +62,7 @@ export function CompanySyncCheck({ hasHubSpot }: CompanySyncCheckProps) {
         const errors: string[] = [];
         if (!customersResponse.ok) {
           const data = await customersResponse.json().catch(() => ({}));
-          errors.push(data.error || "Companies sync failed");
+          errors.push(data.error || "Organizations sync failed");
         }
         if (!dealsResponse.ok) {
           const data = await dealsResponse.json().catch(() => ({}));
@@ -71,7 +71,7 @@ export function CompanySyncCheck({ hasHubSpot }: CompanySyncCheckProps) {
         setToast({ message: errors.join(". "), type: "error" });
         return;
       }
-      setToast({ message: "Companies synced from HubSpot", type: "info" });
+      setToast({ message: "Organizations synced from HubSpot", type: "info" });
       router.refresh();
     } catch {
       setToast({ message: "Failed to sync from HubSpot", type: "error" });

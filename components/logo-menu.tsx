@@ -41,7 +41,7 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
   }, [isOpen]);
 
   const dropdownItems = [
-    { href: "/companies", label: "Companies", icon: BuildingIcon, count: counts?.companies },
+    { href: "/companies", label: "Organizations", icon: BuildingIcon, count: counts?.companies },
     { href: "/extracts", label: "Extracts", icon: DocumentIcon, count: counts?.extracts },
     { href: "/extracts?filter=action", label: "Action Items", icon: ChecklistIcon, count: counts?.actionItems },
     { href: "/extract-rules", label: "Extract Rules", icon: CogIcon, count: counts?.extractRules },

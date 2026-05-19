@@ -535,11 +535,11 @@ export function SyncButton() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {unmatchedMeetings.length} Meeting{unmatchedMeetings.length !== 1 ? "s" : ""} Without Company Match
+                  {unmatchedMeetings.length} Meeting{unmatchedMeetings.length !== 1 ? "s" : ""} Without Organization Match
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  These meetings have participant email domains that don&apos;t match any company in the system.
-                  You can assign a company from the meeting page or add a new company.
+                  These meetings have participant email domains that don&apos;t match any organization in the system.
+                  You can assign an organization from the meeting page or add a new one.
                 </p>
               </div>
             </div>
@@ -590,7 +590,7 @@ export function SyncButton() {
                 onClick={() => router.push("/companies")}
                 className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
               >
-                + Add New Company
+                + Add New Organization
               </button>
               <button
                 onClick={() => {

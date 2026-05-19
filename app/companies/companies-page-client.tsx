@@ -103,7 +103,7 @@ function CompaniesView({
     <div>
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Companies" value={stats.totalCompanies} />
+        <StatCard label="Organizations" value={stats.totalCompanies} />
         <StatCard label="Total Meetings" value={stats.totalMeetings} color="blue" />
         <StatCard label="Total Extracts" value={stats.totalExtracts} color="green" />
         <StatCard label="Pending Actions" value={stats.totalPendingActions} color="orange" />
@@ -111,7 +111,7 @@ function CompaniesView({
 
       {/* Companies List */}
       {companies.length === 0 ? (
-        <EmptyState message="No companies yet" description="Add organizations to get started." />
+        <EmptyState message="No organizations yet" description="Add an organization to get started." />
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
@@ -119,7 +119,7 @@ function CompaniesView({
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Company
+                    Organization
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Deal Stage
@@ -276,7 +276,7 @@ function CustomersView({
       {customers.length === 0 ? (
         <EmptyState
           message={filter === "all" ? "No customers yet" : filter === "customer" ? "No customers yet" : "No deals yet"}
-          description="Sync companies from HubSpot to get started."
+          description="Add an organization to get started."
         />
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">

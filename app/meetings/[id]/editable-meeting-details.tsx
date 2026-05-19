@@ -239,17 +239,17 @@ export function EditableMeetingDetails({
           </svg>
           <div className="flex-1">
             <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-              No company assigned to this meeting
+              No organization assigned to this meeting
             </p>
             <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-0.5">
-              Extracts and insights won&apos;t be linked to a company. Click &quot;Edit&quot; to assign one.
+              Extracts and insights won&apos;t be linked to an organization. Click &quot;Edit&quot; to assign one.
             </p>
           </div>
           <button
             onClick={() => setIsEditing(true)}
             className="text-sm font-medium text-yellow-800 dark:text-yellow-200 hover:text-yellow-900 dark:hover:text-yellow-100 underline"
           >
-            Assign Company
+            Assign Organization
           </button>
         </div>
       )}
@@ -383,9 +383,9 @@ export function EditableMeetingDetails({
           </dd>
         </div>
 
-        {/* Customer */}
+        {/* Organization */}
         <div>
-          <dt className="text-sm text-gray-500 dark:text-gray-400">Customer</dt>
+          <dt className="text-sm text-gray-500 dark:text-gray-400">Organization</dt>
           <dd className="text-gray-900 dark:text-white">
             {isEditing ? (
               <div className="relative">
@@ -397,7 +397,7 @@ export function EditableMeetingDetails({
                     setShowCustomerDropdown(true);
                   }}
                   onFocus={() => setShowCustomerDropdown(true)}
-                  placeholder="Search companies..."
+                  placeholder="Search organizations..."
                   className="w-full px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
                 />
                 {showCustomerDropdown && (
@@ -427,7 +427,7 @@ export function EditableMeetingDetails({
                         </button>
                       ))
                     ) : (
-                      <div className="p-2 text-sm text-gray-500">No companies found</div>
+                      <div className="p-2 text-sm text-gray-500">No organizations found</div>
                     )}
                   </div>
                 )}

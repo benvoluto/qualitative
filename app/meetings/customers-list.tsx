@@ -84,7 +84,7 @@ export function CustomersList({ customers }: CustomersListProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
           <span className="text-sm font-semibold text-gray-900 dark:text-white">
-            Companies ({customers.length})
+            Organizations ({customers.length})
           </span>
           {customers.length > 0 && (
             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -100,8 +100,8 @@ export function CustomersList({ customers }: CustomersListProps) {
               setShowAddForm(true);
             }}
             className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 p-1"
-            title="Add a company manually"
-            aria-label="Add company"
+            title="Add an organization manually"
+            aria-label="Add organization"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -176,7 +176,7 @@ export function CustomersList({ customers }: CustomersListProps) {
               onClose={() => setShowAddForm(false)}
               onCreated={() => {
                 setShowAddForm(false);
-                setMessage({ type: "success", text: "Company added" });
+                setMessage({ type: "success", text: "Organization added" });
                 router.refresh();
               }}
             />
@@ -214,14 +214,14 @@ export function CustomersList({ customers }: CustomersListProps) {
             !showAddForm && (
               <div className="text-center py-4">
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                  No companies yet
+                  No organizations yet
                 </p>
                 <div className="flex items-center justify-center gap-3">
                   <button
                     onClick={() => setShowAddForm(true)}
                     className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400"
                   >
-                    Add a company
+                    Add an organization
                   </button>
                   {features.hubspot && (
                     <>
@@ -297,7 +297,7 @@ function AddCompanyForm({ onClose, onCreated }: AddCompanyFormProps) {
           onChange={(e) => setName(e.target.value)}
           autoFocus
           required
-          placeholder="Company name"
+          placeholder="Organization name"
           className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500"
         />
         <input
@@ -331,7 +331,7 @@ function AddCompanyForm({ onClose, onCreated }: AddCompanyFormProps) {
           disabled={isSubmitting || !name.trim()}
           className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-3 py-1 rounded"
         >
-          {isSubmitting ? "Adding…" : "Add company"}
+          {isSubmitting ? "Adding…" : "Add organization"}
         </button>
       </div>
     </form>

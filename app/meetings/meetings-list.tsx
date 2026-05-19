@@ -295,7 +295,7 @@ export function MeetingsList({ meetings, customers = [], extractCounts = {} }: M
           onChange={handleHostFilterChange}
         />
         <FilterCombobox
-          label="Company"
+          label="Organization"
           value={companyFilter}
           options={uniqueCompanies}
           onChange={handleCompanyFilterChange}
@@ -335,7 +335,7 @@ export function MeetingsList({ meetings, customers = [], extractCounts = {} }: M
                 onClick={handleSort}
               />
               <SortableHeader
-                label="Company"
+                label="Organization"
                 column="company"
                 currentColumn={sortColumn}
                 direction={sortDirection}

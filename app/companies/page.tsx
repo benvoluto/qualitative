@@ -1,9 +1,11 @@
 import { customers, meetings, extracts, companies } from "@/lib/db";
 import { requireAccountId } from "@/lib/account-context";
 import { SyncCustomersButton } from "./sync-button";
+import { AddOrganizationButton } from "./add-organization-button";
 import { CompaniesPageClient } from "./companies-page-client";
 import { LogoMenu } from "@/components/logo-menu";
 import { HeaderUserMenu } from "@/components/header-user-menu";
+import { features } from "@/lib/features";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +61,8 @@ export default async function CompaniesPage() {
               </h1>
             </div>
             <div className="flex items-center gap-3">
-              <SyncCustomersButton />
+              <AddOrganizationButton />
+              {features.hubspot && <SyncCustomersButton />}
               <HeaderUserMenu />
             </div>
           </div>
