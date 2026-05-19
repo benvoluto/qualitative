@@ -137,8 +137,8 @@ function AddTagFormInline({ availableColors }: { availableColors: string[] }) {
 
       {/* Color picker */}
       {availableColors.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {availableColors.slice(0, 16).map((color) => (
+        <div className="flex flex-wrap gap-1 max-h-40 overflow-y-auto p-1">
+          {availableColors.map((color) => (
             <button
               key={color}
               type="button"
@@ -267,8 +267,8 @@ function TagRow({
           className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           autoFocus
         />
-        <div className="flex flex-wrap gap-1">
-          {availableColors.slice(0, 12).map((color) => (
+        <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto p-1">
+          {availableColors.map((color) => (
             <button
               key={color}
               type="button"

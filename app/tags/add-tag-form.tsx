@@ -86,7 +86,7 @@ export function AddTagForm({ availableColors }: AddTagFormProps) {
         </label>
         {availableColors.length > 0 ? (
           <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1">
-            {availableColors.slice(0, 30).map((color) => (
+            {availableColors.map((color) => (
               <button
                 key={color}
                 type="button"

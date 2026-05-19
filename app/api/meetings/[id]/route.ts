@@ -24,7 +24,7 @@ export async function GET(
 
 interface UpdateMeetingBody {
   name?: string;
-  meeting_date?: string;
+  meeting_date?: string | null;
   user_notes?: string;
   customer_id?: string | null;
   host_name?: string;
@@ -52,7 +52,9 @@ export async function PATCH(
 
     const meetingUpdate: Parameters<typeof meetings.updateMeeting>[2] = {};
     if (body.name !== undefined) meetingUpdate.name = body.name;
-    if (body.meeting_date !== undefined) meetingUpdate.meeting_date = new Date(body.meeting_date);
+    if (body.meeting_date !== undefined) {
+      meetingUpdate.meeting_date = body.meeting_date ? new Date(body.meeting_date) : null;
+    }
     if (body.user_notes !== undefined) meetingUpdate.user_notes = body.user_notes;
     if (body.customer_id !== undefined) meetingUpdate.customer_id = body.customer_id;
     if (body.host_name !== undefined) meetingUpdate.host_name = body.host_name;
