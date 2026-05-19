@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "./logo";
-import { SettingsModal } from "./settings-modal";
 import { features } from "@/lib/features";
 
 interface LogoMenuProps {
@@ -25,7 +24,6 @@ interface LogoMenuProps {
 
 export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
@@ -41,10 +39,6 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen]);
-
-  const handleSettingsClick = () => {
-    setShowSettings(true);
-  };
 
   const dropdownItems = [
     { href: "/companies", label: "Companies", icon: BuildingIcon, count: counts?.companies },
@@ -158,38 +152,26 @@ export function LogoMenu({ counts, integrationStatus }: LogoMenuProps) {
           )}
         </Link>
 
-        <button
-          onClick={handleSettingsClick}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            showSettings
-              ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
-              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50"
-          }`}
-        >
-          <SettingsIcon className="w-4 h-4" />
-          <span>Settings</span>
-          {integrationStatus && (
-            <div className="flex items-center gap-0.5 ml-1">
-              {[
-                { connected: integrationStatus.googleMeet, color: "#4285F4", enabled: true },
-                { connected: integrationStatus.zoom, color: "#2D8CFF", enabled: features.zoom },
-                { connected: integrationStatus.teams, color: "#6264A7", enabled: features.teams },
-                { connected: integrationStatus.hubspot, color: "#FF7A59", enabled: features.hubspot },
-              ]
-                .filter((i) => i.enabled)
-                .map((integration, idx) => (
-                  <div
-                    key={idx}
-                    className={`w-2 h-2 rounded-full ${integration.connected ? "" : "opacity-30"}`}
-                    style={{ backgroundColor: integration.color }}
-                  />
-                ))}
-            </div>
-          )}
-        </button>
+        {integrationStatus && (
+          <div className="flex items-center gap-0.5 ml-2" aria-label="Integration status">
+            {[
+              { connected: integrationStatus.googleMeet, color: "#4285F4", enabled: true, name: "Google Meet" },
+              { connected: integrationStatus.zoom, color: "#2D8CFF", enabled: features.zoom, name: "Zoom" },
+              { connected: integrationStatus.teams, color: "#6264A7", enabled: features.teams, name: "Teams" },
+              { connected: integrationStatus.hubspot, color: "#FF7A59", enabled: features.hubspot, name: "HubSpot" },
+            ]
+              .filter((i) => i.enabled)
+              .map((integration) => (
+                <div
+                  key={integration.name}
+                  className={`w-2 h-2 rounded-full ${integration.connected ? "" : "opacity-30"}`}
+                  style={{ backgroundColor: integration.color }}
+                  title={`${integration.name}: ${integration.connected ? "Connected" : "Not connected"}`}
+                />
+              ))}
+          </div>
+        )}
       </nav>
-
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 }
@@ -304,15 +286,3 @@ function CreditCardIcon({ className }: { className?: string }) {
   );
 }
 
-function SettingsIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-      />
-    </svg>
-  );
-}

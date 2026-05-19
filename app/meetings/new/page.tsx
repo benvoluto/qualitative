@@ -2,6 +2,7 @@ import { customers } from "@/lib/db";
 import { requireAccountId } from "@/lib/account-context";
 import { NewMeetingForm } from "./new-meeting-form";
 import { LogoMenu } from "@/components/logo-menu";
+import { HeaderUserMenu } from "@/components/header-user-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export default async function NewMeetingPage() {
                 Add Meeting Manually
               </h1>
             </div>
+            <HeaderUserMenu />
           </div>
         </div>
       </header>

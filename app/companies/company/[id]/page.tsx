@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CustomerTypeBadge } from "../../customer-type-badge";
 import { LogoMenu } from "@/components/logo-menu";
+import { HeaderUserMenu } from "@/components/header-user-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
                 </h1>
               </div>
             </div>
+            <HeaderUserMenu />
           </div>
         </div>
       </header>

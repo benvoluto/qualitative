@@ -4,6 +4,7 @@ import { TagsList } from "./tags-list";
 import { AddTagForm } from "./add-tag-form";
 import { TAG_COLORS } from "@/lib/constants/colors";
 import { LogoMenu } from "@/components/logo-menu";
+import { HeaderUserMenu } from "@/components/header-user-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export default async function TagsPage() {
                 Tags
               </h1>
             </div>
+            <HeaderUserMenu />
           </div>
         </div>
       </header>

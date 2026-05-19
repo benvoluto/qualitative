@@ -5,6 +5,7 @@ import { SyncButton } from "./sync-button";
 import { CustomersList } from "./customers-list";
 import Link from "next/link";
 import { LogoMenu } from "@/components/logo-menu";
+import { HeaderUserMenu } from "@/components/header-user-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,7 @@ export default async function MeetingsPage() {
                 Add Meeting Manually
               </Link>
               <SyncButton />
+              <HeaderUserMenu />
             </div>
           </div>
         </div>

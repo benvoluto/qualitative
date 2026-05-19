@@ -3,6 +3,7 @@ import { requireAccountId } from "@/lib/account-context";
 import { SyncCustomersButton } from "./sync-button";
 import { CompaniesPageClient } from "./companies-page-client";
 import { LogoMenu } from "@/components/logo-menu";
+import { HeaderUserMenu } from "@/components/header-user-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,7 @@ export default async function CompaniesPage() {
             </div>
             <div className="flex items-center gap-3">
               <SyncCustomersButton />
+              <HeaderUserMenu />
             </div>
           </div>
         </div>

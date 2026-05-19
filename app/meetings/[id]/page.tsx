@@ -8,6 +8,7 @@ import { EditableNotes } from "./editable-notes";
 import { MeetingExtracts } from "./meeting-extracts";
 import { EditableMeetingDetails } from "./editable-meeting-details";
 import { LogoMenu } from "@/components/logo-menu";
+import { HeaderUserMenu } from "@/components/header-user-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,7 @@ export default async function MeetingDetailPage({
             </div>
             <div className="flex items-center gap-4">
               <StatusBadge status={meeting.workflow_status} />
+              <HeaderUserMenu />
             </div>
           </div>
         </div>

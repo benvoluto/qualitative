@@ -6,6 +6,7 @@ import { CustomerTypeBadge } from "../customer-type-badge";
 import { CompanySummary } from "./company-summary";
 import { CompanyExtracts } from "./company-extracts";
 import { LogoMenu } from "@/components/logo-menu";
+import { HeaderUserMenu } from "@/components/header-user-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                 <CustomerTypeBadge type={company.customer_type} />
               </div>
             </div>
+            <HeaderUserMenu />
           </div>
         </div>
       </header>

@@ -4,6 +4,7 @@ import { getUsageStatus } from "@/lib/billing/usage";
 import { isStripeConfigured } from "@/lib/billing/stripe";
 import { PLANS } from "@/lib/billing/plans";
 import { LogoMenu } from "@/components/logo-menu";
+import { HeaderUserMenu } from "@/components/header-user-menu";
 import { CheckoutButton, PortalButton } from "./buttons";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ export default async function BillingPage({
               <LogoMenu />
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Billing</h1>
             </div>
+            <HeaderUserMenu />
           </div>
         </div>
       </header>

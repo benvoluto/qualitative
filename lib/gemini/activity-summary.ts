@@ -1,28 +1,6 @@
 import { getGeminiClient, GEMINI_MODEL_FAST } from "./client";
 import { Meeting, Extract, Customer } from "@/lib/db/types";
 
-const ACTIVITY_SUMMARY_PROMPT = `You are generating a concise activity summary for a time period of meetings.
-
-## Meeting Type: {meeting_type}
-
-## Meetings and Extracts:
-{meetings_data}
-
----
-
-Generate a single concise paragraph (2-4 sentences) that:
-1. Mentions ALL companies/organizations met with (for customers/deals) or meeting topics (for internal)
-2. Highlights key positive findings or wins
-3. Notes any concerns, issues, or lowlights
-
-IMPORTANT: For each company name or meeting topic mentioned, wrap it in double brackets like this: [[Company Name|meeting_id]] or [[Meeting Topic|meeting_id]]
-This allows us to create links. Use the exact meeting_id provided in the data.
-
-Example output:
-"Met with [[Acme Corp|abc123]] and [[Beta Inc|def456]]. Positive feedback on the new dashboard features from Acme, while Beta reported ongoing integration issues."
-
-Return ONLY the summary paragraph, no additional formatting or explanation.`;
-
 const ACTIVITY_SUMMARY_WITH_ITEMS_PROMPT = `You are generating a concise activity summary for a time period of meetings.
 
 ## Meeting Type: {meeting_type}

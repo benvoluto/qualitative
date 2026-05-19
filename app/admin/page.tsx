@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin";
 import { listAllUsers } from "@/lib/admin/users-list";
 import { LogoMenu } from "@/components/logo-menu";
+import { HeaderUserMenu } from "@/components/header-user-menu";
 import { CompToggle } from "./comp-toggle";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,7 @@ export default async function AdminPage() {
               <LogoMenu />
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Admin</h1>
             </div>
+            <HeaderUserMenu />
           </div>
         </div>
       </header>

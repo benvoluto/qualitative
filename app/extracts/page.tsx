@@ -2,6 +2,7 @@ import { extracts, tags, extractRules, customers } from "@/lib/db";
 import { requireAccountId } from "@/lib/account-context";
 import { ExtractsFilter } from "./extracts-filter";
 import { LogoMenu } from "@/components/logo-menu";
+import { HeaderUserMenu } from "@/components/header-user-menu";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -81,6 +82,7 @@ export default async function ExtractsPage() {
                 Extracts
               </h1>
             </div>
+            <HeaderUserMenu />
           </div>
         </div>
       </header>

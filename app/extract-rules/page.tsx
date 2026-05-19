@@ -6,6 +6,7 @@ import { AddRuleForm } from "./add-rule-form";
 import { TagsSection } from "./tags-section";
 import { TAG_COLORS } from "@/lib/constants/colors";
 import { LogoMenu } from "@/components/logo-menu";
+import { HeaderUserMenu } from "@/components/header-user-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,7 @@ export default async function ExtractRulesPage() {
                 Extract Rules
               </h1>
             </div>
+            <HeaderUserMenu />
           </div>
         </div>
       </header>
