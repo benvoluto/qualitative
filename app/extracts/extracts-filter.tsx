@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Tag, ExtractRule, Meeting, Customer } from "@/lib/db/types";
 import { TagBadge } from "@/components/tag-badge";
+import { exportExtractsToCsv, exportExtractsToXlsx } from "./export-utils";
 
 // Returns true if every whitespace-separated word in the query appears as a
 // case-insensitive substring of the text. Whole-word, all-AND semantics —
@@ -604,35 +605,59 @@ export function ExtractsFilter({
       <div className="lg:col-span-3">
         {/* Type Filter Tabs */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 mb-6">
-          <div className="flex border-b border-gray-200 dark:border-gray-700 px-4">
-            <TypeTabButton
-              active={typeFilter === "all"}
-              onClick={() => setTypeFilter("all")}
-              count={typeCounts.all}
-            >
-              All
-            </TypeTabButton>
-            <TypeTabButton
-              active={typeFilter === "customer"}
-              onClick={() => setTypeFilter("customer")}
-              count={typeCounts.customer}
-            >
-              Primary
-            </TypeTabButton>
-            <TypeTabButton
-              active={typeFilter === "deal"}
-              onClick={() => setTypeFilter("deal")}
-              count={typeCounts.deal}
-            >
-              Secondary
-            </TypeTabButton>
-            <TypeTabButton
-              active={typeFilter === "internal"}
-              onClick={() => setTypeFilter("internal")}
-              count={typeCounts.internal}
-            >
-              Other
-            </TypeTabButton>
+          <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4">
+            <div className="flex">
+              <TypeTabButton
+                active={typeFilter === "all"}
+                onClick={() => setTypeFilter("all")}
+                count={typeCounts.all}
+              >
+                All
+              </TypeTabButton>
+              <TypeTabButton
+                active={typeFilter === "customer"}
+                onClick={() => setTypeFilter("customer")}
+                count={typeCounts.customer}
+              >
+                Primary
+              </TypeTabButton>
+              <TypeTabButton
+                active={typeFilter === "deal"}
+                onClick={() => setTypeFilter("deal")}
+                count={typeCounts.deal}
+              >
+                Secondary
+              </TypeTabButton>
+              <TypeTabButton
+                active={typeFilter === "internal"}
+                onClick={() => setTypeFilter("internal")}
+                count={typeCounts.internal}
+              >
+                Other
+              </TypeTabButton>
+            </div>
+            <div className="flex items-center gap-4 text-sm">
+              <button
+                type="button"
+                onClick={() => exportExtractsToXlsx(filteredExtracts)}
+                disabled={filteredExtracts.length === 0}
+                className="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Save the current list as an Excel file"
+              >
+                <DownloadIcon className="w-4 h-4" />
+                Save as XLS
+              </button>
+              <button
+                type="button"
+                onClick={() => exportExtractsToCsv(filteredExtracts)}
+                disabled={filteredExtracts.length === 0}
+                className="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Export the current list as a CSV file"
+              >
+                <DownloadIcon className="w-4 h-4" />
+                Export CSV
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1088,5 +1113,19 @@ function TypeTabButton({
         {count}
       </span>
     </button>
+  );
+}
+
+
+function DownloadIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
+      />
+    </svg>
   );
 }
