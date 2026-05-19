@@ -73,14 +73,6 @@ export default async function LandingPage() {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-0">
             <figure className="relative">
               <div className="relative rounded-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-6 sm:p-8 shadow-sm">
-                <svg
-                  aria-hidden
-                  className="absolute -top-2 -left-2 w-8 h-8 text-blue-300 dark:text-blue-700"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M7.17 17q-1.66 0-2.92-1.26T3 12.83V9q0-1.66 1.17-2.83T7 5h1v3H7q-.42 0-.71.29T6 9v3.83q0 .35.07.67.36-.5.94-.83T8.33 12q1.66 0 2.83 1.17T12.33 16t-1.17 2.83T8.33 20q-.49 0-.91-.07T7.17 19.83Zm9 0q-1.66 0-2.92-1.26T12 12.83V9q0-1.66 1.17-2.83T16 5h1v3h-1q-.42 0-.71.29T15 9v3.83q0 .35.07.67.36-.5.94-.83T17.33 12q1.66 0 2.83 1.17T21.33 16t-1.17 2.83T17.33 20q-.49 0-.91-.07t-.25-.1Z" transform="translate(-3 -2)" />
-                </svg>
                 <blockquote className="text-base sm:text-lg leading-relaxed text-gray-800 dark:text-gray-100 space-y-4">
                   <p>
                     Qualitative is better than using AI by itself to extract insights from your
