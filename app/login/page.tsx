@@ -16,7 +16,7 @@ export default async function LoginPage({
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
+    <div className="flex-grow flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 py-12">
       <div className="w-full max-w-md p-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
           <div className="flex flex-col items-center mb-8">

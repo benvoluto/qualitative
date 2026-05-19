@@ -27,7 +27,7 @@ export default function RootLayout({
     <html lang="en" className={poltawski.variable}>
       <body className="antialiased min-h-screen flex flex-col">
         <Providers>
-          <div className="flex-grow">{children}</div>
+          <div className="flex-grow flex flex-col">{children}</div>
           <SiteFooter />
         </Providers>
         <Analytics />

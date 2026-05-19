@@ -49,8 +49,7 @@ export default async function LandingPage() {
             Better & inexpensive qualitative insights from your user research interviews.
           </h1>
           <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-600 dark:text-gray-400 max-w-[70%] mx-auto">
-            Built by a user researcher for user researchers, Qualitative reads your meeting transcripts, pulls out the feature requests,
-            bug reports, and action items, drafts notes, and lets you export everything for your own use.
+            Built by a user researcher for user researchers, Qualitative reads your meeting transcripts, breaks them down into short "sticky note"-length items, and exports everything easily so you can do your own analysis.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
@@ -85,9 +84,7 @@ export default async function LandingPage() {
                 <blockquote className="text-base sm:text-lg leading-relaxed text-gray-800 dark:text-gray-100 space-y-4">
                   <p>
                     Qualitative is better than using AI by itself to extract insights from your
-                    research interviews. It uses a proprietary method of rules and extracts to do a
-                    better job of pulling out the important parts of your interviews and saving
-                    them in a way that you can use more easily.
+                    research interviews. It uses a proprietary method of rules and extracts to make a set of "sticky notes" that import easily into Miro, FigJam, Google Sheets, or other tools so you can do your own anaylsis more easily.
                   </p>
                   <p>
                     I built this for myself, and I much prefer it to any other method, including
