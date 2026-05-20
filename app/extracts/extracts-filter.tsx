@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Tag, ExtractRule, Meeting, Customer } from "@/lib/db/types";
 import { TagBadge } from "@/components/tag-badge";
-import { exportExtractsToCsv, exportExtractsToXlsx } from "./export-utils";
+import { exportExtractsToCsv, exportExtractsToXlsx, formatExtractsForMiro } from "./export-utils";
 
 // Returns true if every whitespace-separated word in the query appears as a
 // case-insensitive substring of the text. Whole-word, all-AND semantics —
@@ -657,6 +657,7 @@ export function ExtractsFilter({
                 <DownloadIcon className="w-4 h-4" />
                 Export CSV
               </button>
+              <CopyForMiroButton extracts={filteredExtracts} />
             </div>
           </div>
         </div>
@@ -1125,6 +1126,76 @@ function DownloadIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
+      />
+    </svg>
+  );
+}
+
+interface CopyForMiroButtonProps {
+  extracts: ExtractWithDetails[];
+}
+
+function CopyForMiroButton({ extracts }: CopyForMiroButtonProps) {
+  const [copied, setCopied] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  async function handleClick(): Promise<void> {
+    const text = formatExtractsForMiro(extracts);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(() => setCopied(false), 1800);
+    } catch (err) {
+      console.error("Copy for Miro failed:", err);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={extracts.length === 0}
+      className={`inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed ${
+        copied
+          ? "text-green-600 dark:text-green-400"
+          : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+      }`}
+      title="Copy the current list to the clipboard, formatted one extract per line for pasting into Miro"
+    >
+      {copied ? <CheckIcon className="w-4 h-4" /> : <ClipboardIcon className="w-4 h-4" />}
+      {copied ? "Copied!" : "Copy for Miro"}
+    </button>
+  );
+}
+
+function ClipboardIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+      />
+    </svg>
+  );
+}
+
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 13l4 4L19 7"
       />
     </svg>
   );

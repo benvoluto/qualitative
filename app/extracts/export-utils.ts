@@ -117,6 +117,38 @@ export function exportExtractsToCsv(extracts: ExtractRowSource[]): void {
   triggerDownload(blob, buildFilename("extracts", "csv"));
 }
 
+/**
+ * Format extracts as plain text for pasting into Miro (or any sticky-note tool
+ * that takes one item per line). Each line:
+ *
+ *   <summary> "<first 48 chars of first quote, ellipsized>" (tag1, tag2)
+ *
+ * Quote and parenthetical tag list are omitted if absent so the output stays
+ * tidy for extracts that have no quote or no tags.
+ */
+const MIRO_QUOTE_LENGTH = 48;
+
+export function formatExtractsForMiro(extracts: ExtractRowSource[]): string {
+  return extracts.map(formatExtractLine).join("\n");
+}
+
+function formatExtractLine(e: ExtractRowSource): string {
+  const summary = (e.summary ?? "").trim();
+  const firstQuote = (e.quotes ?? []).find((q) => q && q.trim().length > 0)?.trim() ?? "";
+  const tagNames = (e.tags ?? []).map((t) => t.name);
+
+  const parts: string[] = [];
+  if (summary) parts.push(summary);
+  if (firstQuote) {
+    const truncated = firstQuote.length > MIRO_QUOTE_LENGTH
+      ? firstQuote.slice(0, MIRO_QUOTE_LENGTH).trimEnd() + "..."
+      : firstQuote;
+    parts.push(`"${truncated}"`);
+  }
+  if (tagNames.length > 0) parts.push(`(${tagNames.join(", ")})`);
+  return parts.join(" ");
+}
+
 export function exportExtractsToXlsx(extracts: ExtractRowSource[]): void {
   const rows = toExportRows(extracts);
   const sheet = XLSX.utils.json_to_sheet(rows, { header: COLUMN_ORDER });
