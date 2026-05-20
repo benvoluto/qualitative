@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Tag, ExtractRule, Meeting, Customer } from "@/lib/db/types";
 import { TagBadge } from "@/components/tag-badge";
-import { exportExtractsToCsv, exportExtractsToXlsx, formatExtractsForMiro } from "./export-utils";
+import { exportExtractsToCsv, exportExtractsToXlsx, copyExtractsForMiro } from "./export-utils";
 
 // Returns true if every whitespace-separated word in the query appears as a
 // case-insensitive substring of the text. Whole-word, all-AND semantics —
@@ -1146,9 +1146,8 @@ function CopyForMiroButton({ extracts }: CopyForMiroButtonProps) {
   }, []);
 
   async function handleClick(): Promise<void> {
-    const text = formatExtractsForMiro(extracts);
     try {
-      await navigator.clipboard.writeText(text);
+      await copyExtractsForMiro(extracts);
       setCopied(true);
       if (timerRef.current !== null) window.clearTimeout(timerRef.current);
       timerRef.current = window.setTimeout(() => setCopied(false), 1800);

@@ -134,6 +134,48 @@ export function formatExtractsForMiro(extracts: ExtractRowSource[]): string {
 }
 
 /**
+ * HTML representation for the clipboard — modeled after what Google Sheets
+ * writes, since the Sheets-then-paste roundtrip is the workflow users find
+ * works cleanly with Miro. A single-column `<table>` makes Miro create one
+ * sticky per row instead of one giant block of text.
+ */
+export function formatExtractsForMiroHtml(extracts: ExtractRowSource[]): string {
+  const rows = extracts
+    .map((e) => `<tr><td>${escapeHtml(formatExtractLine(e))}</td></tr>`)
+    .join("");
+  return `<table>${rows}</table>`;
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/**
+ * Writes both text/plain and text/html to the clipboard via ClipboardItem so
+ * rich paste targets (Miro, Notion, etc.) pick up the table; everything else
+ * still falls back to the plain text. Falls back to writeText if the
+ * ClipboardItem API isn't available (older Safari/Firefox).
+ */
+export async function copyExtractsForMiro(extracts: ExtractRowSource[]): Promise<void> {
+  const plain = formatExtractsForMiro(extracts);
+  const html = formatExtractsForMiroHtml(extracts);
+
+  if (typeof ClipboardItem === "undefined") {
+    await navigator.clipboard.writeText(plain);
+    return;
+  }
+  const item = new ClipboardItem({
+    "text/plain": new Blob([plain], { type: "text/plain" }),
+    "text/html": new Blob([html], { type: "text/html" }),
+  });
+  await navigator.clipboard.write([item]);
+}
+
+/**
  * Collapse all whitespace (including embedded \n, \r, and \t) into single
  * spaces. Critical for Miro: an unsanitized summary that contains its own
  * line break would otherwise spawn an extra empty sticky note.
