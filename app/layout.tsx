@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={poltawski.variable}>
+    <html lang="en" className={`${poltawski.variable} dark`} style={{ colorScheme: "dark" }}>
       <body className="antialiased min-h-screen flex flex-col">
         <Providers>
           <div className="flex-grow flex flex-col">{children}</div>
