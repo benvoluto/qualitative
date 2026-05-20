@@ -45,9 +45,9 @@ export default async function LandingPage() {
       <main className="flex-grow">
         {/* Hero */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 sm:pt-32 sm:pb-20 text-center">
-          <Logo width={130} height={130} className="mx-auto" />
+          <img src="/assets/hero.svg" alt="Qualitative diagram" className="mx-auto" width={588} height={120} />
           <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-gray-900 dark:text-white max-w-[70%] mx-auto">
-            Better & inexpensive qualitative insights from your user research interviews.
+            Use AI to extract more useful qualitative data from your user research interviews.
           </h1>
           <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-600 dark:text-gray-400 max-w-[70%] mx-auto">
             Built by a user researcher for user researchers, Qualitative reads your meeting transcripts, breaks them down into short &ldquo;sticky note&rdquo;-length items, generates structures notes and follow-up emails, and exports everything easily so you can do your own analysis.
@@ -77,7 +77,7 @@ export default async function LandingPage() {
                 <blockquote className="text-base sm:text-lg leading-relaxed text-gray-800 dark:text-gray-100 space-y-4">
                   <p>
                     Qualitative is better than using AI by itself to extract insights from your
-                    research interviews. It uses a proprietary method of rules and extracts to make a set of &ldquo;sticky note&rdquo;-length items that import easily into Miro, FigJam, Google Sheets, or other tools so you can do your own anaylsis more easily. It also uses the extracts to generate much better meeting notes and follow-up emails.
+                    research interviews. It uses AI parsing with a set of rules you can easily customize to make a set of &ldquo;sticky note&rdquo;-length items that import easily into Miro, FigJam, Google Sheets, or other tools so you can do your own anaylsis more easily. It also uses the extracts to generate much better meeting notes and follow-up emails.
                   </p>
                   <p>
                     I built this for myself, and I much prefer it to any other method, including
