@@ -2,13 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark theme is the only theme. CSS vars stay so any code referencing
-   `bg-background` / `text-foreground` still works; they just resolve to dark
-   values unconditionally. */
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  color-scheme: dark;
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
 }
 
 body {

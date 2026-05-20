@@ -74,6 +74,14 @@ export function UserMenu({ user, isAdmin }: UserMenuProps) {
                 <SettingsIcon className="w-4 h-4" />
                 Settings
               </button>
+              <Link
+                href="/billing"
+                onClick={() => setIsOpen(false)}
+                className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors flex items-center gap-2"
+              >
+                <CreditCardIcon className="w-4 h-4" />
+                Billing
+              </Link>
               {isAdmin && (
                 <Link
                   href="/admin"
@@ -139,6 +147,24 @@ function SettingsIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
+  );
+}
+
+function CreditCardIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M3 10h18M5 6h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"
       />
     </svg>
   );

@@ -59,18 +59,6 @@ export function LogoMenu({ counts }: LogoMenuProps) {
       icon: ChecklistIcon,
       count: counts?.actionItems,
     },
-    {
-      href: "/extract-rules",
-      label: "Extract Rules",
-      icon: CogIcon,
-      count: counts?.extractRules,
-    },
-    {
-      href: "/billing",
-      label: "Billing",
-      icon: CreditCardIcon,
-      count: undefined,
-    },
   ];
 
   const isActive = (path: string) => {
@@ -80,59 +68,14 @@ export function LogoMenu({ counts }: LogoMenuProps) {
 
   return (
     <div className="flex items-center gap-1">
-      {/* Logo (links home) with dropdown chevron for other items */}
-      <div className="relative flex items-center" ref={menuRef}>
-        <Link
-          href="/app"
-          aria-label="Home"
-          className="inline-flex shrink-0 rounded-md hover:opacity-80 transition-opacity"
-        >
-          <Logo width={40} height={40} className="rounded-md block" />
-        </Link>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="inline-flex items-center justify-center w-6 h-8 ml-0.5 rounded-md text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          aria-label="Navigation menu"
-          aria-expanded={isOpen}
-        >
-          <svg
-            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
-
-        {isOpen && (
-          <div className="absolute left-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 py-1">
-            {dropdownItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
-                <div className="flex items-center gap-3">
-                  <item.icon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                  {item.label}
-                </div>
-                {item.count !== undefined && (
-                  <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-                    {item.count}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Logo — clicking navigates home */}
+      <Link
+        href="/app"
+        aria-label="Home"
+        className="inline-flex shrink-0 rounded-md hover:opacity-80 transition-opacity"
+      >
+        <Logo width={40} height={40} className="rounded-md block" />
+      </Link>
 
       {/* Tab Bar */}
       <nav className="flex items-center ml-2 border-l border-gray-200 dark:border-gray-700 pl-3">
@@ -181,7 +124,66 @@ export function LogoMenu({ counts }: LogoMenuProps) {
             </span>
           )}
         </Link>
+
+        <Link
+          href="/extract-rules"
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            isActive("/extract-rules")
+              ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
+              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50"
+          }`}
+        >
+          <CogIcon className="w-4 h-4" />
+          <span>Extract Rules</span>
+          {counts?.extractRules !== undefined && counts.extractRules > 0 && (
+            <span className="ml-1 text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center">
+              {counts.extractRules}
+            </span>
+          )}
+        </Link>
       </nav>
+
+      {/* Overflow menu — items that don't fit as top-level tabs */}
+      <div className="relative" ref={menuRef}>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="inline-flex items-center justify-center w-7 h-8 rounded-md text-gray-500 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          aria-label="More navigation"
+          aria-expanded={isOpen}
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {isOpen && (
+          <div className="absolute left-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50 py-1">
+            {dropdownItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <div className="flex items-center gap-3">
+                  <item.icon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  {item.label}
+                </div>
+                {item.count !== undefined && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                    {item.count}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -313,24 +315,6 @@ function CogIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-      />
-    </svg>
-  );
-}
-
-function CreditCardIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M3 10h18M5 6h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"
       />
     </svg>
   );
