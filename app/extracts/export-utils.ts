@@ -129,13 +129,25 @@ export function exportExtractsToCsv(extracts: ExtractRowSource[]): void {
 const MIRO_QUOTE_LENGTH = 48;
 
 export function formatExtractsForMiro(extracts: ExtractRowSource[]): string {
-  return extracts.map(formatExtractLine).join("\n");
+  // CRLF between lines so Miro / Windows / Mac all see distinct lines.
+  return extracts.map(formatExtractLine).join("\r\n");
+}
+
+/**
+ * Collapse all whitespace (including embedded \n, \r, and \t) into single
+ * spaces. Critical for Miro: an unsanitized summary that contains its own
+ * line break would otherwise spawn an extra empty sticky note.
+ */
+function singleLine(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
 }
 
 function formatExtractLine(e: ExtractRowSource): string {
-  const summary = (e.summary ?? "").trim();
-  const firstQuote = (e.quotes ?? []).find((q) => q && q.trim().length > 0)?.trim() ?? "";
-  const tagNames = (e.tags ?? []).map((t) => t.name);
+  const summary = singleLine(e.summary ?? "");
+  const firstQuote = singleLine(
+    (e.quotes ?? []).find((q) => q && q.trim().length > 0) ?? ""
+  );
+  const tagNames = (e.tags ?? []).map((t) => singleLine(t.name)).filter((n) => n.length > 0);
 
   const parts: string[] = [];
   if (summary) parts.push(summary);
