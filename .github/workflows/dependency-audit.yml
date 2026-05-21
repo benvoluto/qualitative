@@ -1,5 +1,10 @@
 name: Dependency Audit
 
+# Audit reports the full vulnerability state of the dependency tree. We run it
+# on PRs as an informational signal (`continue-on-error`) so it doesn't block
+# merges that don't change dependencies, and on a daily schedule + push to main
+# as the authoritative source of remediation tracking.
+
 on:
   push:
     branches: [main]
@@ -16,6 +21,8 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+    # Informational on PRs (vulns are inherited from main); blocking on push/schedule.
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
 
     steps:
       - name: Checkout
