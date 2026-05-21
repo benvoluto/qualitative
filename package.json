@@ -19,7 +19,7 @@
     "@workflow/next": "^4.0.5",
     "googleapis": "^169.0.0",
     "marked": "^17.0.1",
-    "next": "15.1.11",
+    "next": "16.2.6",
     "next-auth": "^5.0.0-beta.30",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
