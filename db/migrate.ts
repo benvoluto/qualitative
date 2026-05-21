@@ -72,7 +72,7 @@ async function runMigrations() {
 
     for (let i = 0; i < statements.length; i++) {
       try {
-        await sql(statements[i]);
+        await sql(statements[i], []);
         process.stdout.write(".");
       } catch (error: any) {
         console.error(`\n  ✗ Statement ${i + 1} failed:`, error.message);
