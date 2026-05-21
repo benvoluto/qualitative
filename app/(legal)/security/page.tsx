@@ -23,17 +23,82 @@ export default function SecurityPage() {
       <nav className="mt-8 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
         <h2 className="text-sm font-medium text-gray-900 dark:text-white">Contents</h2>
         <ul className="mt-2 space-y-1 text-sm">
-          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#security-policy">1. Security policy</a></li>
-          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#vulnerability-management">2. Vulnerability management</a></li>
-          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#data-retention">3. Data retention &amp; protection</a></li>
-          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#incident-response">4. Incident management and response</a></li>
-          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#infrastructure">5. Infrastructure &amp; dependency management</a></li>
-          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#compliance">6. Compliance attestations (SOC 2, ISO 27001)</a></li>
-          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#contact">7. Contact</a></li>
+          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#ssdlc">1. Secure Software Development Lifecycle (SSDLC)</a></li>
+          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#security-policy">2. Security policy</a></li>
+          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#vulnerability-management">3. Vulnerability management</a></li>
+          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#data-retention">4. Data retention &amp; protection</a></li>
+          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#incident-response">5. Incident management and response</a></li>
+          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#infrastructure">6. Infrastructure &amp; dependency management</a></li>
+          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#compliance">7. Compliance attestations (SOC 2, ISO 27001)</a></li>
+          <li><a className="text-blue-600 dark:text-blue-400 hover:underline" href="#contact">8. Contact</a></li>
         </ul>
       </nav>
 
-      <Section id="security-policy" title="1. Security policy">
+      <Section id="ssdlc" title="1. Secure Software Development Lifecycle (SSDLC)">
+        <p>
+          Our SSDLC is intentionally lightweight but every stage has at least one enforced control.
+          The phases below describe what is required for any change to reach production.
+        </p>
+        <h3>Design and threat modelling</h3>
+        <ul>
+          <li>Changes that touch authentication, authorization, encryption, third-party integrations,
+            or data retention require a written design note in the pull request describing the
+            data flows and the trust boundaries crossed.</li>
+          <li>For new integrations, we identify the OAuth scopes requested, the data fields read or
+            written, and any new sub-processors before implementation begins.</li>
+        </ul>
+        <h3>Secure coding</h3>
+        <ul>
+          <li>TypeScript with <code>strict</code> mode; <code>any</code> is avoided.</li>
+          <li>All database queries are parameterized through the Neon serverless driver — no string
+            concatenation.</li>
+          <li>Webhook endpoints verify HMAC-SHA256 signatures with timing-safe comparison and a
+            timestamp window before any side-effecting work runs.</li>
+          <li>OAuth tokens are encrypted with AES-256-GCM before persistence; the key lives only in
+            the application environment, never in source or the database.</li>
+          <li>Tenant isolation is enforced by an <code>account_id</code> filter on every
+            customer-data query, surfaced at the type system level.</li>
+        </ul>
+        <h3>Code review</h3>
+        <ul>
+          <li>All changes to <code>main</code> go through a pull request with at least one reviewer.
+            Self-merges of security-relevant changes are prohibited.</li>
+          <li>Reviewers consult the OWASP Top 10 informally; high-risk paths (auth, crypto, SQL,
+            webhooks) receive extra scrutiny.</li>
+        </ul>
+        <h3>Automated checks (CI)</h3>
+        <ul>
+          <li><strong>SAST</strong>: GitHub CodeQL runs the <code>security-and-quality</code> query
+            suite on every push, every pull request, and weekly. Findings are tracked in the
+            repository&apos;s Security tab.</li>
+          <li><strong>Dependency scanning</strong>: <code>npm audit</code> runs on every push and
+            daily; GitHub Dependabot raises pull requests for vulnerable dependencies.</li>
+          <li><strong>Type checking and linting</strong>: <code>tsc --noEmit</code> and
+            <code>next lint</code> must pass before merge.</li>
+        </ul>
+        <h3>Deployment</h3>
+        <ul>
+          <li>Every pull request gets an isolated Vercel preview deployment with its own preview
+            secrets — production secrets are never reachable from previews.</li>
+          <li>Promotion to production happens only after the PR is merged to <code>main</code>;
+            builds use the same artefact that was reviewed.</li>
+          <li>Database schema changes ship as versioned migrations checked into source control and
+            reviewed alongside the code that uses them.</li>
+        </ul>
+        <h3>Periodic dynamic testing (DAST)</h3>
+        <ul>
+          <li>OWASP ZAP baseline scans are run against production before each major release and at
+            minimum quarterly. Reports are retained internally.</li>
+        </ul>
+        <h3>Post-deployment monitoring</h3>
+        <ul>
+          <li>Application errors and traffic anomalies are observable through Vercel&apos;s built-in
+            telemetry; database health is monitored via Neon.</li>
+          <li>Production incidents follow the process in §5 (Incident management).</li>
+        </ul>
+      </Section>
+
+      <Section id="security-policy" title="2. Security policy">
         <p>
           Qualitative protects customer data through a combination of platform-provided controls,
           column-level encryption for sensitive fields, and strict tenant isolation enforced both
@@ -77,7 +142,7 @@ export default function SecurityPage() {
         </ul>
       </Section>
 
-      <Section id="vulnerability-management" title="2. Vulnerability management policy">
+      <Section id="vulnerability-management" title="3. Vulnerability management policy">
         <h3>Identification</h3>
         <ul>
           <li>Dependencies are pinned via <code>package-lock.json</code>; <code>npm audit</code> is
@@ -100,13 +165,13 @@ export default function SecurityPage() {
         </ul>
         <h3>Disclosure</h3>
         <p>
-          Vulnerabilities affecting customer data trigger the Incident Response process (§4). We
+          Vulnerabilities affecting customer data trigger the Incident Response process (§5). We
           do not run a bug-bounty program at this time but welcome responsible-disclosure reports
           and credit reporters in published postmortems with permission.
         </p>
       </Section>
 
-      <Section id="data-retention" title="3. Data retention &amp; protection policy">
+      <Section id="data-retention" title="4. Data retention &amp; protection policy">
         <h3>What we store</h3>
         <ul>
           <li><strong>Account data</strong>: name, email, profile image, organization domain.</li>
@@ -139,7 +204,7 @@ export default function SecurityPage() {
         </p>
       </Section>
 
-      <Section id="incident-response" title="4. Incident management and response policy">
+      <Section id="incident-response" title="5. Incident management and response policy">
         <h3>Detection</h3>
         <ul>
           <li>Application errors and platform health are monitored through Vercel Observability.</li>
@@ -174,7 +239,7 @@ export default function SecurityPage() {
         </p>
       </Section>
 
-      <Section id="infrastructure" title="5. Infrastructure &amp; dependency management policy">
+      <Section id="infrastructure" title="6. Infrastructure &amp; dependency management policy">
         <h3>Hosting and sub-processors</h3>
         <p>
           Qualitative is hosted on Vercel and uses the following sub-processors. Each is itself
@@ -217,7 +282,7 @@ export default function SecurityPage() {
         </ul>
       </Section>
 
-      <Section id="compliance" title="6. Compliance attestations (SOC 2, ISO 27001)">
+      <Section id="compliance" title="7. Compliance attestations (SOC 2, ISO 27001)">
         <p>
           <strong>Qualitative does not currently hold its own SOC 2 or ISO 27001 attestation.</strong>
           We are an early-stage product. Achieving these attestations involves expense and
@@ -236,7 +301,7 @@ export default function SecurityPage() {
         </p>
       </Section>
 
-      <Section id="contact" title="7. Contact">
+      <Section id="contact" title="8. Contact">
         <ul>
           <li>Security issues and responsible disclosure: <a href="mailto:security@qualitative.one">security@qualitative.one</a></li>
           <li>Privacy and data-subject requests: <a href="mailto:privacy@qualitative.one">privacy@qualitative.one</a></li>

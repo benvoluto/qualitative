@@ -93,7 +93,7 @@ export default function DPA() {
           Qualitative will assist Customer in responding to data subject requests (access, rectification,
           erasure, restriction, portability, objection). Customers can fulfill most requests directly through
           the product UI. For deletion of an entire account, email{" "}
-          <a href="mailto:privacy@qualitative.app">privacy@qualitative.app</a>.
+          <a href="mailto:privacy@qualitative.one">privacy@qualitative.one</a>.
         </p>
       </Section>
 
@@ -139,7 +139,7 @@ export default function DPA() {
       <Section title="14. Contact">
         <p>
           For DPA inquiries or to sign a counter-signed copy on behalf of your organization, email{" "}
-          <a href="mailto:privacy@qualitative.app">privacy@qualitative.app</a>.
+          <a href="mailto:privacy@qualitative.one">privacy@qualitative.one</a>.
         </p>
       </Section>
     </>

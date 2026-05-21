@@ -80,18 +80,6 @@ export function LogoMenu({ counts }: LogoMenuProps) {
       {/* Tab Bar */}
       <nav className="flex items-center ml-2 border-l border-gray-200 dark:border-gray-700 pl-3">
         <Link
-          href="/app"
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-            pathname === "/app"
-              ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
-              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700/50"
-          }`}
-        >
-          <HomeIcon className="w-4 h-4" />
-          <span>Home</span>
-        </Link>
-
-        <Link
           href="/meetings"
           className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
             isActive("/meetings")
@@ -185,24 +173,6 @@ export function LogoMenu({ counts }: LogoMenuProps) {
         )}
       </div>
     </div>
-  );
-}
-
-function HomeIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-      />
-    </svg>
   );
 }
 

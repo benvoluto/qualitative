@@ -18,7 +18,7 @@ export default function PrivacyPolicy() {
         </p>
         <p>
           For questions about this policy, contact us at{" "}
-          <a href="mailto:privacy@qualitative.app">privacy@qualitative.app</a>.
+          <a href="mailto:privacy@qualitative.one">privacy@qualitative.one</a>.
         </p>
       </Section>
 
@@ -90,7 +90,7 @@ export default function PrivacyPolicy() {
         <p>
           We retain your data for as long as your account is active. You can delete individual meetings, extracts,
           and email drafts at any time from the product. To delete your account and all associated data, email{" "}
-          <a href="mailto:privacy@qualitative.app">privacy@qualitative.app</a> — we will action the request within
+          <a href="mailto:privacy@qualitative.one">privacy@qualitative.one</a> — we will action the request within
           30 days.
         </p>
       </Section>
@@ -99,7 +99,7 @@ export default function PrivacyPolicy() {
         <p>
           If you are located in the EEA, UK, or California, you have rights under the GDPR, UK GDPR, and CCPA
           respectively, including access, correction, deletion, and portability. Email{" "}
-          <a href="mailto:privacy@qualitative.app">privacy@qualitative.app</a> to exercise any of these rights.
+          <a href="mailto:privacy@qualitative.one">privacy@qualitative.one</a> to exercise any of these rights.
         </p>
       </Section>
 
@@ -110,7 +110,7 @@ export default function PrivacyPolicy() {
           need-to-know basis.
         </p>
         <p>
-          Report a security issue to <a href="mailto:security@qualitative.app">security@qualitative.app</a>.
+          Report a security issue to <a href="mailto:security@qualitative.one">security@qualitative.one</a>.
         </p>
       </Section>
 

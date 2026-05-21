@@ -84,7 +84,7 @@ export default function TermsOfService() {
         <p>
           We may suspend or terminate your access to the Service if you breach these Terms, if your account is
           delinquent, or if required by law. You may terminate your account at any time by emailing{" "}
-          <a href="mailto:support@qualitative.app">support@qualitative.app</a>.
+          <a href="mailto:support@qualitative.one">support@qualitative.one</a>.
         </p>
       </Section>
 
@@ -128,7 +128,7 @@ export default function TermsOfService() {
       <Section title="14. Contact">
         <p>
           For questions about these Terms, email{" "}
-          <a href="mailto:support@qualitative.app">support@qualitative.app</a>.
+          <a href="mailto:support@qualitative.one">support@qualitative.one</a>.
         </p>
       </Section>
     </>
