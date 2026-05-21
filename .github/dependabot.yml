@@ -8,8 +8,23 @@ updates:
     groups:
       production-dependencies:
         dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
       development-dependencies:
         dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Tailwind v4 is a major migration (config + directive rewrite).
+      # Take it via an intentional upgrade, not an automated PR.
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+      # @neondatabase/serverless ships overload-shape changes between minor
+      # versions; pin major bumps for manual review.
+      - dependency-name: "@neondatabase/serverless"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

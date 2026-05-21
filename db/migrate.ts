@@ -52,6 +52,9 @@ async function runMigrations() {
   }
 
   const sql = neon(process.env.DATABASE_URL);
+  // `neon()` returns a tagged-template fn whose overload resolution is fragile
+  // across minor versions; cast to the (statement: string) form explicitly.
+  const exec = sql as unknown as (statement: string) => Promise<unknown>;
   const migrationsDir = path.join(__dirname, "migrations");
 
   // Get all migration files sorted by name
@@ -72,7 +75,7 @@ async function runMigrations() {
 
     for (let i = 0; i < statements.length; i++) {
       try {
-        await sql(statements[i], []);
+        await exec(statements[i]);
         process.stdout.write(".");
       } catch (error: any) {
         console.error(`\n  ✗ Statement ${i + 1} failed:`, error.message);
