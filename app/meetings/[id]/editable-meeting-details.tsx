@@ -77,6 +77,9 @@ export function EditableMeetingDetails({
   const [participantSearch, setParticipantSearch] = useState("");
   const [hubspotContacts, setHubspotContacts] = useState<HubSpotContact[]>([]);
   const [isSearchingContacts, setIsSearchingContacts] = useState(false);
+  const [personnelResults, setPersonnelResults] = useState<ParticipantData[]>([]);
+  const [isSearchingPersonnel, setIsSearchingPersonnel] = useState(false);
+  const [isCreatingPersonnel, setIsCreatingPersonnel] = useState(false);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [showHostDropdown, setShowHostDropdown] = useState(false);
   const [showParticipantDropdown, setShowParticipantDropdown] = useState(false);
@@ -88,7 +91,7 @@ export function EditableMeetingDetails({
       c.domain?.toLowerCase().includes(customerSearch.toLowerCase())
   );
 
-  // Search HubSpot contacts
+  // Search HubSpot contacts (host field only)
   const searchHubSpotContacts = useCallback(async (query: string) => {
     if (query.length < 2) {
       setHubspotContacts([]);
@@ -109,19 +112,53 @@ export function EditableMeetingDetails({
     }
   }, []);
 
-  // Debounced search for HubSpot contacts
+  // Search existing personnel for the participant picker
+  const searchLocalPersonnel = useCallback(async (query: string) => {
+    if (query.length < 1) {
+      setPersonnelResults([]);
+      return;
+    }
+    setIsSearchingPersonnel(true);
+    try {
+      const response = await fetch(`/api/personnel?q=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const data = await response.json();
+        const results: ParticipantData[] = (data.personnel || []).map((p: ParticipantData) => ({
+          id: p.id,
+          name: p.name,
+          email: p.email ?? null,
+          title: p.title ?? null,
+          participation_status: p.participation_status || "n/a",
+        }));
+        setPersonnelResults(results);
+      }
+    } catch (error) {
+      console.error("Failed to search personnel:", error);
+    } finally {
+      setIsSearchingPersonnel(false);
+    }
+  }, []);
+
+  // Debounce HubSpot host search and local personnel search
   useEffect(() => {
     const timer = setTimeout(() => {
       if (hostSearch.length >= 2 && showHostDropdown) {
         searchHubSpotContacts(hostSearch);
       }
-      if (participantSearch.length >= 2 && showParticipantDropdown) {
-        searchHubSpotContacts(participantSearch);
+      if (participantSearch.length >= 1 && showParticipantDropdown) {
+        searchLocalPersonnel(participantSearch);
       }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [hostSearch, participantSearch, showHostDropdown, showParticipantDropdown, searchHubSpotContacts]);
+  }, [
+    hostSearch,
+    participantSearch,
+    showHostDropdown,
+    showParticipantDropdown,
+    searchHubSpotContacts,
+    searchLocalPersonnel,
+  ]);
 
   function handleCustomerSelect(customer: Customer) {
     setFormData({
@@ -143,38 +180,54 @@ export function EditableMeetingDetails({
     setShowHostDropdown(false);
   }
 
-  async function handleAddParticipant(contact: HubSpotContact) {
-    // Create or get personnel from HubSpot contact
+  function handleAddExistingParticipant(person: ParticipantData) {
+    if (!participants.find((p) => p.id === person.id)) {
+      setParticipants([...participants, person]);
+    }
+    setParticipantSearch("");
+    setPersonnelResults([]);
+    setShowParticipantDropdown(false);
+  }
+
+  async function handleCreateParticipant(name: string) {
+    const trimmedName = name.trim();
+    if (!trimmedName || isCreatingPersonnel) return;
+    setIsCreatingPersonnel(true);
     try {
+      const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedName);
       const response = await fetch("/api/personnel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: contact.fullName || contact.email || "Unknown",
-          email: contact.email,
-          title: contact.jobTitle,
-          hubspot_contact_id: contact.id,
-        }),
+        body: JSON.stringify(
+          looksLikeEmail
+            ? { name: trimmedName, email: trimmedName }
+            : { name: trimmedName }
+        ),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        const newPersonnel = data.personnel;
-
-        // Add to participants if not already present
-        if (!participants.find((p) => p.id === newPersonnel.id)) {
-          setParticipants([...participants, {
-            ...newPersonnel,
-            participation_status: newPersonnel.participation_status || "n/a",
-          }]);
-        }
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        console.error("Failed to create participant:", error);
+        return;
       }
+      const data = await response.json();
+      const created: ParticipantData = {
+        id: data.personnel.id,
+        name: data.personnel.name,
+        email: data.personnel.email ?? null,
+        title: data.personnel.title ?? null,
+        participation_status: data.personnel.participation_status || "n/a",
+      };
+      if (!participants.find((p) => p.id === created.id)) {
+        setParticipants([...participants, created]);
+      }
+      setParticipantSearch("");
+      setPersonnelResults([]);
+      setShowParticipantDropdown(false);
     } catch (error) {
-      console.error("Failed to add participant:", error);
+      console.error("Failed to create participant:", error);
+    } finally {
+      setIsCreatingPersonnel(false);
     }
-
-    setParticipantSearch("");
-    setShowParticipantDropdown(false);
   }
 
   function handleRemoveParticipant(personnelId: string) {
@@ -545,28 +598,57 @@ export function EditableMeetingDetails({
                 setShowParticipantDropdown(true);
               }}
               onFocus={() => setShowParticipantDropdown(true)}
-              placeholder="Search HubSpot contacts to add..."
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && participantSearch.trim()) {
+                  e.preventDefault();
+                  const trimmed = participantSearch.trim();
+                  const exactMatch = personnelResults.find(
+                    (p) => p.name.toLowerCase() === trimmed.toLowerCase()
+                  );
+                  if (exactMatch) {
+                    handleAddExistingParticipant(exactMatch);
+                  } else {
+                    handleCreateParticipant(trimmed);
+                  }
+                }
+              }}
+              placeholder="Type a name or email — pick from list or press Enter to add"
               className="w-full px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600 text-sm"
             />
-            {showParticipantDropdown && participantSearch.length >= 2 && (
+            {showParticipantDropdown && participantSearch.length >= 1 && (
               <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                {isSearchingContacts ? (
+                {isSearchingPersonnel ? (
                   <div className="p-2 text-sm text-gray-500">Searching...</div>
-                ) : hubspotContacts.length > 0 ? (
-                  hubspotContacts.map((contact) => (
-                    <button
-                      key={contact.id}
-                      onClick={() => handleAddParticipant(contact)}
-                      className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                    >
-                      <div className="font-medium text-sm">{contact.fullName || "No name"}</div>
-                      {contact.email && (
-                        <div className="text-xs text-gray-500">{contact.email}</div>
-                      )}
-                    </button>
-                  ))
                 ) : (
-                  <div className="p-2 text-sm text-gray-500">No contacts found</div>
+                  <>
+                    {personnelResults
+                      .filter((p) => !participants.find((existing) => existing.id === p.id))
+                      .map((person) => (
+                        <button
+                          key={person.id}
+                          onClick={() => handleAddExistingParticipant(person)}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <div className="font-medium text-sm">{person.name}</div>
+                          {person.email && (
+                            <div className="text-xs text-gray-500">{person.email}</div>
+                          )}
+                        </button>
+                      ))}
+                    {!personnelResults.find(
+                      (p) => p.name.toLowerCase() === participantSearch.trim().toLowerCase()
+                    ) && (
+                      <button
+                        onClick={() => handleCreateParticipant(participantSearch)}
+                        disabled={isCreatingPersonnel}
+                        className="w-full text-left px-3 py-2 border-t border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-blue-600 dark:text-blue-400 disabled:opacity-50"
+                      >
+                        {isCreatingPersonnel
+                          ? "Adding…"
+                          : `+ Add “${participantSearch.trim()}” as new participant`}
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             )}
