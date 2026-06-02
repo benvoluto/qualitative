@@ -1,16 +1,31 @@
 import type { Metadata } from "next";
-import { Poltawski_Nowy } from "next/font/google";
+import { Alegreya_Sans, PT_Serif, Fira_Code } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "@/components/providers";
 import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
-const poltawski = Poltawski_Nowy({
+const alegreyaSans = Alegreya_Sans({
   subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "700", "800"],
   style: ["normal", "italic"],
   display: "swap",
-  variable: "--font-poltawski",
+  variable: "--font-alegreya-sans",
+});
+
+const ptSerif = PT_Serif({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  display: "swap",
+  variable: "--font-pt-serif",
+});
+
+const firaCode = Fira_Code({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "700"],
+  display: "swap",
+  variable: "--font-fira-code",
 });
 
 export const metadata: Metadata = {
@@ -23,9 +38,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const fontVars = `${alegreyaSans.variable} ${ptSerif.variable} ${firaCode.variable}`;
   return (
-    <html lang="en" className={poltawski.variable}>
-      <body className="antialiased min-h-screen flex flex-col">
+    <html lang="en" className={fontVars}>
+      <body className="antialiased min-h-screen flex flex-col font-sans">
         <Providers>
           <div className="flex-grow flex flex-col">{children}</div>
           <SiteFooter />
