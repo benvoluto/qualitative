@@ -15,6 +15,34 @@ export async function getActiveExtractRules(accountId: string): Promise<ExtractR
   return result as ExtractRule[];
 }
 
+/**
+ * Active rules that apply to a meeting with the given customer:
+ * global rules (customer_id IS NULL) plus rules scoped to this exact customer.
+ * When customerId is null, only global rules apply.
+ */
+export async function getActiveExtractRulesForCustomer(
+  accountId: string,
+  customerId: string | null
+): Promise<ExtractRule[]> {
+  const sql = getDb();
+  const result = customerId
+    ? await sql`
+        SELECT * FROM extract_rules
+        WHERE account_id = ${accountId}
+          AND is_active = true
+          AND (customer_id IS NULL OR customer_id = ${customerId})
+        ORDER BY name
+      `
+    : await sql`
+        SELECT * FROM extract_rules
+        WHERE account_id = ${accountId}
+          AND is_active = true
+          AND customer_id IS NULL
+        ORDER BY name
+      `;
+  return result as ExtractRule[];
+}
+
 export async function getExtractRuleById(accountId: string, id: string): Promise<ExtractRule | null> {
   const sql = getDb();
   const result = await sql`SELECT * FROM extract_rules WHERE id = ${id} AND account_id = ${accountId}`;
@@ -24,14 +52,15 @@ export async function getExtractRuleById(accountId: string, id: string): Promise
 export async function createExtractRule(accountId: string, data: CreateExtractRule): Promise<ExtractRule> {
   const sql = getDb();
   const result = await sql`
-    INSERT INTO extract_rules (account_id, name, summary, quotes, action_items, is_active)
+    INSERT INTO extract_rules (account_id, name, summary, quotes, action_items, is_active, customer_id)
     VALUES (
       ${accountId},
       ${data.name},
       ${data.summary ?? null},
       ${JSON.stringify(data.quotes ?? [])},
       ${JSON.stringify(data.action_items ?? [])},
-      ${data.is_active ?? true}
+      ${data.is_active ?? true},
+      ${data.customer_id ?? null}
     )
     RETURNING *
   `;
@@ -44,13 +73,16 @@ export async function updateExtractRule(
   data: UpdateExtractRule
 ): Promise<ExtractRule | null> {
   const sql = getDb();
+  const current = await getExtractRuleById(accountId, id);
+  if (!current) return null;
   const result = await sql`
     UPDATE extract_rules SET
       name = COALESCE(${data.name ?? null}, name),
       summary = COALESCE(${data.summary ?? null}, summary),
       quotes = COALESCE(${data.quotes ? JSON.stringify(data.quotes) : null}, quotes),
       action_items = COALESCE(${data.action_items ? JSON.stringify(data.action_items) : null}, action_items),
-      is_active = COALESCE(${data.is_active ?? null}, is_active)
+      is_active = COALESCE(${data.is_active ?? null}, is_active),
+      customer_id = ${data.customer_id !== undefined ? data.customer_id : current.customer_id}
     WHERE id = ${id} AND account_id = ${accountId}
     RETURNING *
   `;

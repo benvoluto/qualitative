@@ -148,6 +148,7 @@ export interface ExtractRule {
   quotes: string[];
   action_items: string[];
   is_active: boolean;
+  customer_id: string | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -320,9 +321,9 @@ export type UpdateMeeting = Partial<
 >;
 
 export type CreateExtractRule = Pick<ExtractRule, "name"> &
-  Partial<Pick<ExtractRule, "summary" | "quotes" | "action_items" | "is_active">>;
+  Partial<Pick<ExtractRule, "summary" | "quotes" | "action_items" | "is_active" | "customer_id">>;
 export type UpdateExtractRule = Partial<
-  Pick<ExtractRule, "name" | "summary" | "quotes" | "action_items" | "is_active">
+  Pick<ExtractRule, "name" | "summary" | "quotes" | "action_items" | "is_active" | "customer_id">
 >;
 
 export type CreateExtract = Pick<Extract, "meeting_id"> &

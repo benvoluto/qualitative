@@ -39,6 +39,7 @@ export async function PATCH(
       quotes: body.quotes,
       action_items: body.action_items,
       is_active: body.is_active,
+      customer_id: body.customer_id,
     });
 
     if (!rule) {

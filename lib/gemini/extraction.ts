@@ -195,16 +195,19 @@ export interface CompanyInfo {
   id: string;
 }
 
-// Extract insights from a transcript using existing rules
+// Extract insights from a transcript using existing rules.
+// When customerId is provided, only rules that are global (customer_id IS NULL) or
+// scoped to this exact customer are applied.
 export async function extractInsightsFromTranscript(
   accountId: string,
   transcript: string,
-  companies: CompanyInfo[] = []
+  companies: CompanyInfo[] = [],
+  customerId: string | null = null
 ): Promise<GeneratedExtract[]> {
   const genAI = getGeminiClient();
   const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
 
-  const activeRules = await extractRules.getActiveExtractRules(accountId);
+  const activeRules = await extractRules.getActiveExtractRulesForCustomer(accountId, customerId);
 
   if (activeRules.length === 0) {
     return extractWithDefaultRules(transcript, companies);

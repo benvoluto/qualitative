@@ -10,13 +10,20 @@ interface Tag {
   color: string | null;
 }
 
-interface AddRuleFormProps {
-  tags: Tag[];
+interface CustomerOption {
+  id: string;
+  name: string;
 }
 
-export function AddRuleForm({ tags }: AddRuleFormProps) {
+interface AddRuleFormProps {
+  tags: Tag[];
+  customers: CustomerOption[];
+}
+
+export function AddRuleForm({ tags, customers }: AddRuleFormProps) {
   const [name, setName] = useState("");
   const [summary, setSummary] = useState("");
+  const [customerId, setCustomerId] = useState<string>("");
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +58,7 @@ export function AddRuleForm({ tags }: AddRuleFormProps) {
           name: name.trim(),
           summary: summary.trim() || null,
           is_active: true,
+          customer_id: customerId || null,
           tagIds: Array.from(selectedTagIds),
         }),
       });
@@ -58,6 +66,7 @@ export function AddRuleForm({ tags }: AddRuleFormProps) {
       if (response.ok) {
         setName("");
         setSummary("");
+        setCustomerId("");
         setSelectedTagIds(new Set());
         router.refresh();
       } else {
@@ -105,6 +114,31 @@ export function AddRuleForm({ tags }: AddRuleFormProps) {
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
+      </div>
+
+      <div>
+        <label
+          htmlFor="rule-customer"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+        >
+          Scope to organization
+        </label>
+        <select
+          id="rule-customer"
+          value={customerId}
+          onChange={(e) => setCustomerId(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="">All organizations (global)</option>
+          {customers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Global rules apply to every meeting. Scoped rules only apply to meetings with this organization.
+        </p>
       </div>
 
       {tags.length > 0 && (

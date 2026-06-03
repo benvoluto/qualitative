@@ -1,4 +1,4 @@
-import { extractRules, tags } from "@/lib/db";
+import { extractRules, tags, customers } from "@/lib/db";
 import { requireAccountId } from "@/lib/account-context";
 import { RulesList } from "./rules-list";
 import { GenerateRulesForm } from "./generate-rules-form";
@@ -13,12 +13,14 @@ export const dynamic = "force-dynamic";
 export default async function ExtractRulesPage() {
   const accountId = await requireAccountId();
   const rules = await extractRules.getExtractRulesWithTags(accountId);
-  const [allTags, usedColors] = await Promise.all([
+  const [allTags, usedColors, allCustomers] = await Promise.all([
     tags.getTags(accountId),
     tags.getUsedColors(accountId),
+    customers.getCustomers(accountId),
   ]);
   const usedColorSet = new Set(usedColors);
   const availableColors = TAG_COLORS.filter((c) => !usedColorSet.has(c));
+  const customerOptions = allCustomers.map((c) => ({ id: c.id, name: c.name }));
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -50,7 +52,7 @@ export default async function ExtractRulesPage() {
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 Manually add a new extraction rule by entering a name and description.
               </p>
-              <AddRuleForm tags={allTags} />
+              <AddRuleForm tags={allTags} customers={customerOptions} />
             </div>
 
             {/* Generate Rules Form */}
@@ -101,7 +103,7 @@ export default async function ExtractRulesPage() {
                   </p>
                 </div>
               ) : (
-                <RulesList rules={rules} allTags={allTags} />
+                <RulesList rules={rules} allTags={allTags} customers={customerOptions} />
               )}
             </div>
           </div>

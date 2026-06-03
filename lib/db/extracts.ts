@@ -177,12 +177,15 @@ export async function deleteExtract(accountId: string, id: string): Promise<bool
 export async function updateExtractsCustomerByMeetingId(
   accountId: string,
   meetingId: string,
-  customerId: string | null
+  customerId: string | null,
+  companyId: string | null
 ): Promise<number> {
   const sql = getDb();
   const result = await sql`
     UPDATE extracts
-    SET customer_id = ${customerId}, updated_at = NOW()
+    SET customer_id = ${customerId},
+        company_id = ${companyId},
+        updated_at = NOW()
     WHERE meeting_id = ${meetingId} AND account_id = ${accountId}
     RETURNING id
   `;

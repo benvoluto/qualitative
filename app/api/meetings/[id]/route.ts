@@ -56,16 +56,30 @@ export async function PATCH(
       meetingUpdate.meeting_date = body.meeting_date ? new Date(body.meeting_date) : null;
     }
     if (body.user_notes !== undefined) meetingUpdate.user_notes = body.user_notes;
-    if (body.customer_id !== undefined) meetingUpdate.customer_id = body.customer_id;
     if (body.host_name !== undefined) meetingUpdate.host_name = body.host_name;
     if (body.host_email !== undefined) meetingUpdate.host_email = body.host_email;
     if (body.transcript !== undefined) meetingUpdate.transcript = body.transcript;
     if (body.transcript_source !== undefined) meetingUpdate.transcript_source = body.transcript_source;
 
+    // Customer change cascades the derived company_id onto the meeting and its extracts.
+    let derivedCompanyId: string | null | undefined;
+    if (body.customer_id !== undefined) {
+      meetingUpdate.customer_id = body.customer_id;
+      derivedCompanyId = body.customer_id
+        ? (await customers.getCustomerById(accountId, body.customer_id))?.company_id ?? null
+        : null;
+      meetingUpdate.company_id = derivedCompanyId;
+    }
+
     const meeting = await meetings.updateMeeting(accountId, id, meetingUpdate);
 
     if (body.customer_id !== undefined && body.customer_id !== existingMeeting.customer_id) {
-      await extracts.updateExtractsCustomerByMeetingId(accountId, id, body.customer_id);
+      await extracts.updateExtractsCustomerByMeetingId(
+        accountId,
+        id,
+        body.customer_id,
+        derivedCompanyId ?? null
+      );
     }
 
     if (body.customer_type && body.customer_id) {

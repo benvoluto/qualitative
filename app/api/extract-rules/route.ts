@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     const accountId = await requireAccountId();
 
     const body = await request.json();
-    const { name, summary, quotes, action_items, is_active, tagIds } = body;
+    const { name, summary, quotes, action_items, is_active, customer_id, tagIds } = body;
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
       quotes: quotes || [],
       action_items: action_items || [],
       is_active: is_active ?? true,
+      customer_id: customer_id ?? null,
     });
 
     if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {

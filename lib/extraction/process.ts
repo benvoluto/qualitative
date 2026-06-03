@@ -32,11 +32,18 @@ export async function processMeetingExtracts(
 
     const customerId = meeting.customer_id;
 
-    const insights = await extractInsightsFromTranscript(accountId, meeting.transcript, companyInfoList);
+    const insights = await extractInsightsFromTranscript(
+      accountId,
+      meeting.transcript,
+      companyInfoList,
+      customerId
+    );
 
-    const allRules = await extractRules.getExtractRules(accountId);
+    // Restrict the rule-name → id lookup to the same scope used by extraction,
+    // so a rule from another customer can't accidentally absorb a match.
+    const scopedRules = await extractRules.getActiveExtractRulesForCustomer(accountId, customerId);
     const ruleNameToId = new Map<string, string>();
-    for (const rule of allRules) {
+    for (const rule of scopedRules) {
       ruleNameToId.set(rule.name, rule.id);
       ruleNameToId.set(rule.name.toLowerCase(), rule.id);
     }

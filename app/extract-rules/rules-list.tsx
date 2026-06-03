@@ -11,6 +11,11 @@ interface Tag {
   color: string | null;
 }
 
+interface CustomerOption {
+  id: string;
+  name: string;
+}
+
 interface ExtractRuleWithTags extends ExtractRule {
   tags: Tag[];
 }
@@ -18,19 +23,28 @@ interface ExtractRuleWithTags extends ExtractRule {
 interface RulesListProps {
   rules: ExtractRuleWithTags[];
   allTags: Tag[];
+  customers: CustomerOption[];
 }
 
-export function RulesList({ rules, allTags }: RulesListProps) {
+export function RulesList({ rules, allTags, customers }: RulesListProps) {
   return (
     <div className="space-y-4">
       {rules.map((rule) => (
-        <RuleCard key={rule.id} rule={rule} allTags={allTags} />
+        <RuleCard key={rule.id} rule={rule} allTags={allTags} customers={customers} />
       ))}
     </div>
   );
 }
 
-function RuleCard({ rule, allTags }: { rule: ExtractRuleWithTags; allTags: Tag[] }) {
+function RuleCard({
+  rule,
+  allTags,
+  customers,
+}: {
+  rule: ExtractRuleWithTags;
+  allTags: Tag[];
+  customers: CustomerOption[];
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
@@ -39,9 +53,13 @@ function RuleCard({ rule, allTags }: { rule: ExtractRuleWithTags; allTags: Tag[]
   const [editForm, setEditForm] = useState({
     name: rule.name,
     summary: rule.summary || "",
+    customerId: rule.customer_id || "",
     tagIds: new Set<string>(rule.tags.map((t) => t.id)),
   });
   const router = useRouter();
+  const scopedCustomer = rule.customer_id
+    ? customers.find((c) => c.id === rule.customer_id)
+    : null;
 
   function toggleEditTag(tagId: string) {
     const newTagIds = new Set(editForm.tagIds);
@@ -94,6 +112,7 @@ function RuleCard({ rule, allTags }: { rule: ExtractRuleWithTags; allTags: Tag[]
         body: JSON.stringify({
           name: editForm.name,
           summary: editForm.summary,
+          customer_id: editForm.customerId || null,
           tagIds: Array.from(editForm.tagIds),
         }),
       });
@@ -126,6 +145,23 @@ function RuleCard({ rule, allTags }: { rule: ExtractRuleWithTags; allTags: Tag[]
                 placeholder="Rule summary"
                 rows={2}
               />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Scope to organization
+                </label>
+                <select
+                  value={editForm.customerId}
+                  onChange={(e) => setEditForm({ ...editForm, customerId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                >
+                  <option value="">All organizations (global)</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               {allTags.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -162,6 +198,7 @@ function RuleCard({ rule, allTags }: { rule: ExtractRuleWithTags; allTags: Tag[]
                     setEditForm({
                       name: rule.name,
                       summary: rule.summary || "",
+                      customerId: rule.customer_id || "",
                       tagIds: new Set<string>(rule.tags.map((t) => t.id)),
                     });
                   }}
@@ -173,7 +210,7 @@ function RuleCard({ rule, allTags }: { rule: ExtractRuleWithTags; allTags: Tag[]
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-medium text-gray-900 dark:text-white">
                   {rule.name}
                 </h3>
@@ -186,6 +223,15 @@ function RuleCard({ rule, allTags }: { rule: ExtractRuleWithTags; allTags: Tag[]
                 >
                   {rule.is_active ? "Active" : "Inactive"}
                 </span>
+                {scopedCustomer ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                    {scopedCustomer.name}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                    Global
+                  </span>
+                )}
               </div>
               {rule.summary && (
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

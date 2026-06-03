@@ -278,7 +278,7 @@ export function ExtractsFilter({
       <div className="lg:col-span-1 space-y-6">
 
         {/* Search */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4">
+        <div className="p-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg
@@ -346,7 +346,7 @@ export function ExtractsFilter({
         </div>
 
         {/* Action Items filter */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4">
+        <div className="p-4">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
             Action Items
           </h3>
@@ -427,7 +427,7 @@ export function ExtractsFilter({
         </div>
 
         {/* Requests filter */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4">
+        <div className="p-4">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
             Requests
           </h3>
@@ -493,7 +493,7 @@ export function ExtractsFilter({
         </div>
 
         {/* Customers filter */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4">
+        <div className="p-4">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
             Filter by Organization
           </h3>
@@ -527,7 +527,7 @@ export function ExtractsFilter({
         </div>
 
         {/* Rules filter */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4">
+        <div className="p-4">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
             Filter by Rule
           </h3>
@@ -561,7 +561,7 @@ export function ExtractsFilter({
         </div>
 
         {/* Tags filter */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4">
+        <div className="p-4">
           <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
             Filter by Tag
           </h3>
@@ -604,7 +604,7 @@ export function ExtractsFilter({
       {/* Right content - Extracts list */}
       <div className="lg:col-span-3">
         {/* Type Filter Tabs */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 mb-6">
+        <div className="mb-6">
           <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4">
             <div className="flex">
               <TypeTabButton
@@ -740,7 +740,7 @@ function VirtualizedExtractList({ extracts, selectedTags, toggleTag, onRefresh }
   return (
     <div
       ref={parentRef}
-      className="h-[calc(100vh-60px)] overflow-auto"
+      className="h-[calc(100vh-60px)] overflow-auto px-4"
       style={{ contain: "strict" }}
     >
       <div
@@ -851,7 +851,7 @@ function ExtractCard({ extract, selectedTags, toggleTag, onRefresh }: ExtractCar
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-lg shadow border p-5 ${
+      className={`bg-white dark:bg-gray-800 rounded-lg border p-5 ${
         extract.is_action_item
           ? "border-orange-200 dark:border-orange-800"
           : "border-gray-200 dark:border-gray-700"

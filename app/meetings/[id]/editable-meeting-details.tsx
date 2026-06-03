@@ -80,12 +80,15 @@ export function EditableMeetingDetails({
   const [personnelResults, setPersonnelResults] = useState<ParticipantData[]>([]);
   const [isSearchingPersonnel, setIsSearchingPersonnel] = useState(false);
   const [isCreatingPersonnel, setIsCreatingPersonnel] = useState(false);
+  const [newCustomers, setNewCustomers] = useState<Customer[]>([]);
+  const [isCreatingCustomer, setIsCreatingCustomer] = useState(false);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [showHostDropdown, setShowHostDropdown] = useState(false);
   const [showParticipantDropdown, setShowParticipantDropdown] = useState(false);
 
-  // Filtered customers based on search
-  const filteredCustomers = allCustomers.filter(
+  // Filtered customers based on search (includes any orgs created inline this session)
+  const availableCustomers = [...newCustomers, ...allCustomers];
+  const filteredCustomers = availableCustomers.filter(
     (c) =>
       c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
       c.domain?.toLowerCase().includes(customerSearch.toLowerCase())
@@ -168,6 +171,32 @@ export function EditableMeetingDetails({
     });
     setCustomerSearch(customer.name);
     setShowCustomerDropdown(false);
+  }
+
+  async function handleCreateCustomer(name: string): Promise<void> {
+    const trimmedName = name.trim();
+    if (!trimmedName || isCreatingCustomer) return;
+    setIsCreatingCustomer(true);
+    try {
+      const response = await fetch("/api/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: trimmedName, customer_type: "customer" }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        console.error("Failed to create organization:", error);
+        return;
+      }
+      const data = await response.json();
+      const created: Customer = data.customer;
+      setNewCustomers((prev) => [created, ...prev]);
+      handleCustomerSelect(created);
+    } catch (error) {
+      console.error("Failed to create organization:", error);
+    } finally {
+      setIsCreatingCustomer(false);
+    }
   }
 
   async function handleHostSelect(contact: HubSpotContact) {
@@ -450,37 +479,66 @@ export function EditableMeetingDetails({
                     setShowCustomerDropdown(true);
                   }}
                   onFocus={() => setShowCustomerDropdown(true)}
-                  placeholder="Search organizations..."
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && customerSearch.trim()) {
+                      e.preventDefault();
+                      const trimmed = customerSearch.trim();
+                      const exactMatch = availableCustomers.find(
+                        (c) => c.name.toLowerCase() === trimmed.toLowerCase()
+                      );
+                      if (exactMatch) {
+                        handleCustomerSelect(exactMatch);
+                      } else {
+                        handleCreateCustomer(trimmed);
+                      }
+                    }
+                  }}
+                  placeholder="Search or type a new organization name..."
                   className="w-full px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
                 />
                 {showCustomerDropdown && (
                   <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {filteredCustomers.length > 0 ? (
-                      filteredCustomers.slice(0, 10).map((customer) => (
+                    {filteredCustomers.slice(0, 10).map((customer) => (
+                      <button
+                        key={customer.id}
+                        onClick={() => handleCustomerSelect(customer)}
+                        className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{customer.name}</span>
+                          <span
+                            className={`text-xs px-1.5 py-0.5 rounded ${
+                              customer.customer_type === "deal"
+                                ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                                : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                            }`}
+                          >
+                            {customer.customer_type === "deal" ? "Secondary" : "Primary"}
+                          </span>
+                        </div>
+                        {customer.domain && (
+                          <div className="text-xs text-gray-500">{customer.domain}</div>
+                        )}
+                      </button>
+                    ))}
+                    {customerSearch.trim() &&
+                      !availableCustomers.find(
+                        (c) => c.name.toLowerCase() === customerSearch.trim().toLowerCase()
+                      ) && (
                         <button
-                          key={customer.id}
-                          onClick={() => handleCustomerSelect(customer)}
-                          className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          onClick={() => handleCreateCustomer(customerSearch)}
+                          disabled={isCreatingCustomer}
+                          className="w-full text-left px-3 py-2 border-t border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-blue-600 dark:text-blue-400 disabled:opacity-50"
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{customer.name}</span>
-                            <span
-                              className={`text-xs px-1.5 py-0.5 rounded ${
-                                customer.customer_type === "deal"
-                                  ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-                                  : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                              }`}
-                            >
-                              {customer.customer_type === "deal" ? "Secondary" : "Primary"}
-                            </span>
-                          </div>
-                          {customer.domain && (
-                            <div className="text-xs text-gray-500">{customer.domain}</div>
-                          )}
+                          {isCreatingCustomer
+                            ? "Adding…"
+                            : `+ Add “${customerSearch.trim()}” as new organization`}
                         </button>
-                      ))
-                    ) : (
-                      <div className="p-2 text-sm text-gray-500">No organizations found</div>
+                      )}
+                    {filteredCustomers.length === 0 && !customerSearch.trim() && (
+                      <div className="p-2 text-sm text-gray-500">
+                        Start typing to search or add an organization
+                      </div>
                     )}
                   </div>
                 )}

@@ -74,7 +74,7 @@ export function LogoMenu({ counts }: LogoMenuProps) {
         aria-label="Home"
         className="inline-flex shrink-0 rounded-md hover:opacity-80 transition-opacity"
       >
-        <Logo width={40} height={40} className="rounded-md block" />
+        <Logo width={64} height={64} className="rounded-md block" />
       </Link>
 
       {/* Tab Bar */}
