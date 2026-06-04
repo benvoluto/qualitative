@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { CaretDown, DownloadSimple, User } from "@phosphor-icons/react";
 
 interface ExtractTag {
   id: string;
@@ -10,7 +11,7 @@ interface ExtractTag {
 
 interface ExtractWithTags {
   id: string;
-  meeting_id: string;
+  meeting_id: string | null;
   customer_id: string | null;
   extract_rule_id: string | null;
   extract_date: Date | null;
@@ -165,39 +166,18 @@ export function MeetingExtracts({
               className="inline-flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               title="Download extracts as CSV"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
-                />
-              </svg>
+              <DownloadSimple size={16} />
               Export CSV
             </a>
           )}
         </div>
         <div className="flex items-center gap-3">
-          <svg
-            className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${
+          <CaretDown
+            size={20}
+            className={`text-gray-500 dark:text-gray-400 transition-transform ${
               isExpanded ? "rotate-180" : ""
             }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+          />
         </div>
       </div>
       {isExpanded && extracts.length > 0 && (
@@ -267,19 +247,7 @@ export function MeetingExtracts({
                 {/* Participant Info */}
                 {(extract.participant_name || extract.participant_email) && (
                   <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
-                    <svg
-                      className="w-3 h-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
+                    <User size={12} />
                     <span>
                       {extract.participant_name}
                       {extract.participant_email && (

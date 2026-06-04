@@ -2,6 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  CaretRight,
+  Check,
+  CircleNotch,
+  EnvelopeSimple,
+  FileText,
+  PencilSimple,
+} from "@phosphor-icons/react";
 import { features } from "@/lib/features";
 import { ProcessButton } from "./process-button";
 import { ExtractButton } from "./extract-button";
@@ -209,11 +217,7 @@ export function WorkflowActions({
             isLoading={isGeneratingEmail}
             disabled={isGeneratingEmail}
             colorScheme="green"
-            icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            }
+            icon={<EnvelopeSimple size={20} />}
             title="Generate Follow-up Email"
             description={customerType === "deal" ? "Create Secondary follow-up with next steps" : "Create Primary recap email"}
           />
@@ -233,11 +237,7 @@ export function WorkflowActions({
             isLoading={isGeneratingNotes}
             disabled={isGeneratingNotes}
             colorScheme="blue"
-            icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            }
+            icon={<PencilSimple size={20} />}
             title="Generate Meeting Notes"
             description="Summarize extracts and add to notes"
           />
@@ -250,11 +250,7 @@ export function WorkflowActions({
             isLoading={isWritingHubSpot}
             disabled={isWritingHubSpot || !canWriteToHubSpot}
             colorScheme="orange"
-            icon={
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            }
+            icon={<FileText size={20} />}
             title="Write Notes to HubSpot"
             description={canWriteToHubSpot ? "Generate CRM notes and sync to HubSpot" : "Link a HubSpot organization first"}
           />
@@ -340,19 +336,12 @@ function ActionButton({
         </div>
       </div>
       {isLoading ? (
-        <svg className={`animate-spin h-5 w-5 ${colors.icon}`} fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-        </svg>
+        <CircleNotch size={20} className={`animate-spin ${colors.icon}`} />
       ) : showChevron !== false ? (
-        <svg
-          className={`w-5 h-5 ${colors.icon} transition-transform ${chevronRotated ? "rotate-90" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
+        <CaretRight
+          size={20}
+          className={`${colors.icon} transition-transform ${chevronRotated ? "rotate-90" : ""}`}
+        />
       ) : null}
     </button>
   );
@@ -376,9 +365,7 @@ function CompletedAction({
     <div className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg">
       <div className="flex items-center gap-3">
         <span className="text-green-600 dark:text-green-400">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+          <Check size={20} weight="bold" />
         </span>
         <div className="text-left">
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{title}</p>

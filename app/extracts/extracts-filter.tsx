@@ -4,6 +4,18 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import {
+  Buildings,
+  Check,
+  Clipboard,
+  DownloadSimple,
+  FileText,
+  MagnifyingGlass,
+  PencilSimple,
+  Play,
+  Trash,
+  X,
+} from "@phosphor-icons/react";
 import { Tag, ExtractRule, Meeting, Customer } from "@/lib/db/types";
 import { TagBadge } from "@/components/tag-badge";
 import { exportExtractsToCsv, exportExtractsToXlsx, copyExtractsForMiro } from "./export-utils";
@@ -281,19 +293,7 @@ export function ExtractsFilter({
         <div className="p-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg
-                className="h-4 w-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+              <MagnifyingGlass size={16} className="text-gray-400" />
             </div>
             <input
               type="text"
@@ -307,19 +307,7 @@ export function ExtractsFilter({
                 onClick={() => setSearchQuery("")}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
               >
-                <svg
-                  className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X size={16} weight="bold" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
               </button>
             )}
           </div>
@@ -644,7 +632,7 @@ export function ExtractsFilter({
                 className="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
                 title="Save the current list as an Excel file"
               >
-                <DownloadIcon className="w-4 h-4" />
+                <DownloadSimple size={16} />
                 Save as XLS
               </button>
               <button
@@ -654,7 +642,7 @@ export function ExtractsFilter({
                 className="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
                 title="Export the current list as a CSV file"
               >
-                <DownloadIcon className="w-4 h-4" />
+                <DownloadSimple size={16} />
                 Export CSV
               </button>
               <CopyForMiroButton extracts={filteredExtracts} />
@@ -671,19 +659,7 @@ export function ExtractsFilter({
           />
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-8 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
+            <FileText size={48} className="mx-auto text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
               No extracts found
             </h3>
@@ -907,18 +883,14 @@ function ExtractCard({ extract, selectedTags, toggleTag, onRefresh }: ExtractCar
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 title="Edit extract"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
+                <PencilSimple size={16} />
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 className="text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                 title="Delete extract"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <Trash size={16} />
               </button>
             </>
           )}
@@ -935,9 +907,7 @@ function ExtractCard({ extract, selectedTags, toggleTag, onRefresh }: ExtractCar
         {extract.customer_name && (
           <span className="inline-flex items-center gap-2">
             <span className="inline-flex items-center gap-1 font-medium text-gray-700 dark:text-gray-300">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
+              <Buildings size={12} />
               {extract.customer_name}
             </span>
             {extract.customer_type && (
@@ -973,10 +943,7 @@ function ExtractCard({ extract, selectedTags, toggleTag, onRefresh }: ExtractCar
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <Play size={12} weight="fill" />
                 Recording
               </a>
             )}
@@ -1118,19 +1085,6 @@ function TypeTabButton({
 }
 
 
-function DownloadIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
-      />
-    </svg>
-  );
-}
-
 interface CopyForMiroButtonProps {
   extracts: ExtractWithDetails[];
 }
@@ -1168,34 +1122,8 @@ function CopyForMiroButton({ extracts }: CopyForMiroButtonProps) {
       }`}
       title="Copy the current list to the clipboard, formatted one extract per line for pasting into Miro"
     >
-      {copied ? <CheckIcon className="w-4 h-4" /> : <ClipboardIcon className="w-4 h-4" />}
+      {copied ? <Check size={16} weight="bold" /> : <Clipboard size={16} />}
       {copied ? "Copied!" : "Copy for Miro"}
     </button>
-  );
-}
-
-function ClipboardIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-      />
-    </svg>
-  );
-}
-
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M5 13l4 4L19 7"
-      />
-    </svg>
   );
 }

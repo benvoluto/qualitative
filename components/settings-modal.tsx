@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { CaretDown, X } from "@phosphor-icons/react";
 import { features } from "@/lib/features";
 
 interface SettingsModalProps {
@@ -455,7 +456,7 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
             onClick={onClose}
             className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
           >
-            <CloseIcon className="w-5 h-5 text-gray-500" />
+            <X size={20} weight="bold" className="text-gray-500" />
           </button>
         </div>
 
@@ -767,14 +768,10 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
                           </span>
                         )}
                       </div>
-                      <svg
-                        className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
+                      <CaretDown
+                        size={20}
+                        className={`text-gray-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                      />
                     </button>
 
                     {/* Expanded Content */}
@@ -945,14 +942,6 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
         </div>
       </div>
     </div>
-  );
-}
-
-function CloseIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
   );
 }
 

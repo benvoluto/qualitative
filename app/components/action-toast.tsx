@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CircleNotch, Question } from "@phosphor-icons/react";
 
 interface ActionToastProps {
   message: string;
@@ -43,14 +44,7 @@ export function ActionToast({
       }`}
     >
       <div className="flex items-start gap-3">
-        <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
+        <Question size={20} className="mt-0.5 flex-shrink-0" />
         <div className="flex-1">
           <p className="text-sm font-medium">{message}</p>
           <div className="flex gap-2 mt-3">
@@ -61,22 +55,7 @@ export function ActionToast({
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
+                  <CircleNotch size={16} className="animate-spin" />
                   Processing...
                 </span>
               ) : (

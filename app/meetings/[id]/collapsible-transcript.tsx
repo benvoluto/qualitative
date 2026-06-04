@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { CaretDown, Plus } from "@phosphor-icons/react";
 
 interface CollapsibleTranscriptProps {
   meetingId: string;
@@ -173,21 +174,12 @@ export function CollapsibleTranscript({
               {transcript ? "Edit" : "Add"}
             </button>
           )}
-          <svg
-            className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${
+          <CaretDown
+            size={20}
+            className={`text-gray-500 dark:text-gray-400 transition-transform ${
               isExpanded ? "rotate-180" : ""
             }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+          />
         </div>
       </div>
 
@@ -279,9 +271,7 @@ export function CollapsibleTranscript({
                   onClick={() => setIsEditing(true)}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
+                  <Plus size={16} weight="bold" />
                   Add Transcript
                 </button>
               )}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowSquareOut, User, Warning, X } from "@phosphor-icons/react";
 import { Meeting, Customer, CustomerType, ParticipationStatus } from "@/lib/db/types";
 
 interface ParticipantData {
@@ -316,9 +317,7 @@ export function EditableMeetingDetails({
       {/* No Company Warning Banner */}
       {!linkedCustomer && !isEditing && (
         <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start gap-3">
-          <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
+          <Warning size={20} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
               No organization assigned to this meeting
@@ -447,9 +446,7 @@ export function EditableMeetingDetails({
               </div>
             ) : meeting.host_name || meeting.host_email ? (
               <div className="flex items-center gap-1">
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+                <User size={16} className="text-gray-400" />
                 <span>
                   {meeting.host_name || "Unknown"}
                   {meeting.host_email && (
@@ -602,9 +599,7 @@ export function EditableMeetingDetails({
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm inline-flex items-center gap-1"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
+                  <ArrowSquareOut size={14} />
                   Open Meeting
                 </a>
               ) : meeting.recording_url && !meeting.recording_url.startsWith("drive:") ? (
@@ -615,9 +610,7 @@ export function EditableMeetingDetails({
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm inline-flex items-center gap-1"
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
+                    <ArrowSquareOut size={14} />
                     Open Recording
                   </a>
                   {meeting.recording_passcode && (
@@ -740,9 +733,7 @@ export function EditableMeetingDetails({
                     className="text-red-500 hover:text-red-700"
                     title="Remove participant"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <X size={16} weight="bold" />
                   </button>
                 )}
               </div>

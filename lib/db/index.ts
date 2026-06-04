@@ -15,6 +15,7 @@ export * as groups from "./groups";
 export * as meetings from "./meetings";
 export * as tags from "./tags";
 export * as extracts from "./extracts";
+export * as extractPositions from "./extract-positions";
 export * as extractRules from "./extract-rules";
 export * as users from "./users";
 export * as emailDrafts from "./email-drafts";

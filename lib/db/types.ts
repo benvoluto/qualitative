@@ -158,7 +158,7 @@ export type RequestStatus = "pending" | "ticket_added" | null;
 
 export interface Extract {
   id: string;
-  meeting_id: string;
+  meeting_id: string | null;
   customer_id: string | null;
   company_id: string | null;
   extract_rule_id: string | null;
@@ -326,10 +326,9 @@ export type UpdateExtractRule = Partial<
   Pick<ExtractRule, "name" | "summary" | "quotes" | "action_items" | "is_active" | "customer_id">
 >;
 
-export type CreateExtract = Pick<Extract, "meeting_id"> &
-  Partial<
-    Pick<Extract, "customer_id" | "company_id" | "extract_rule_id" | "extract_date" | "summary" | "quotes" | "is_action_item" | "action_item_status" | "request_status" | "participant_name" | "participant_email">
-  >;
+export type CreateExtract = Partial<
+  Pick<Extract, "meeting_id" | "customer_id" | "company_id" | "extract_rule_id" | "extract_date" | "summary" | "quotes" | "is_action_item" | "action_item_status" | "request_status" | "participant_name" | "participant_email">
+>;
 export type UpdateExtract = Partial<
   Pick<Extract, "customer_id" | "company_id" | "extract_rule_id" | "extract_date" | "summary" | "quotes" | "is_action_item" | "action_item_status" | "request_status" | "participant_name" | "participant_email">
 >;
@@ -345,3 +344,17 @@ export type CreateEmailDraft = Pick<EmailDraft, "meeting_id" | "draft_type"> &
 export type UpdateEmailDraft = Partial<
   Pick<EmailDraft, "subject" | "body" | "recipient_email" | "recipient_name" | "status" | "sent_at">
 >;
+
+export interface ExtractPosition {
+  extract_id: string;
+  account_id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  color: string | null;
+  updated_at: Date;
+}
+
+export type UpsertExtractPosition = Pick<ExtractPosition, "extract_id" | "x" | "y"> &
+  Partial<Pick<ExtractPosition, "width" | "height" | "color">>;

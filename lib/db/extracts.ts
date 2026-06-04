@@ -43,6 +43,7 @@ export async function getExtractsByMeetingIds(
   const map = new Map<string, Extract[]>();
   for (const id of meetingIds) map.set(id, []);
   for (const e of result as Extract[]) {
+    if (!e.meeting_id) continue;
     const arr = map.get(e.meeting_id) || [];
     arr.push(e);
     map.set(e.meeting_id, arr);
@@ -97,7 +98,7 @@ export async function createExtract(accountId: string, data: CreateExtract): Pro
     )
     VALUES (
       ${accountId},
-      ${data.meeting_id},
+      ${data.meeting_id ?? null},
       ${data.customer_id ?? null},
       ${data.company_id ?? null},
       ${data.extract_rule_id ?? null},
@@ -286,7 +287,7 @@ export async function searchExtracts(accountId: string, query: string): Promise<
 }
 
 export interface ExtractWithTags extends Extract {
-  tags: Array<{ id: string; name: string }>;
+  tags: Array<{ id: string; name: string; color: string | null }>;
 }
 
 export interface ExtractWithRule extends Extract {
@@ -326,6 +327,30 @@ export async function getExtractCountByRuleId(accountId: string, ruleId: string)
   return parseInt((result[0] as { count: string }).count, 10);
 }
 
+export async function getExtractsWithTagsByCustomerId(
+  accountId: string,
+  customerId: string
+): Promise<ExtractWithTags[]> {
+  const sql = getDb();
+  const extractsResult = await sql`
+    SELECT * FROM extracts
+    WHERE customer_id = ${customerId} AND account_id = ${accountId}
+    ORDER BY created_at
+  `;
+  const extractsList = extractsResult as Extract[];
+  return Promise.all(
+    extractsList.map(async (extract) => {
+      const tagsResult = await sql`
+        SELECT t.id, t.name, t.color FROM tags t
+        JOIN extract_tags et ON t.id = et.tag_id
+        WHERE et.extract_id = ${extract.id}
+        ORDER BY t.name
+      `;
+      return { ...extract, tags: tagsResult as Array<{ id: string; name: string; color: string | null }> };
+    })
+  );
+}
+
 export async function getExtractsWithTagsByMeetingId(
   accountId: string,
   meetingId: string
@@ -339,11 +364,11 @@ export async function getExtractsWithTagsByMeetingId(
   const extractsWithTags: ExtractWithTags[] = await Promise.all(
     extractsList.map(async (extract) => {
       const tagsResult = await sql`
-        SELECT t.id, t.name FROM tags t
+        SELECT t.id, t.name, t.color FROM tags t
         JOIN extract_tags et ON t.id = et.tag_id
         WHERE et.extract_id = ${extract.id}
       `;
-      return { ...extract, tags: tagsResult as Array<{ id: string; name: string }> };
+      return { ...extract, tags: tagsResult as Array<{ id: string; name: string; color: string | null }> };
     })
   );
 

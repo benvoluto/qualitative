@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Check, Warning, X } from "@phosphor-icons/react";
 
 const SYNC_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
 const LOCAL_STORAGE_KEY = "lastMeetingSync";
@@ -125,27 +126,13 @@ export function AutoSync({ hasIntegrations }: AutoSyncProps) {
       {showNotification && lastResult && lastResult.totalSynced > 0 && (
         <div className="fixed bottom-4 right-4 z-50 transition-all duration-300">
           <div className="bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
+            <Check size={20} weight="bold" />
             <span>{lastResult.message}</span>
             <button
               onClick={() => setShowNotification(false)}
               className="ml-2 text-white/80 hover:text-white"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X size={16} weight="bold" />
             </button>
           </div>
         </div>
@@ -155,14 +142,7 @@ export function AutoSync({ hasIntegrations }: AutoSyncProps) {
       {status === "error" && (
         <div className="fixed bottom-4 right-4 z-50 transition-all duration-300">
           <div className="bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <Warning size={20} />
             <span>Failed to sync meetings</span>
           </div>
         </div>
