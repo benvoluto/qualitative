@@ -1,11 +1,11 @@
+import { Plus } from "@phosphor-icons/react/dist/ssr";
 import { meetings, customers, extracts } from "@/lib/db";
 import { requireAccountId } from "@/lib/account-context";
 import { MeetingsList } from "./meetings-list";
 import { SyncButton } from "./sync-button";
 import { CustomersList } from "./customers-list";
 import Link from "next/link";
-import { LogoMenu } from "@/components/logo-menu";
-import { HeaderUserMenu } from "@/components/header-user-menu";
+import { PageHeader } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -29,32 +29,22 @@ export default async function MeetingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <LogoMenu />
-            </div>
-            <div className="flex items-center gap-3">
-              <Link
-                href="/meetings/new"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add Meeting Manually
-              </Link>
-              <SyncButton />
-              <HeaderUserMenu />
-            </div>
-          </div>
-        </div>
-      </header>
+      <PageHeader title="Meetings" />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Actions */}
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <Link
+            href="/meetings/new"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus size={16} weight="bold" />
+            Add Meeting Manually
+          </Link>
+          <SyncButton />
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
           <StatCard label="Total" value={stats.total} />

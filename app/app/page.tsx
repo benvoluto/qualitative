@@ -1,3 +1,13 @@
+import type { ComponentType } from "react";
+import type { IconProps } from "@phosphor-icons/react";
+import Link from "next/link";
+import {
+  Buildings,
+  Calendar,
+  Gear,
+  ListChecks,
+  Note,
+} from "@phosphor-icons/react/dist/ssr";
 import { auth } from "@/lib/auth";
 import { UserMenu } from "@/components/user-menu";
 import { LogoMenu } from "@/components/logo-menu";
@@ -29,14 +39,6 @@ export default async function Dashboard() {
   const actionItems = accountId ? await extracts.getPendingActionItems(accountId) : [];
   const allRules = accountId ? await extractRules.getExtractRules(accountId) : [];
   const allCompanies = accountId ? await customers.getCustomers(accountId) : [];
-
-  const menuCounts = {
-    meetings: allMeetings.length,
-    companies: allCompanies.length,
-    extracts: allExtracts.length,
-    actionItems: actionItems.length,
-    extractRules: allRules.length,
-  };
 
   // Get user's integration status and autosync preference
   let integrationStatus = {
@@ -74,13 +76,18 @@ export default async function Dashboard() {
       <CompanySyncCheck hasHubSpot={integrationStatus.hubspot} />
 
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <LogoMenu counts={menuCounts} integrationStatus={integrationStatus} />
+      <header>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="grid grid-cols-3 items-center h-16 gap-4">
+            <div />
+            <div className="flex justify-center">
+              <LogoMenu />
             </div>
-            {session?.user && <UserMenu user={session.user} isAdmin={isAdminEmail(session.user.email)} />}
+            <div className="flex justify-end">
+              {session?.user && (
+                <UserMenu user={session.user} isAdmin={isAdminEmail(session.user.email)} />
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -95,36 +102,16 @@ export default async function Dashboard() {
           )}
 
           {/* Dashboard Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-8">
+            <DashboardCard count={allMeetings.length} label="Meetings" href="/meetings" Icon={Calendar} />
+            <DashboardCard count={allExtracts.length} label="Extracts" href="/extracts" Icon={Note} />
+            <DashboardCard count={allCompanies.length} label="Organizations" href="/companies" Icon={Buildings} />
+            <DashboardCard count={allRules.length} label="Extraction Rules" href="/extract-rules" Icon={Gear} />
             <DashboardCard
-              title="Meetings"
-              description="View and manage meeting transcripts"
-              count={allMeetings.length}
-              href="/meetings"
-            />
-            <DashboardCard
-              title="Organizations"
-              description="Browse Organizations (customers and deals)"
-              count={allCompanies.length}
-              href="/companies"
-            />
-            <DashboardCard
-              title="Action Items"
-              description="Track pending action items"
               count={actionItems.length}
+              label="Pending Action Items"
               href="/extracts?filter=action"
-            />
-            <DashboardCard
-              title="Extracts"
-              description="Search insights and quotes"
-              count={allExtracts.length}
-              href="/extracts"
-            />
-            <DashboardCard
-              title="Extract Rules"
-              description="Manage extraction rules"
-              count={allRules.length}
-              href="/extract-rules"
+              Icon={ListChecks}
             />
             <SettingsCard status={integrationStatus} />
           </div>
@@ -135,36 +122,30 @@ export default async function Dashboard() {
 }
 
 function DashboardCard({
-  title,
-  description,
   count,
+  label,
   href,
+  Icon,
 }: {
-  title: string;
-  description: string;
-  count: number | null;
+  count: number;
+  label: string;
   href: string;
+  Icon: ComponentType<IconProps>;
 }) {
   return (
-    <a
+    <Link
       href={href}
-      className="block bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow"
+      className="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow px-8 py-7"
     >
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            {title}
-          </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {description}
-          </p>
-        </div>
-        {count !== null && (
-          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-sm font-medium">
-            {count}
-          </span>
-        )}
+      <div className="flex items-center gap-4">
+        <p className="text-5xl font-light text-gray-900 dark:text-white leading-none tracking-tight">
+          {count}
+        </p>
+        <Icon size={36} weight="regular" className="text-gray-400 dark:text-gray-500" />
       </div>
-    </a>
+      <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+        {label}
+      </p>
+    </Link>
   );
 }

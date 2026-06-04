@@ -7,8 +7,7 @@ import { CollapsibleTranscript } from "./collapsible-transcript";
 import { EditableNotes } from "./editable-notes";
 import { MeetingExtracts } from "./meeting-extracts";
 import { EditableMeetingDetails } from "./editable-meeting-details";
-import { LogoMenu } from "@/components/logo-menu";
-import { HeaderUserMenu } from "@/components/header-user-menu";
+import { PageHeader } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -38,27 +37,17 @@ export default async function MeetingDetailPage({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <LogoMenu />
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
-                {meeting.name || "Untitled Meeting"}
-              </h1>
-              {/* Meeting Type Badge */}
-              {linkedCustomer && (
-                <MeetingTypeBadge customerType={linkedCustomer.customer_type} />
-              )}
-            </div>
-            <div className="flex items-center gap-4">
-              <StatusBadge status={meeting.workflow_status} />
-              <HeaderUserMenu />
-            </div>
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title={
+          <span className="flex items-center gap-3 truncate">
+            <span className="truncate">{meeting.name || "Untitled Meeting"}</span>
+            {linkedCustomer && (
+              <MeetingTypeBadge customerType={linkedCustomer.customer_type} />
+            )}
+          </span>
+        }
+        rightSlot={<StatusBadge status={meeting.workflow_status} />}
+      />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -3,8 +3,7 @@ import { subscriptions } from "@/lib/db";
 import { getUsageStatus } from "@/lib/billing/usage";
 import { isStripeConfigured } from "@/lib/billing/stripe";
 import { PLANS } from "@/lib/billing/plans";
-import { LogoMenu } from "@/components/logo-menu";
-import { HeaderUserMenu } from "@/components/header-user-menu";
+import { PageHeader } from "@/components/page-header";
 import { CheckoutButton, PortalButton } from "./buttons";
 
 export const dynamic = "force-dynamic";
@@ -31,17 +30,7 @@ export default async function BillingPage({
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <LogoMenu />
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Billing</h1>
-            </div>
-            <HeaderUserMenu />
-          </div>
-        </div>
-      </header>
+      <PageHeader title="Billing" />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {statusBanner && (
