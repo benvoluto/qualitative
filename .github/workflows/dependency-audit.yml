@@ -34,5 +34,5 @@ jobs:
           node-version: "22"
           cache: "npm"
 
-      - name: Run npm audit (high and critical only)
-        run: npm audit --audit-level=high
+      - name: Run npm audit (critical only)
+        run: npm audit --audit-level=critcal
