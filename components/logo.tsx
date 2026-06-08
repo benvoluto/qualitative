@@ -18,7 +18,7 @@ export function Logo({ className, width = 40, height = 40 }: LogoProps) {
       alt="Qualitative"
       width={width}
       height={height}
-      className={className}
+      className={`${className} drop-shadow-md`}
     />
   );
 }

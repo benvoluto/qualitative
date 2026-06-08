@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { PlugsConnected } from "@phosphor-icons/react";
 import { SettingsModal } from "@/components/settings-modal";
 import { features } from "@/lib/features";
 
@@ -17,40 +18,34 @@ export function SettingsCard({ status }: SettingsCardProps) {
   const [showSettings, setShowSettings] = useState(false);
 
   const integrations = [
-    { name: "Google Meet", connected: status.googleMeet, color: "#4285F4", enabled: true },
-    { name: "Zoom", connected: status.zoom, color: "#2D8CFF", enabled: features.zoom },
-    { name: "Teams", connected: status.teams, color: "#6264A7", enabled: features.teams },
-    { name: "HubSpot", connected: status.hubspot, color: "#FF7A59", enabled: features.hubspot },
+    { name: "Google Meet", connected: status.googleMeet, enabled: true },
+    { name: "Zoom", connected: status.zoom, enabled: features.zoom },
+    { name: "Teams", connected: status.teams, enabled: features.teams },
+    { name: "HubSpot", connected: status.hubspot, enabled: features.hubspot },
   ].filter((i) => i.enabled);
+
+  const connectedCount = integrations.filter((i) => i.connected).length;
+  const totalCount = integrations.length;
 
   return (
     <>
       <button
         onClick={() => setShowSettings(true)}
-        className="block w-full text-left bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow"
+        className="block w-full text-left bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow px-8 py-7"
       >
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-              Settings
-            </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Configure integrations
-            </p>
-          </div>
-          <div className="flex items-center gap-1">
-            {integrations.map((integration) => (
-              <div
-                key={integration.name}
-                className={`w-3 h-3 rounded-full ${
-                  integration.connected ? "" : "opacity-30"
-                }`}
-                style={{ backgroundColor: integration.color }}
-                title={`${integration.name}: ${integration.connected ? "Connected" : "Not connected"}`}
-              />
-            ))}
-          </div>
+        <div className="flex items-center gap-4">
+          <p className="text-5xl font-light text-gray-900 dark:text-white leading-none tracking-tight">
+            {connectedCount}
+            <span className="text-2xl text-gray-400 dark:text-gray-500 font-light">
+              {" "}
+              / {totalCount}
+            </span>
+          </p>
+          <PlugsConnected size={36} weight="regular" className="text-gray-400 dark:text-gray-500" />
         </div>
+        <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+          Connected Integrations
+        </p>
       </button>
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </>

@@ -324,9 +324,9 @@ export function RecentActivity() {
   };
 
   const typeColors = {
-    deals: "border-l-purple-500",
-    customers: "border-l-blue-500",
-    internal: "border-l-gray-500",
+    deals: "",
+    customers: "",
+    internal: "",
   };
 
   // Count meetings by type (using meetingLinks.length from each summary)
@@ -342,7 +342,7 @@ export function RecentActivity() {
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Recent Activity
+            Summaries
           </h3>
           <button
             onClick={handleRegenerate}
