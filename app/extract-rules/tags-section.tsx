@@ -15,7 +15,7 @@ export function TagsSection({ tags, availableColors, allColors }: TagsSectionPro
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto">
       {/* Header - always visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}

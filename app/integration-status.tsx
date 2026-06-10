@@ -68,7 +68,7 @@ export function IntegrationStatus({ status, onClick }: IntegrationStatusProps) {
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+      className="inline-flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 rounded-xl overflow-x-auto hover:shadow-md transition-shadow"
     >
       <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Integrations:</span>
       <div className="flex items-center gap-2">

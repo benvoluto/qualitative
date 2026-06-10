@@ -3,7 +3,7 @@ import { Alegreya_Sans, PT_Serif, Fira_Code } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "@/components/providers";
 import { SiteFooter } from "@/components/site-footer";
-import { FloatingNav } from "@/components/floating-nav";
+import { FloatingBar } from "@/components/floating-bar";
 import "./globals.css";
 
 const alegreyaSans = Alegreya_Sans({
@@ -45,7 +45,7 @@ export default function RootLayout({
       <body className="antialiased min-h-screen flex flex-col font-sans">
         <Providers>
           <div className="flex-grow flex flex-col">{children}</div>
-          <FloatingNav />
+          <FloatingBar />
           <SiteFooter />
         </Providers>
         <Analytics />

@@ -245,7 +245,7 @@ export function MeetingsList({ meetings, customers = [], extractCounts = {} }: M
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto overflow-hidden">
       {/* Filter Tabs */}
       <div className="flex border-b border-gray-200 dark:border-gray-700 px-4">
         <TabButton

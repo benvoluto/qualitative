@@ -60,7 +60,7 @@ export function CustomersList({ customers }: CustomersListProps) {
   const dealsCount = customers.filter((c) => c.customer_type === "deal").length;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto overflow-hidden">
       {/* Accordion Header */}
       <div
         role="button"

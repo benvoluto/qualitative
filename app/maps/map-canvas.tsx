@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { NoteBlank, Trash } from "@phosphor-icons/react";
 import { TagBadge } from "@/components/tag-badge";
+import { FloatingActionPortal } from "@/components/floating-action-portal";
 
 interface StickyTag {
   id: string;
@@ -887,7 +888,7 @@ export function MapCanvas({
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex flex-wrap items-center gap-2">
+      <div className="bg-slate-100 dark:bg-slate-800 border-b border-slate-300 dark:border-slate-700 px-4 py-2 flex flex-wrap items-center gap-2">
         {allTags.length > 0 && (
           <>
             <span className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mr-1">
@@ -895,7 +896,7 @@ export function MapCanvas({
             </span>
             <button
               onClick={() => setActiveTagFilter(null)}
-              className={`text-xs px-2 py-1 rounded border ${
+              className={`text-xs px-2 py-0.5 rounded-xl border ${
                 activeTagFilter === null
                   ? "bg-blue-600 text-white border-blue-600"
                   : "bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
@@ -918,55 +919,55 @@ export function MapCanvas({
           </>
         )}
         <div className="ml-auto flex items-center gap-2">
-          {!selectMode && (
-            <>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                {visibleStickies.length} / {stickies.length} stickies
-              </span>
-              <button
-                onClick={() => setSelectMode(true)}
-                className="text-xs px-2 py-1 rounded border bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
-              >
-                Select
-              </button>
-            </>
-          )}
-          {selectMode && (
-            <>
-              <span className="text-xs text-gray-700 dark:text-gray-200">
-                {selectedIds.size} selected
-              </span>
-              <button
-                onClick={() => setBulkDialog("delete")}
-                disabled={selectedIds.size === 0}
-                className="text-xs px-2 py-1 rounded border bg-red-600 text-white border-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => setBulkDialog("addTag")}
-                disabled={selectedIds.size === 0}
-                className="text-xs px-2 py-1 rounded border bg-blue-600 text-white border-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Add tag
-              </button>
-              <button
-                onClick={handleGroupSelected}
-                disabled={selectedIds.size === 0}
-                className="text-xs px-2 py-1 rounded border bg-purple-600 text-white border-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Group
-              </button>
-              <button
-                onClick={exitSelectMode}
-                className="text-xs px-2 py-1 rounded border bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600"
-              >
-                Cancel
-              </button>
-            </>
-          )}
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            {visibleStickies.length} / {stickies.length} stickies
+          </span>
         </div>
       </div>
+
+      <FloatingActionPortal>
+        {!selectMode ? (
+          <button
+            onClick={() => setSelectMode(true)}
+            className="bg-amber-600 text-white inline-flex items-center px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap shadow-lg backdrop-blur-md border bg-amber-600/95 dark:bg-gray-800/95 dark-text-amber-200 border-amber-600 dark:border-gray-700 hover:bg-amber-700 dark:hover:bg-gray-700 transition-colors"
+          >
+            Select
+          </button>
+        ) : (
+          <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow-lg whitespace-nowrap">
+            <span className="text-xs px-2 text-gray-700 dark:text-gray-200">
+              {selectedIds.size} selected
+            </span>
+            <button
+              onClick={() => setBulkDialog("delete")}
+              disabled={selectedIds.size === 0}
+              className="text-xs px-3 py-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Delete
+            </button>
+            <button
+              onClick={() => setBulkDialog("addTag")}
+              disabled={selectedIds.size === 0}
+              className="text-xs px-3 py-1.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Add tag
+            </button>
+            <button
+              onClick={handleGroupSelected}
+              disabled={selectedIds.size === 0}
+              className="text-xs px-3 py-1.5 rounded-full bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Group
+            </button>
+            <button
+              onClick={exitSelectMode}
+              className="text-xs px-3 py-1.5 rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+      </FloatingActionPortal>
 
       <div
         ref={containerRef}

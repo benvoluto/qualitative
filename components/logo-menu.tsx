@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Logo } from "./logo";
 
 /**
- * Small home-link in the page header. The primary nav moved to <FloatingNav />,
+ * Small home-link in the page header. The primary nav moved to <FloatingBar />,
  * so this component now just renders the logo as a link to /app.
  */
 export function LogoMenu() {

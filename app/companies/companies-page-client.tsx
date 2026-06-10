@@ -113,7 +113,7 @@ function CompaniesView({
       {companies.length === 0 ? (
         <EmptyState message="No organizations yet" description="Add an organization to get started." />
       ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
@@ -279,7 +279,7 @@ function CustomersView({
           description="Add an organization to get started."
         />
       ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
@@ -478,7 +478,7 @@ function StatCard({
 
 function EmptyState({ message, description }: { message: string; description: string }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-12 text-center">
+    <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-12 text-center">
       <svg
         className="mx-auto h-12 w-12 text-gray-400"
         fill="none"

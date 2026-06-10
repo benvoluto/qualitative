@@ -284,7 +284,7 @@ export function SyncButton() {
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-1.5 bg-blue-600 text-white rounded-full whitespace-nowrap shadow-lg backdrop-blur-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isLoading ? (
             <>
@@ -330,7 +330,7 @@ export function SyncButton() {
         </button>
 
         {isMenuOpen && (
-          <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
+          <div className="absolute right-0 bottom-full mb-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
             <div className="py-1">
               <button
                 onClick={() => handleSyncCheck("google")}

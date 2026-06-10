@@ -4,7 +4,7 @@ interface GettingStartedProps {
 
 export function GettingStarted({ hasGoogle }: GettingStartedProps) {
   return (
-    <section className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-8">
+    <section className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-8">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
         Let&apos;s get your first meeting in
       </h2>

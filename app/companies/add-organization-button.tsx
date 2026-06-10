@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CustomerType } from "@/lib/db/types";
+import { FloatingActionPortal } from "@/components/floating-action-portal";
 
 export function AddOrganizationButton() {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,15 +59,17 @@ export function AddOrganizationButton() {
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-        </svg>
-        Add Organization
-      </button>
+      <FloatingActionPortal>
+        <button
+          onClick={() => setIsOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium whitespace-nowrap text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg backdrop-blur-md transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add Organization
+        </button>
+      </FloatingActionPortal>
 
       {isOpen && (
         <div

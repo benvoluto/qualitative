@@ -137,7 +137,7 @@ export function CollapsibleTranscript({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto">
       <div
         className="w-full p-6 flex items-center justify-between"
         role="button"

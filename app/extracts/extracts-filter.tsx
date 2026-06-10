@@ -18,6 +18,8 @@ import {
 } from "@phosphor-icons/react";
 import { Tag, ExtractRule, Meeting, Customer } from "@/lib/db/types";
 import { TagBadge } from "@/components/tag-badge";
+import { FloatingActionPortal } from "@/components/floating-action-portal";
+import { PrimaryActionButton } from "@/components/primary-action-button";
 import { exportExtractsToCsv, exportExtractsToXlsx, copyExtractsForMiro } from "./export-utils";
 
 // Returns true if every whitespace-separated word in the query appears as a
@@ -627,16 +629,6 @@ export function ExtractsFilter({
             <div className="flex items-center gap-4 text-sm">
               <button
                 type="button"
-                onClick={() => exportExtractsToXlsx(filteredExtracts)}
-                disabled={filteredExtracts.length === 0}
-                className="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
-                title="Save the current list as an Excel file"
-              >
-                <DownloadSimple size={16} />
-                Save as XLS
-              </button>
-              <button
-                type="button"
                 onClick={() => exportExtractsToCsv(filteredExtracts)}
                 disabled={filteredExtracts.length === 0}
                 className="inline-flex items-center gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed"
@@ -645,8 +637,18 @@ export function ExtractsFilter({
                 <DownloadSimple size={16} />
                 Export CSV
               </button>
-              <CopyForMiroButton extracts={filteredExtracts} />
             </div>
+            <FloatingActionPortal>
+              <PrimaryActionButton
+                Icon={DownloadSimple}
+                label="Save as XLS"
+                onClick={() => exportExtractsToXlsx(filteredExtracts)}
+                disabled={filteredExtracts.length === 0}
+                variant="secondary"
+                title="Save the current list as an Excel file"
+              />
+              <CopyForMiroButton extracts={filteredExtracts} />
+            </FloatingActionPortal>
           </div>
         </div>
 
@@ -658,7 +660,7 @@ export function ExtractsFilter({
             onRefresh={() => router.refresh()}
           />
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-8 text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-8 text-center">
             <FileText size={48} className="mx-auto text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
               No extracts found
@@ -1115,10 +1117,10 @@ function CopyForMiroButton({ extracts }: CopyForMiroButtonProps) {
       type="button"
       onClick={handleClick}
       disabled={extracts.length === 0}
-      className={`inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed ${
+      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap shadow-lg backdrop-blur-md border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
         copied
-          ? "text-green-600 dark:text-green-400"
-          : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+          ? "bg-white/95 dark:bg-gray-800/95 text-green-600 dark:text-green-400 border-gray-200 dark:border-gray-700"
+          : "bg-white/95 dark:bg-gray-800/95 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
       }`}
       title="Copy the current list to the clipboard, formatted one extract per line for pasting into Miro"
     >

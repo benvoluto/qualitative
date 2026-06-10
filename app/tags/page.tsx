@@ -19,7 +19,7 @@ export default async function TagsPage() {
   const availableColors = TAG_COLORS.filter((c) => !usedColorSet.has(c));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
       <PageHeader title="Tags" />
 
       {/* Main Content */}
@@ -27,7 +27,7 @@ export default async function TagsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left column - Add tag form */}
           <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Add Tag
               </h2>
@@ -40,7 +40,7 @@ export default async function TagsPage() {
 
           {/* Right column - Tags list */}
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   All Tags ({allTags.length})

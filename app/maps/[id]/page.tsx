@@ -37,7 +37,7 @@ export default async function MapPage({ params }: { params: Promise<{ id: string
   }));
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-900">
       <PageHeader title={`Map · ${customer.name}`} />
       <MapCanvas
         customerId={customer.id}

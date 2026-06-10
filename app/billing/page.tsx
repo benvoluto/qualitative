@@ -29,7 +29,7 @@ export default async function BillingPage({
   const planLimits = PLANS[subscription.plan];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
       <PageHeader title="Billing" />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -46,7 +46,7 @@ export default async function BillingPage({
         )}
 
         {/* Current plan + usage */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+        <section className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -117,7 +117,7 @@ export default async function BillingPage({
 
         {/* Upgrade card (only shown on free) */}
         {subscription.plan === "free" && (
-          <section className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+          <section className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Upgrade to Pro</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{PLANS.pro.description}</p>
             <ul className="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-300">

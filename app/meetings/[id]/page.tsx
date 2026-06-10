@@ -36,7 +36,7 @@ export default async function MeetingDetailPage({
     : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
       <PageHeader
         title={
           <span className="flex items-center gap-3 truncate">
