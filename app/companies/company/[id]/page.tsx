@@ -31,7 +31,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
   const location = locationParts.length > 0 ? locationParts.join(", ") : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
       <PageHeader
         title={
           <span className="flex items-center gap-3">
@@ -61,7 +61,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
         {/* Company Details & Linked Customers */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Details Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Company Details
             </h2>
@@ -110,7 +110,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
           </div>
 
           {/* Linked Customers/Deals */}
-          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Linked Primary & Secondary
             </h2>
@@ -148,7 +148,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
 
         {/* Recent Meetings */}
         {companyMeetings.length > 0 && (
-          <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+          <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Meetings ({companyMeetings.length})
             </h2>
@@ -199,7 +199,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
 
         {/* Extracts */}
         {companyExtracts.length > 0 && (
-          <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+          <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Extracts ({companyExtracts.length})
               {pendingActions.length > 0 && (

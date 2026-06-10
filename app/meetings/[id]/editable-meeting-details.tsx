@@ -313,7 +313,7 @@ export function EditableMeetingDetails({
   const selectedCustomer = allCustomers.find((c) => c.id === formData.customer_id);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
       {/* No Company Warning Banner */}
       {!linkedCustomer && !isEditing && (
         <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start gap-3">

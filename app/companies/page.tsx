@@ -48,7 +48,7 @@ export default async function CompaniesPage() {
   const totalCustomerPendingActions = customersWithStats.reduce((sum, c) => sum + c.pendingActionCount, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
       <PageHeader
         title="Organizations"
         rightSlot={features.hubspot ? <SyncCustomersButton /> : null}
@@ -56,9 +56,7 @@ export default async function CompaniesPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <AddOrganizationButton />
-        </div>
+        <AddOrganizationButton />
         <CompaniesPageClient
           companies={companiesList}
           customers={customersWithStats}

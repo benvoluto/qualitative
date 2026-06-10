@@ -31,7 +31,7 @@ export function SettingsCard({ status }: SettingsCardProps) {
     <>
       <button
         onClick={() => setShowSettings(true)}
-        className="block w-full text-left bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow px-8 py-7"
+        className="block w-full text-left bg-white dark:bg-gray-800 rounded-4xl hover:shadow-md transition-shadow px-8 py-7"
       >
         <div className="flex items-center gap-4">
           <p className="text-5xl font-light text-gray-900 dark:text-white leading-none tracking-tight">

@@ -80,7 +80,7 @@ export function EmailDraftPanel({
   if (drafts.length === 0) {
     if (!shouldPoll) return null;
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
         <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
           <CircleNotch size={16} className="animate-spin" />
           Generating email draft…
@@ -90,7 +90,7 @@ export function EmailDraftPanel({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           Email Drafts ({drafts.length})

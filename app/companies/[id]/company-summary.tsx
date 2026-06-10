@@ -143,7 +143,7 @@ export function CompanySummary({ customerId }: CompanySummaryProps) {
 
   if (isLoading) {
     return (
-      <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+      <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
         <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
           <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
             <circle
@@ -169,7 +169,7 @@ export function CompanySummary({ customerId }: CompanySummaryProps) {
 
   if (error) {
     return (
-      <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+      <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
         <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
       </div>
     );
@@ -180,7 +180,7 @@ export function CompanySummary({ customerId }: CompanySummaryProps) {
   }
 
   return (
-    <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+    <div className="mb-8 bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           6-Month Summary

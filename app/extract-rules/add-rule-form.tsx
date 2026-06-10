@@ -18,9 +18,11 @@ interface CustomerOption {
 interface AddRuleFormProps {
   tags: Tag[];
   customers: CustomerOption[];
+  /** Called after a rule is successfully created (e.g. to close a modal). */
+  onSuccess?: () => void;
 }
 
-export function AddRuleForm({ tags, customers }: AddRuleFormProps) {
+export function AddRuleForm({ tags, customers, onSuccess }: AddRuleFormProps) {
   const [name, setName] = useState("");
   const [summary, setSummary] = useState("");
   const [customerId, setCustomerId] = useState<string>("");
@@ -69,6 +71,7 @@ export function AddRuleForm({ tags, customers }: AddRuleFormProps) {
         setCustomerId("");
         setSelectedTagIds(new Set());
         router.refresh();
+        onSuccess?.();
       } else {
         const data = await response.json();
         setError(data.error || "Failed to create rule");

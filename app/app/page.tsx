@@ -70,7 +70,7 @@ export default async function Dashboard() {
   const shouldAutosync = hasIntegrations && autosyncEnabled;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-900">
       {/* Auto-sync meetings on page load and periodically (only if user enabled it) */}
       <AutoSync hasIntegrations={shouldAutosync} />
       <CompanySyncCheck hasHubSpot={integrationStatus.hubspot} />
@@ -102,16 +102,17 @@ export default async function Dashboard() {
           )}
 
           {/* Dashboard Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-8">
-            <DashboardCard count={allMeetings.length} label="Meetings" href="/meetings" Icon={Calendar} />
-            <DashboardCard count={allExtracts.length} label="Extracts" href="/extracts" Icon={Note} />
-            <DashboardCard count={allCompanies.length} label="Organizations" href="/companies" Icon={Buildings} />
-            <DashboardCard count={allRules.length} label="Extraction Rules" href="/extract-rules" Icon={Gear} />
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 mt-8">
+            <DashboardCard count={allMeetings.length} label="Meetings" href="/meetings" Icon={Calendar} type="meetings" />
+            <DashboardCard count={allExtracts.length} label="Extracts" href="/extracts" Icon={Note} type="extracts" />
+            <DashboardCard count={allCompanies.length} label="Organizations" href="/companies" Icon={Buildings} type="organizations" />
+            <DashboardCard count={allRules.length} label="Extraction Rules" href="/extract-rules" Icon={Gear} type="extract-rules" />
             <DashboardCard
               count={actionItems.length}
               label="Pending Action Items"
               href="/extracts?filter=action"
               Icon={ListChecks}
+              type="pending-action-items"
             />
             <SettingsCard status={integrationStatus} />
           </div>
@@ -126,24 +127,33 @@ function DashboardCard({
   label,
   href,
   Icon,
+  type,
 }: {
   count: number;
   label: string;
   href: string;
   Icon: ComponentType<IconProps>;
+  type: "meetings" | "extracts" | "organizations" | "extract-rules" | "pending-action-items";
 }) {
+  const colorClasses = {
+    meetings: "bg-blue-600 text-blue-100 dark:bg-blue-900/30 dark:text-blue-300",
+    extracts: "bg-green-600 text-green-100 dark:bg-green-900/30 dark:text-green-300",
+    organizations: "bg-white text-amber-800 dark:bg-amber-900/30 dark:text-amber-200",
+    "extract-rules": "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+    "pending-action-items": "bg-white text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300",
+  }[type];
   return (
     <Link
       href={href}
-      className="block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow px-8 py-7"
+      className={`rounded-4xl overflow-x-auto p-6 shadow-none ${colorClasses}`}
     >
       <div className="flex items-center gap-4">
-        <p className="text-5xl font-light text-gray-900 dark:text-white leading-none tracking-tight">
+        <p className="text-5xl font-light leading-none tracking-tight">
           {count}
         </p>
-        <Icon size={36} weight="regular" className="text-gray-400 dark:text-gray-500" />
+        <Icon size={36} weight="regular" />
       </div>
-      <p className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+      <p className="mt-4 text-sm">
         {label}
       </p>
     </Link>

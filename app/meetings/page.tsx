@@ -1,10 +1,8 @@
-import { Plus } from "@phosphor-icons/react/dist/ssr";
 import { meetings, customers, extracts } from "@/lib/db";
 import { requireAccountId } from "@/lib/account-context";
 import { MeetingsList } from "./meetings-list";
-import { SyncButton } from "./sync-button";
+import { MeetingsActions } from "./meetings-actions";
 import { CustomersList } from "./customers-list";
-import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 
 export const dynamic = "force-dynamic";
@@ -28,23 +26,14 @@ export default async function MeetingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
       <PageHeader title="Meetings" />
+
+      {/* Page actions render into the floating bar */}
+      <MeetingsActions />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Actions */}
-        <div className="flex flex-wrap items-center gap-3 mb-6">
-          <Link
-            href="/meetings/new"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus size={16} weight="bold" />
-            Add Meeting Manually
-          </Link>
-          <SyncButton />
-        </div>
-
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
           <StatCard label="Total" value={stats.total} />
@@ -58,7 +47,7 @@ export default async function MeetingsPage() {
         <div className="space-y-8">
           {/* Meetings List */}
           {meetingsList.length === 0 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-12 text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-12 text-center">
               <svg
                 className="mx-auto h-12 w-12 text-gray-400"
                 fill="none"
@@ -105,7 +94,7 @@ function StatCard({
   color?: "gray" | "yellow" | "blue" | "teal" | "green" | "red";
 }) {
   const colorClasses = {
-    gray: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200",
+    gray: "bg-white-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200",
     yellow: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
     blue: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
     teal: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300",

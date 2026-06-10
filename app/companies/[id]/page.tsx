@@ -28,7 +28,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
   const pendingActions = actionItems.filter((e) => e.action_item_status === "pending");
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
       <PageHeader
         title={
           <span className="flex items-center gap-3">
@@ -54,7 +54,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
         {/* Company Details */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Details Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Company Details
             </h2>
@@ -91,7 +91,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
           </div>
 
           {/* Recent Meetings */}
-          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Recent Meetings
             </h2>

@@ -27,8 +27,12 @@ export function RecentActivity() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [updatedStatuses, setUpdatedStatuses] = useState<Map<string, StatusUpdate>>(new Map());
-  const [updatingExtractId, setUpdatingExtractId] = useState<string | null>(null);
+  const [updatedStatuses, setUpdatedStatuses] = useState<
+    Map<string, StatusUpdate>
+  >(new Map());
+  const [updatingExtractId, setUpdatingExtractId] = useState<string | null>(
+    null,
+  );
 
   // Load saved preferences from localStorage on mount
   useEffect(() => {
@@ -38,7 +42,10 @@ export function RecentActivity() {
     }
 
     const savedType = localStorage.getItem(STORAGE_KEY_TYPE);
-    if (savedType && ["all", "deals", "customers", "internal"].includes(savedType)) {
+    if (
+      savedType &&
+      ["all", "deals", "customers", "internal"].includes(savedType)
+    ) {
       setTypeFilter(savedType as TypeFilter);
     }
   }, []);
@@ -55,30 +62,33 @@ export function RecentActivity() {
     localStorage.setItem(STORAGE_KEY_TYPE, newType);
   };
 
-  const fetchSummaries = useCallback(async (regenerate: boolean = false) => {
-    if (regenerate) {
-      setIsRegenerating(true);
-    } else {
-      setIsLoading(true);
-    }
-    setError(null);
-
-    try {
-      const url = `/api/activity-summary?period=${period}${regenerate ? "&regenerate=true" : ""}`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("Failed to fetch summaries");
+  const fetchSummaries = useCallback(
+    async (regenerate: boolean = false) => {
+      if (regenerate) {
+        setIsRegenerating(true);
+      } else {
+        setIsLoading(true);
       }
-      const data = await response.json();
-      setSummaries(data.summaries || []);
-    } catch (err) {
-      setError("Failed to load activity summaries");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-      setIsRegenerating(false);
-    }
-  }, [period]);
+      setError(null);
+
+      try {
+        const url = `/api/activity-summary?period=${period}${regenerate ? "&regenerate=true" : ""}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error("Failed to fetch summaries");
+        }
+        const data = await response.json();
+        setSummaries(data.summaries || []);
+      } catch (err) {
+        setError("Failed to load activity summaries");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+        setIsRegenerating(false);
+      }
+    },
+    [period],
+  );
 
   useEffect(() => {
     fetchSummaries();
@@ -91,7 +101,7 @@ export function RecentActivity() {
   const updateExtractStatus = async (
     extractId: string,
     statusType: "action" | "request",
-    status: string
+    status: string,
   ) => {
     setUpdatingExtractId(extractId);
     try {
@@ -115,9 +125,10 @@ export function RecentActivity() {
   };
 
   // Filter summaries based on type filter
-  const filteredSummaries = typeFilter === "all"
-    ? summaries
-    : summaries.filter((s) => s.type === typeFilter);
+  const filteredSummaries =
+    typeFilter === "all"
+      ? summaries
+      : summaries.filter((s) => s.type === typeFilter);
 
   // Parse text and replace [[Name|id]] or [[Name|meeting_id|extract_id]] with links
   function renderTextWithLinks(text: string, keyPrefix: string = "") {
@@ -141,7 +152,7 @@ export function RecentActivity() {
           className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
         >
           {name}
-        </Link>
+        </Link>,
       );
 
       lastIndex = match.index + match[0].length;
@@ -163,7 +174,11 @@ export function RecentActivity() {
     const actionItemsSection = parts[1]?.trim();
 
     // Parse item type badge and extract ID
-    function parseItemType(itemText: string): { type: "action" | "request" | null; text: string; extractId: string | null } {
+    function parseItemType(itemText: string): {
+      type: "action" | "request" | null;
+      text: string;
+      extractId: string | null;
+    } {
       let itemType: "action" | "request" | null = null;
       let cleanedText = itemText;
 
@@ -185,15 +200,18 @@ export function RecentActivity() {
 
     // Parse all items and separate into actions and requests
     const allItems = actionItemsSection
-      ? actionItemsSection.split("\n").filter(line => line.trim().startsWith("•")).map((item) => {
-          const itemText = item.replace(/^•\s*/, "").trim();
-          return parseItemType(itemText);
-        })
+      ? actionItemsSection
+          .split("\n")
+          .filter((line) => line.trim().startsWith("•"))
+          .map((item) => {
+            const itemText = item.replace(/^•\s*/, "").trim();
+            return parseItemType(itemText);
+          })
       : [];
 
-    const actions = allItems.filter(item => item.type === "action");
-    const requests = allItems.filter(item => item.type === "request");
-    const otherItems = allItems.filter(item => item.type === null);
+    const actions = allItems.filter((item) => item.type === "action");
+    const requests = allItems.filter((item) => item.type === "request");
+    const otherItems = allItems.filter((item) => item.type === null);
 
     const MAX_ITEMS = 3;
     const displayedActions = actions.slice(0, MAX_ITEMS);
@@ -202,14 +220,29 @@ export function RecentActivity() {
     const hasMoreActions = actions.length > MAX_ITEMS;
     const hasMoreRequests = requests.length > MAX_ITEMS;
 
-    function renderItemList(items: { type: "action" | "request" | null; text: string; extractId: string | null }[], itemType: "action" | "request" | null, keyPrefix: string) {
+    function renderItemList(
+      items: {
+        type: "action" | "request" | null;
+        text: string;
+        extractId: string | null;
+      }[],
+      itemType: "action" | "request" | null,
+      keyPrefix: string,
+    ) {
       return items.map((item, index) => {
         const isUpdating = updatingExtractId === item.extractId;
-        const statusUpdate = item.extractId ? updatedStatuses.get(item.extractId) : null;
-        const isMarkedDone = statusUpdate?.status === "assigned" || statusUpdate?.status === "ticket_added";
+        const statusUpdate = item.extractId
+          ? updatedStatuses.get(item.extractId)
+          : null;
+        const isMarkedDone =
+          statusUpdate?.status === "assigned" ||
+          statusUpdate?.status === "ticket_added";
 
         return (
-          <li key={`${keyPrefix}-${index}`} className={`text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2 ${isMarkedDone ? "opacity-60" : ""}`}>
+          <li
+            key={`${keyPrefix}-${index}`}
+            className={`text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2 ${isMarkedDone ? "opacity-60" : ""}`}
+          >
             <span className="text-gray-400 dark:text-gray-500 mt-0.5">•</span>
             {item.type && (
               <span
@@ -222,14 +255,20 @@ export function RecentActivity() {
                 {item.type === "action" ? "Action" : "Request"}
               </span>
             )}
-            <span className={isMarkedDone ? "line-through" : ""}>{renderTextWithLinks(item.text, `${type}-${keyPrefix}-${index}-`)}</span>
+            <span className={isMarkedDone ? "line-through" : ""}>
+              {renderTextWithLinks(item.text, `${type}-${keyPrefix}-${index}-`)}
+            </span>
             {item.extractId && !isMarkedDone && (
               <button
                 onClick={() => {
                   if (item.type === "action") {
                     updateExtractStatus(item.extractId!, "action", "assigned");
                   } else if (item.type === "request") {
-                    updateExtractStatus(item.extractId!, "request", "ticket_added");
+                    updateExtractStatus(
+                      item.extractId!,
+                      "request",
+                      "ticket_added",
+                    );
                   }
                 }}
                 disabled={isUpdating}
@@ -237,17 +276,27 @@ export function RecentActivity() {
                   isUpdating
                     ? "bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500"
                     : item.type === "action"
-                    ? "bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
-                    : "bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/30"
+                      ? "bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30"
+                      : "bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/30"
                 }`}
-                title={item.type === "action" ? "Mark as assigned" : "Mark as ticket added"}
+                title={
+                  item.type === "action"
+                    ? "Mark as assigned"
+                    : "Mark as ticket added"
+                }
               >
-                {isUpdating ? "..." : item.type === "action" ? "Mark Assigned" : "Mark Ticket Added"}
+                {isUpdating
+                  ? "..."
+                  : item.type === "action"
+                    ? "Mark Assigned"
+                    : "Mark Ticket Added"}
               </button>
             )}
             {isMarkedDone && (
               <span className="shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                {statusUpdate?.status === "assigned" ? "Assigned" : "Ticket Added"}
+                {statusUpdate?.status === "assigned"
+                  ? "Assigned"
+                  : "Ticket Added"}
               </span>
             )}
           </li>
@@ -272,9 +321,21 @@ export function RecentActivity() {
                   href="/extracts?filter=action"
                   className="mt-2 inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                 >
-                  {hasMoreActions ? `See all ${actions.length} actions` : "Manage action status"}
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  {hasMoreActions
+                    ? `See all ${actions.length} actions`
+                    : "Manage action status"}
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </Link>
               </div>
@@ -290,9 +351,21 @@ export function RecentActivity() {
                   href="/extracts?filter=request"
                   className="mt-2 inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
                 >
-                  {hasMoreRequests ? `See all ${requests.length} requests` : "Manage request status"}
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  {hasMoreRequests
+                    ? `See all ${requests.length} requests`
+                    : "Manage request status"}
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </Link>
               </div>
@@ -333,13 +406,15 @@ export function RecentActivity() {
   const typeCounts = {
     all: summaries.reduce((acc, s) => acc + s.meetingLinks.length, 0),
     deals: summaries.find((s) => s.type === "deals")?.meetingLinks.length || 0,
-    customers: summaries.find((s) => s.type === "customers")?.meetingLinks.length || 0,
-    internal: summaries.find((s) => s.type === "internal")?.meetingLinks.length || 0,
+    customers:
+      summaries.find((s) => s.type === "customers")?.meetingLinks.length || 0,
+    internal:
+      summaries.find((s) => s.type === "internal")?.meetingLinks.length || 0,
   };
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+      <div className="flex items-center justify-between mb-4 p-4 flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Summaries
@@ -367,28 +442,32 @@ export function RecentActivity() {
         </div>
         <div className="flex gap-3 flex-wrap">
           {/* Type Filter */}
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-            {(["all", "deals", "customers", "internal"] as TypeFilter[]).map((t) => (
-              <button
-                key={t}
-                onClick={() => handleTypeFilterChange(t)}
-                disabled={isLoading}
-                className={`px-3 py-1 text-sm rounded-md transition-colors disabled:opacity-50 ${
-                  typeFilter === t
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                {typeLabels[t]}
-                {!isLoading && typeCounts[t] > 0 && (
-                  <span className="ml-1 text-xs opacity-60">({typeCounts[t]})</span>
-                )}
-              </button>
-            ))}
+          <div className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-4xl p-1">
+            {(["all", "deals", "customers", "internal"] as TypeFilter[]).map(
+              (t) => (
+                <button
+                  key={t}
+                  onClick={() => handleTypeFilterChange(t)}
+                  disabled={isLoading}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors disabled:opacity-50 ${
+                    typeFilter === t
+                      ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-white"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  {typeLabels[t]}
+                  {!isLoading && typeCounts[t] > 0 && (
+                    <span className="ml-1 text-xs opacity-60">
+                      ({typeCounts[t]})
+                    </span>
+                  )}
+                </button>
+              ),
+            )}
           </div>
 
           {/* Period Filter */}
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <div className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-4xl p-1">
             {(["week", "month", "quarter"] as Period[]).map((p) => (
               <button
                 key={p}
@@ -407,7 +486,7 @@ export function RecentActivity() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 rounded-4xl overflow-x-auto">
         {isLoading ? (
           <div className="p-6 text-center">
             <div className="inline-flex items-center gap-2 text-gray-500 dark:text-gray-400">
@@ -441,18 +520,19 @@ export function RecentActivity() {
               : `No ${typeFilter} activity in the ${periodLabels[period].toLowerCase()}.`}
           </div>
         ) : (
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700 p-4">
             {filteredSummaries.map((summary) => (
               <div
                 key={summary.type}
-                className={`p-4 border-l-4 ${typeColors[summary.type]}`}
+                className={`p-4 ${typeColors[summary.type]}`}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {typeLabels[summary.type]}
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    ({summary.meetingLinks.length} meeting{summary.meetingLinks.length !== 1 ? "s" : ""})
+                    ({summary.meetingLinks.length} meeting
+                    {summary.meetingLinks.length !== 1 ? "s" : ""})
                   </span>
                 </div>
                 {renderSummaryWithItems(summary.summary, summary.type)}

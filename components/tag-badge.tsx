@@ -17,7 +17,7 @@ export function TagBadge({
   selected,
   className = "",
 }: TagBadgeProps) {
-  const baseClasses = "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium transition-colors";
+  const baseClasses = "inline-flex items-center px-2 py-0.5 rounded-xl text-xs font-medium transition-colors";
 
   // If no color, use default blue styling
   if (!color) {

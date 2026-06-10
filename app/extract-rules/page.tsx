@@ -2,7 +2,7 @@ import { extractRules, tags, customers } from "@/lib/db";
 import { requireAccountId } from "@/lib/account-context";
 import { RulesList } from "./rules-list";
 import { GenerateRulesForm } from "./generate-rules-form";
-import { AddRuleForm } from "./add-rule-form";
+import { AddRuleButton } from "./add-rule-button";
 import { TagsSection } from "./tags-section";
 import { TAG_COLORS } from "@/lib/constants/colors";
 import { PageHeader } from "@/components/page-header";
@@ -22,7 +22,7 @@ export default async function ExtractRulesPage() {
   const customerOptions = allCustomers.map((c) => ({ id: c.id, name: c.name }));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
       <PageHeader title="Extract Rules" />
 
       {/* Main Content */}
@@ -30,19 +30,11 @@ export default async function ExtractRulesPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left column - Add/Generate rules forms */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Add Rule Form */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Add Rule
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Manually add a new extraction rule by entering a name and description.
-              </p>
-              <AddRuleForm tags={allTags} customers={customerOptions} />
-            </div>
+            {/* Add Rule action renders into the floating bar */}
+            <AddRuleButton tags={allTags} customers={customerOptions} />
 
             {/* Generate Rules Form */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Generate Rules
               </h2>
@@ -62,7 +54,7 @@ export default async function ExtractRulesPage() {
 
           {/* Right column - Rules list */}
           <div className="lg:col-span-2">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl overflow-x-auto p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Extraction Rules ({rules.length})
