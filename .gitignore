@@ -38,3 +38,4 @@ next-env.d.ts
 # security artifacts (keep dir, ignore generated reports)
 /docs/security/dast-reports/*
 !/docs/security/dast-reports/.gitkeep.md
+/.swc
